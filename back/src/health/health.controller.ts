@@ -6,7 +6,7 @@ export class HealthController {
   getHealth(): { ok: true; mock: boolean } {
     return {
       ok: true,
-      mock: process.env.MOCK === '1' || !process.env.NVIDIA_API_KEY,
+      mock: process.env.MOCK === '1' || !process.env.OPENAI_API_KEY,
     };
   }
 }

@@ -8,6 +8,7 @@ export type FactKey =
   | 'format'
   | 'language'
   | 'hours'
+  | 'date'
   | 'signal'
   | 'description';
 

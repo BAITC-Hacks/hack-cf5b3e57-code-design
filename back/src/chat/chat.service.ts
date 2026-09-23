@@ -147,7 +147,7 @@ export class ChatService {
       const history = await this.prisma.chatMessage.findMany({
         where: { sessionId },
         orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
-        take: 8,
+        take: 20,
       });
       const messages: ChatCompletionMessageParam[] = [
         {

@@ -401,3 +401,59 @@ describe('bundle chat in MOCK mode', () => {
     expect(complete).toHaveBeenCalledTimes(1);
   });
 });
+
+describe('search chat in MOCK mode — slot extraction and memory', () => {
+  const doneText = (events: ChatStreamEvent[]): string => {
+    const done = events.find((event) => event.type === 'done');
+    if (done?.type !== 'done') throw new Error('missing done event');
+    return done.data.message.content;
+  };
+
+  it('reads city, budget and category from one free-form message', async () => {
+    const { chat, execute } = createHarness();
+    const { sessionId } = await chat.createSession({ mode: 'search' });
+    const events = await collect(
+      chat.streamMessage(
+        sessionId,
+        'мне нужен банкет на 120 гостей в астане бютжет 2000000',
+      ),
+    );
+    expect(events.some((event) => event.type === 'error')).toBe(false);
+    const text = doneText(events);
+    expect(text).not.toMatch(/в каком городе/i);
+    expect(text).not.toMatch(/какой бюджет/i);
+    expect(text).toContain('Астана');
+    expect(text).toMatch(/2\s000\s000/u);
+    expect(execute).not.toHaveBeenCalled();
+  });
+
+  it('keeps earlier slots across turns and runs the match once complete', async () => {
+    const { chat, execute } = createHarness();
+    const { sessionId } = await chat.createSession({ mode: 'search' });
+    const first = await collect(
+      chat.streamMessage(sessionId, 'Нужен ведущий в Алматы'),
+    );
+    expect(doneText(first)).not.toMatch(/в каком городе/i);
+    const second = await collect(
+      chat.streamMessage(
+        sessionId,
+        'на корпоратив 16 октября, бюджет 1 000 000',
+      ),
+    );
+    expect(second.some((event) => event.type === 'error')).toBe(false);
+    const toolStart = second.find((event) => event.type === 'tool_start');
+    if (toolStart?.type !== 'tool_start') throw new Error('no tool_start');
+    expect(toolStart.data.name).toBe('search_contractors');
+    expect(toolStart.data.args).toMatchObject({
+      city: 'Алматы',
+      eventType: 'корпоратив',
+      category: 'Ведущий',
+      budgetKzt: 1_000_000,
+    });
+    expect(String(toolStart.data.args.date)).toMatch(/^\d{4}-10-16$/);
+    expect(execute).toHaveBeenCalledWith(
+      'search_contractors',
+      expect.objectContaining({ city: 'Алматы' }),
+    );
+  });
+});

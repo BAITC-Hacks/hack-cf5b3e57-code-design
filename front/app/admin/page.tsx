@@ -1,11 +1,7 @@
 import type { Metadata } from "next";
-
-import { ManagerWorkspace } from "@/components/manager/manager-workspace";
+import { redirect } from "next/navigation";
 
 export const metadata: Metadata = {
-  title: "Площадка для жюри",
-  description:
-    "Открытый экран подбора: шаги в реальном времени, воронка отбора и проверка объяснений.",
   robots: {
     index: false,
     follow: false,
@@ -14,5 +10,5 @@ export const metadata: Metadata = {
 };
 
 export default function AdminPage() {
-  return <ManagerWorkspace />;
+  redirect("/manager");
 }

@@ -47,10 +47,17 @@ function toMatchRequest(form: MatchFormState, locale: Locale): MatchRequest {
   };
 }
 
-export function MatchExperience() {
+interface MatchExperienceProps {
+  /** Validated overrides from query params (e.g. catalog links); missing fields keep the demo default. */
+  initialForm?: Partial<MatchFormState>;
+}
+
+export function MatchExperience({ initialForm }: MatchExperienceProps = {}) {
   const { locale } = useLocale();
   const copy = MATCH_MESSAGES[locale];
-  const [form, setForm] = useState<MatchFormState>(INITIAL_FORM);
+  const [form, setForm] = useState<MatchFormState>(() =>
+    initialForm ? { ...INITIAL_FORM, ...initialForm } : INITIAL_FORM,
+  );
   const [result, setResult] = useState<MatchResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -145,7 +152,7 @@ export function MatchExperience() {
           <MatchResults copy={copy} locale={locale} result={result} sectionRef={resultRef} />
         )}
 
-        <CompareDates copy={copy} locale={locale} />
+        <CompareDates copy={copy} locale={locale} request={toMatchRequest(form, locale)} />
 
         <section className={styles.how} aria-labelledby="match-how-title">
           <h2 id="match-how-title">{copy.howTitle}</h2>

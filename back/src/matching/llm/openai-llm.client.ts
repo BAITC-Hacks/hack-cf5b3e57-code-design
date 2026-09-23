@@ -1,6 +1,6 @@
 import { Injectable, Logger } from '@nestjs/common';
 import OpenAI from 'openai';
-import {
+import type {
   CriteriaInput,
   ExplainInput,
   ExplainOutput,
@@ -8,34 +8,31 @@ import {
 } from './llm-client';
 import { MockLlmClient } from './mock-llm.client';
 
-const DEFAULT_BASE_URL = 'https://integrate.api.nvidia.com/v1';
-const DEFAULT_MODEL = 'meta/llama-3.3-70b-instruct';
+const DEFAULT_MODEL = 'gpt-4o-mini';
 
 /**
- * Реальный клиент через NVIDIA NIM (OpenAI-совместимый endpoint).
- * Единственная точка сетевых вызовов: короткий таймаут, один ретрай, а при
- * любой ошибке — падение обратно на MOCK, чтобы пайплайн доехал до `done`.
+ * OpenAI-клиент для этапов пайплайна (criteria / explain / critic).
+ * Один провайдер — на объяснения формы `/match` и на чат-ассистента.
+ * При таймауте или ошибке падает на MockLlmClient, чтобы пайплайн всегда
+ * доехал до `done` — критично для DoD хакатона.
  */
 @Injectable()
-export class NvidiaLlmClient implements LlmClient {
-  private readonly logger = new Logger(NvidiaLlmClient.name);
+export class OpenAiLlmClient implements LlmClient {
+  private readonly logger = new Logger(OpenAiLlmClient.name);
   private readonly client: OpenAI;
   private readonly model: string;
   private readonly fallback = new MockLlmClient();
 
-  constructor(apiKey: string, baseURL = DEFAULT_BASE_URL, model = DEFAULT_MODEL) {
-    this.client = new OpenAI({ apiKey, baseURL, timeout: 12_000, maxRetries: 1 });
+  constructor(apiKey: string, model = DEFAULT_MODEL) {
+    this.client = new OpenAI({ apiKey, timeout: 12_000, maxRetries: 1 });
     this.model = model;
   }
 
   async criteria(input: CriteriaInput): Promise<string[]> {
-    const sys = `Ты помощник по подбору event-подрядчиков. На вход — параметры запроса.
-Верни 2–3 коротких КРИТЕРИЯ, на что смотреть при выборе именно этого типа подрядчика.
-Пиши по-русски, каждый критерий 3–6 слов, без общих фраз, без ведущих цифр/маркеров.
-Отдавай ТОЛЬКО JSON вида {"criteria":["...","..."]}`;
-    const user = JSON.stringify(input);
+    const sys = `Ты помощник по подбору event-подрядчиков. Верни 2–3 коротких критерия ("на что смотреть"), под этот тип подрядчика и мероприятие. По-русски, 3–6 слов на пункт, без общих фраз и маркеров.
+Отдавай ТОЛЬКО JSON: {"criteria":["...","..."]}`;
     try {
-      const raw = await this.chatJson(sys, user);
+      const raw = await this.chatJson(sys, JSON.stringify(input));
       const arr = Array.isArray(raw?.criteria)
         ? (raw.criteria as unknown[]).filter((x): x is string => typeof x === 'string')
         : [];
@@ -52,13 +49,13 @@ export class NvidiaLlmClient implements LlmClient {
     const sys = `Ты объясняешь заказчику, ПОЧЕМУ именно этот подрядчик попал в подборку.
 Правила:
 - Используй ТОЛЬКО факты из блока «Проверенные факты». Не выдумывай цифры, языки, форматы.
-- Если сослался на "со слов подрядчика" — так и напиши, серым тоном ("из описания подрядчика: ...").
 - 1–2 предложения, максимум 240 знаков.
 - Обязательно используй ≥2 разных факта.
-- Никаких общих фраз "отличный выбор", "прекрасно подойдёт", "лучший для вашего мероприятия".
+- Никаких общих фраз "отличный выбор", "прекрасно подойдёт", "лучший".
 - Если есть «отличается от других: ...» — упомяни одно отличие.
-- Отдавай ТОЛЬКО JSON: {"reason":"...","factsUsed":["budget","language","format","hours","signal","description"]}. Оставь в factsUsed только реально использованные ключи.`;
-    const user = `Проверенные факты:\n${facts}\n\nЗапрос:\n${JSON.stringify(input.request)}\n\nОтличается от других:\n${input.differentiators.join('; ') || '—'}\n\nОписание подрядчика (со слов):\n${input.candidate.description.slice(0, 800)}`;
+- Если ссылаешься на описание — так и пиши: «из описания подрядчика: ...».
+Отдавай ТОЛЬКО JSON: {"reason":"...","factsUsed":["budget","language","format","hours","signal","description"]}. Оставь только реально использованные ключи.`;
+    const user = `Проверенные факты:\n${facts}\n\nЗапрос:\n${JSON.stringify(input.request)}\n\nОтличается от других в подборке:\n${input.differentiators.join('; ') || '—'}\n\nОписание подрядчика (со слов):\n${input.candidate.description.slice(0, 800)}`;
     try {
       const raw = await this.chatJson(sys, user);
       const reason = typeof raw?.reason === 'string' ? raw.reason.trim() : '';
@@ -79,13 +76,12 @@ export class NvidiaLlmClient implements LlmClient {
     if (reasons.length < 2) return { ok: true, problems: [] };
     const sys = `Ты придирчивый редактор. На вход — объяснения нескольких карточек для одного запроса.
 Найди проблемы:
-- общие фразы ("отличный выбор", "лучший", "прекрасно подойдёт", "идеально") — flag as "generic";
-- взаимозаменяемость: если стереть имена, две карточки не различить — flag as "interchangeable" (укажи id обоих);
-- отсутствие конкретики: нет ни одной цифры, языка, часа, формата — flag as "no_facts".
+- общие фразы ("отличный", "прекрасно", "лучший", "идеальный") → "generic";
+- взаимозаменяемость (если стереть имена, две карточки не различить) → "interchangeable";
+- нет ни одной цифры/языка/часа/формата → "no_facts".
 Отдавай ТОЛЬКО JSON: {"ok":boolean,"problems":[{"id":"...","problem":"..."}]}`;
-    const user = JSON.stringify(reasons);
     try {
-      const raw = await this.chatJson(sys, user);
+      const raw = await this.chatJson(sys, JSON.stringify(reasons));
       const ok = typeof raw?.ok === 'boolean' ? raw.ok : true;
       const problems = Array.isArray(raw?.problems)
         ? (raw.problems as unknown[]).flatMap((p): { id: string; problem: string }[] => {
@@ -104,9 +100,10 @@ export class NvidiaLlmClient implements LlmClient {
   }
 
   private async chatJson(sys: string, user: string): Promise<Record<string, unknown>> {
+    // gpt-5 не даёт менять temperature (только default 1). Не проставляем
+    // явно — на gpt-4o-mini и т.п. это тоже нормально.
     const res = await this.client.chat.completions.create({
       model: this.model,
-      temperature: 0.2,
       response_format: { type: 'json_object' },
       messages: [
         { role: 'system', content: sys },
@@ -121,13 +118,13 @@ export class NvidiaLlmClient implements LlmClient {
   private factsSummary(input: ExplainInput): string {
     const { candidate, request } = input;
     const lines: string[] = [];
-    lines.push(`- цена «от» ${candidate.priceFromKzt.toLocaleString('ru-RU')} ₸, бюджет заказчика ${request.budgetKzt.toLocaleString('ru-RU')} ₸`);
+    lines.push(`- цена «от» ${candidate.priceFromKzt.toLocaleString('ru-RU')} ₸, бюджет ${request.budgetKzt.toLocaleString('ru-RU')} ₸`);
     lines.push(`- языки подрядчика: ${candidate.languages.join(', ') || '—'}`);
-    if (request.language) lines.push(`- заказчику важен язык: ${request.language}`);
+    if (request.language) lines.push(`- заказчику нужен язык: ${request.language}`);
     lines.push(`- берёт форматы: ${candidate.eventFormats.join(', ') || '—'}, запрошен: ${request.eventType}`);
-    lines.push(`- максимум на площадке: ${candidate.maxHours ?? 'не ограничено'} ч${request.durationHours ? `, нужно ${request.durationHours} ч` : ''}`);
-    if (candidate.specialization) lines.push(`- специализация (из офлайн-обогащения): ${candidate.specialization}`);
-    if (candidate.signals.length) lines.push(`- проверяемые признаки: ${candidate.signals.join(', ')}`);
+    lines.push(`- максимум часов: ${candidate.maxHours ?? 'не ограничено'}${request.durationHours ? `, нужно ${request.durationHours}` : ''}`);
+    if (candidate.specialization) lines.push(`- специализация: ${candidate.specialization}`);
+    if (candidate.signals.length) lines.push(`- признаки: ${candidate.signals.join(', ')}`);
     return lines.join('\n');
   }
 }

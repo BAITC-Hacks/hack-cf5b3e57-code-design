@@ -1,0 +1,20 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 4% 8%, rgb(94 148 121 / 11%), transparent 30rem),
+    radial-gradient(circle at 96% 24%, rgb(219 157 109 / 9%), transparent 30rem),
+    #f5f5f1;
+  color: var(--color-dark);
+}
+
+.ambient {
+  position: absolute;
+  inset: 0;
+  opacity: 0.28;
+  background-image: radial-gradient(rgb(29 29 31 / 13%) 0.55px, transparent 0.55px);
+  background-size: 19px 19px;
+  mask-image: linear-gradient(to bottom, black, transparent 52rem);
+  pointer-events: none;
+}

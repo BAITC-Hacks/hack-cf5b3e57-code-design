@@ -1,0 +1,145 @@
+.results {
+  display: grid;
+  gap: 24px;
+  width: min(calc(100% - 40px), 1100px);
+  margin: 34px auto 0;
+  scroll-margin-top: 24px;
+}
+
+.outcome {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 24px;
+  padding: 26px 28px;
+  border: 1px solid #cbddd3;
+  border-radius: 22px;
+  background: #ecf4f0;
+}
+
+.outcome[data-outcome="no_category_in_city"],
+.outcome[data-outcome="all_filtered_out"] {
+  border-color: #e0d6bf;
+  background: #f7f2e8;
+}
+
+.outcome p:first-child {
+  color: #4b725d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.outcome h2 {
+  margin-top: 6px;
+  font-size: var(--font-24);
+  letter-spacing: -0.04em;
+}
+
+.outcome > span {
+  display: grid;
+  min-width: 48px;
+  height: 32px;
+  place-items: center;
+  border-radius: 999px;
+  background: #fff;
+  color: #476954;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.outcome > p:last-child {
+  grid-column: 1 / -1;
+  max-width: 840px;
+  color: #626761;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.criteria,
+.cardSection {
+  padding: 26px 28px;
+  border: 1px solid rgb(29 29 31 / 8%);
+  border-radius: 22px;
+  background: rgb(255 255 255 / 68%);
+}
+
+.criteria h3,
+.cardSection > h3 {
+  font-size: var(--font-20);
+  letter-spacing: -0.035em;
+}
+
+.criteria ul {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin-top: 16px;
+  list-style: none;
+}
+
+.criteria li {
+  display: flex;
+  min-height: 58px;
+  align-items: center;
+  gap: 10px;
+  padding: 12px;
+  border-radius: 14px;
+  background: #f2f2f0;
+  color: #555753;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.criteria li span {
+  color: #60816f;
+  font-size: 9px;
+  font-weight: 850;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 15px;
+  margin-top: 18px;
+}
+
+.grid > div {
+  min-width: 0;
+}
+
+.empty {
+  padding: 24px;
+  border: 1px dashed #d4c9b3;
+  border-radius: 18px;
+  background: rgb(255 253 247 / 72%);
+  color: #766d5b;
+  font-size: 12px;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .criteria ul {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .results {
+    width: min(calc(100% - 24px), 1100px);
+  }
+
+  .outcome,
+  .criteria,
+  .cardSection {
+    padding: 20px;
+  }
+
+  .grid {
+    grid-template-columns: 1fr;
+  }
+}

@@ -1,0 +1,96 @@
+.composer {
+  display: grid;
+  gap: 12px;
+  padding: 16px 18px 17px;
+  border-top: 1px solid rgb(29 29 31 / 8%);
+  background: rgb(250 250 248 / 94%);
+}
+
+.composer form {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 9px;
+}
+
+.composer input {
+  width: 100%;
+  min-height: 50px;
+  padding: 0 16px;
+  border: 1px solid #d9dcd9;
+  border-radius: 14px;
+  background: #fff;
+  font-size: 12px;
+  outline: none;
+}
+
+.composer input:focus {
+  border-color: #638d79;
+  box-shadow: 0 0 0 4px rgb(75 123 100 / 10%);
+}
+
+.composer input:disabled {
+  background: #f0f0ee;
+  cursor: not-allowed;
+}
+
+.composer form button {
+  display: inline-flex;
+  min-width: 118px;
+  min-height: 50px;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 14px;
+  background: var(--color-dark);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.composer form button:hover:not(:disabled) {
+  background: #343436;
+}
+
+.composer form button:disabled {
+  cursor: not-allowed;
+  opacity: 0.48;
+}
+
+.composer svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+.composer > p {
+  color: #8b8c88;
+  font-size: 9px;
+  line-height: 1.5;
+}
+
+@media (max-width: 560px) {
+  .composer {
+    padding-inline: 12px;
+  }
+
+  .composer form button {
+    min-width: 50px;
+    width: 50px;
+    padding: 0;
+  }
+
+  .composer form button span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+  }
+}

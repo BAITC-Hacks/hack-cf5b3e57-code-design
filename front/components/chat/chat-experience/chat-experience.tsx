@@ -80,7 +80,7 @@ export function ChatExperience() {
     controllerRef.current = controller;
     void loadSession(mode, controller, operation);
     return () => {
-      controller.abort();
+      controllerRef.current?.abort();
       operationRef.current += 1;
     };
   }, [mode, loadSession]);
@@ -290,10 +290,10 @@ export function ChatExperience() {
         </section>
       )}
 
-      {result?.type === "match" && (
+      {sessionReady && result?.type === "match" && (
         <ChatResults copy={copy} locale={locale} result={result.match} sectionRef={resultRef} />
       )}
-      {result?.type === "bundle" && (
+      {sessionReady && result?.type === "bundle" && (
         <ChatBundleResults bundle={result.bundle} copy={copy} locale={locale} sectionRef={resultRef} />
       )}
 

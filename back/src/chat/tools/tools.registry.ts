@@ -35,6 +35,24 @@ export const CHAT_TOOLS: ChatCompletionTool[] = [
   {
     type: 'function',
     function: {
+      name: 'estimate_bundle_minimum',
+      description:
+        'Быстрая оценка минимальной стоимости полного пакета мероприятия по обязательным категориям. Вызывай ПЕРЕД build_event_bundle если сомневаешься в бюджете.',
+      parameters: {
+        type: 'object',
+        properties: {
+          city: { type: 'string', enum: cities },
+          eventType: { type: 'string', enum: eventTypes },
+          requiredCategories: { type: 'array', items: { type: 'string' } },
+        },
+        required: ['city', 'eventType', 'requiredCategories'],
+        additionalProperties: false,
+      },
+    },
+  },
+  {
+    type: 'function',
+    function: {
       name: 'build_event_bundle',
       description: 'Собрать полный пакет подрядчиков для мероприятия.',
       parameters: {

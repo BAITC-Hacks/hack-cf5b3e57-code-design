@@ -1,3 +1,14 @@
+import type { CriterionKey } from '../criteria';
+import type { CardFact, FactKey } from '../types';
+
+export interface EvidenceOption {
+  id: string;
+  criterionKey: CriterionKey;
+  factKeys: FactKey[];
+  /** Server-rendered, source-backed clause. The model may select, not edit it. */
+  text: string;
+}
+
 export interface ExplainInput {
   criteria: string[];
   request: {
@@ -21,13 +32,14 @@ export interface ExplainInput {
     signals: string[];
     specialization: string | null;
   };
-  /** Признаки, которыми этот кандидат ОТЛИЧАЕТСЯ от двух других в топе. */
-  differentiators: string[];
+  /** The LLM chooses one of these validated clauses; it cannot invent claims. */
+  options: EvidenceOption[];
+  /** Critic feedback for the single allowed retry. */
+  feedback?: string[];
 }
 
 export interface ExplainOutput {
-  reason: string;
-  factsUsed: string[];
+  selectedId: string;
 }
 
 export interface CriteriaInput {
@@ -42,7 +54,7 @@ export interface CriteriaInput {
 export interface LlmClient {
   criteria(input: CriteriaInput): Promise<string[]>;
   explain(input: ExplainInput): Promise<ExplainOutput>;
-  critic(reasons: { id: string; reason: string }[]): Promise<{
+  critic(reasons: { id: string; reason: string; facts: CardFact[] }[]): Promise<{
     ok: boolean;
     problems: { id: string; problem: string }[];
   }>;

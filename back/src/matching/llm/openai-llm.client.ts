@@ -7,6 +7,7 @@ import type {
   LlmClient,
 } from './llm-client';
 import { MockLlmClient } from './mock-llm.client';
+import type { CardFact } from '../types';
 
 const DEFAULT_MODEL = 'gpt-4o-mini';
 
@@ -24,7 +25,9 @@ export class OpenAiLlmClient implements LlmClient {
   private readonly fallback = new MockLlmClient();
 
   constructor(apiKey: string, model = DEFAULT_MODEL) {
-    this.client = new OpenAI({ apiKey, timeout: 12_000, maxRetries: 1 });
+    // There can be two critic passes and one explanation retry. A short,
+    // non-retrying call preserves the end-to-end demo latency budget.
+    this.client = new OpenAI({ apiKey, timeout: 1_800, maxRetries: 0 });
     this.model = model;
   }
 
@@ -45,32 +48,24 @@ export class OpenAiLlmClient implements LlmClient {
   }
 
   async explain(input: ExplainInput): Promise<ExplainOutput> {
-    const facts = this.factsSummary(input);
-    const sys = `Ты объясняешь заказчику, ПОЧЕМУ именно этот подрядчик попал в подборку.
-Правила:
-- Используй ТОЛЬКО факты из блока «Проверенные факты». Не выдумывай цифры, языки, форматы.
-- 1–2 предложения, максимум 240 знаков.
-- Обязательно используй ≥2 разных факта.
-- Никаких общих фраз "отличный выбор", "прекрасно подойдёт", "лучший".
-- Если есть «отличается от других: ...» — упомяни одно отличие.
-- Если ссылаешься на описание — так и пиши: «из описания подрядчика: ...».
-- Если в кандидате есть signals из Enrichment — используй ровно как в примере 3, с пометкой "со слов подрядчика". Не выдумывай signals.
-
-Примеры:
-1. {"reason":"Единственный из свободных 16 октября, кто ведёт на английском. Цена ровно в ваш бюджет.","factsUsed":["date","language","budget"]}
-2. {"reason":"Ведёт только корпоративы, конференции и юбилеи, без свадеб. Вдвое дешевле бюджета — остаётся 500 000 ₸.","factsUsed":["format","budget"]}
-3. {"reason":"Работа не привязана к часам на площадке. Единственная в тройке с сигналом \"работает с ивентами до 3000 человек\" (со слов подрядчика).","factsUsed":["hours","signal"]}
-
-Отдавай ТОЛЬКО JSON: {"reason":"...","factsUsed":["budget","language","format","hours","signal","description"]}. Оставь только реально использованные ключи.`;
-    const user = `Проверенные факты:\n${facts}\n\nЗапрос:\n${JSON.stringify(input.request)}\n\nОтличается от других в подборке:\n${input.differentiators.join('; ') || '—'}\n\nОписание подрядчика (со слов):\n${input.candidate.description.slice(0, 800)}`;
+    const sys = `Выбери ОДИН наиболее убедительный и индивидуальный факт для первого предложения карточки. Второе предложение про дату и цену добавит сервер. Ты можешь только выбрать id из options, не писать свой текст. Приоритет: критерии заказа, отличие от других показанных, конкретика. Если есть feedback, не повторяй проблемный вариант. Верни только JSON {"selectedId":"id"}.`;
+    const user = JSON.stringify({
+      request: input.request,
+      criteria: input.criteria,
+      candidate: {
+        id: input.candidate.id,
+        description: input.candidate.description.slice(0, 500),
+      },
+      options: input.options,
+      feedback: input.feedback ?? [],
+    });
     try {
       const raw = await this.chatJson(sys, user);
-      const reason = typeof raw?.reason === 'string' ? raw.reason.trim() : '';
-      const factsUsed = Array.isArray(raw?.factsUsed)
-        ? (raw.factsUsed as unknown[]).filter((x): x is string => typeof x === 'string')
-        : [];
-      if (!reason) throw new Error('empty reason');
-      return { reason, factsUsed };
+      const selectedId = typeof raw?.selectedId === 'string' ? raw.selectedId : '';
+      if (!input.options.some((option) => option.id === selectedId)) {
+        throw new Error('unsupported evidence selection');
+      }
+      return { selectedId };
     } catch (e) {
       this.logger.warn(`explain fallback for ${input.candidate.id}: ${(e as Error).message}`);
       return this.fallback.explain(input);
@@ -78,18 +73,13 @@ export class OpenAiLlmClient implements LlmClient {
   }
 
   async critic(
-    reasons: { id: string; reason: string }[],
+    reasons: { id: string; reason: string; facts: CardFact[] }[],
   ): Promise<{ ok: boolean; problems: { id: string; problem: string }[] }> {
     if (reasons.length < 2) return { ok: true, problems: [] };
-    const sys = `Ты придирчивый редактор. На вход — объяснения нескольких карточек для одного запроса.
-Найди проблемы:
-- общие фразы ("отличный", "прекрасно", "лучший", "идеальный") → "generic";
-- взаимозаменяемость (если стереть имена, две карточки не различить) → "interchangeable";
-- нет ни одной цифры/языка/часа/формата → "no_facts".
-Отдавай ТОЛЬКО JSON: {"ok":boolean,"problems":[{"id":"...","problem":"..."}]}`;
+    const sys = `Ты придирчивый редактор. Сравни объяснения без имён. Найди шаблонные или взаимозаменяемые первые предложения, отсутствие конкретного факта, неподтверждённые утверждения. Факты с verified=false — только слова из анкеты, они должны быть явно атрибутированы. Верни ТОЛЬКО JSON: {"ok":boolean,"problems":[{"id":"...","problem":"generic|interchangeable|unsupported|no_facts"}]}`;
     try {
       const raw = await this.chatJson(sys, JSON.stringify(reasons));
-      const ok = typeof raw?.ok === 'boolean' ? raw.ok : true;
+      const ok = raw?.ok === true;
       const problems = Array.isArray(raw?.problems)
         ? (raw.problems as unknown[]).flatMap((p): { id: string; problem: string }[] => {
             if (typeof p !== 'object' || p === null) return [];
@@ -102,7 +92,7 @@ export class OpenAiLlmClient implements LlmClient {
       return { ok, problems };
     } catch (e) {
       this.logger.warn(`critic fallback: ${(e as Error).message}`);
-      return { ok: true, problems: [] };
+      return this.fallback.critic(reasons);
     }
   }
 
@@ -122,16 +112,4 @@ export class OpenAiLlmClient implements LlmClient {
     return JSON.parse(text) as Record<string, unknown>;
   }
 
-  private factsSummary(input: ExplainInput): string {
-    const { candidate, request } = input;
-    const lines: string[] = [];
-    lines.push(`- цена «от» ${candidate.priceFromKzt.toLocaleString('ru-RU')} ₸, бюджет ${request.budgetKzt.toLocaleString('ru-RU')} ₸`);
-    lines.push(`- языки подрядчика: ${candidate.languages.join(', ') || '—'}`);
-    if (request.language) lines.push(`- заказчику нужен язык: ${request.language}`);
-    lines.push(`- берёт форматы: ${candidate.eventFormats.join(', ') || '—'}, запрошен: ${request.eventType}`);
-    lines.push(`- максимум часов: ${candidate.maxHours ?? 'не ограничено'}${request.durationHours ? `, нужно ${request.durationHours}` : ''}`);
-    if (candidate.specialization) lines.push(`- специализация: ${candidate.specialization}`);
-    if (candidate.signals.length) lines.push(`- признаки: ${candidate.signals.join(', ')}`);
-    return lines.join('\n');
-  }
 }

@@ -1,5 +1,10 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import {
+  criteriaFor,
+  hasConcreteProfileSignal,
+  mentionsRequestedEvent,
+} from './criteria';
 import { MatchRequestDto } from './dto/match-request.dto';
 
 /**
@@ -21,34 +26,41 @@ export class RankingService {
         languages: true,
         maxHours: true,
         eventFormats: true,
+        description: true,
       },
     });
 
+    const criteria = criteriaFor(req);
     const scored = rows.map((c) => {
-      let score = 0;
-
-      // 1. Запас по бюджету: чем ниже цена «от» к бюджету — тем лучше, но
-      // экстремально дешёвый (демпинг) не должен обгонять обычного за счёт
-      // одного этого фактора → нормируем в [0..1] и берём с весом 3.
       const budgetHeadroom =
         Math.max(0, req.budgetKzt - c.priceFromKzt) / req.budgetKzt;
-      score += 3 * budgetHeadroom;
-
-      // 2. Явное совпадение по языку (когда язык задан): +2.
-      if (req.language && c.languages.includes(req.language)) score += 2;
-
-      // 3. Формат в event_formats — уже гарантирован фильтром, но подрядчик,
-      // у которого этот формат один из немногих (специализация), — приоритетнее.
-      if (c.eventFormats.includes(req.eventType)) {
-        score += 1;
-        if (c.eventFormats.length <= 2) score += 0.5;
-      }
-
-      // 4. Запас по часам, если задана длительность.
-      if (req.durationHours && c.maxHours !== null) {
-        const headroom = (c.maxHours - req.durationHours) / req.durationHours;
-        score += Math.min(1, Math.max(0, headroom));
-      }
+      const formatFocus = 1 / Math.max(1, c.eventFormats.length);
+      const languageFit = req.language
+        ? Number(c.languages.includes(req.language))
+        : Math.min(1, c.languages.length / 3);
+      // A missing hours limit is unknown, not proof of unlimited availability.
+      const hoursFit = c.maxHours === null
+        ? 0.5
+        : req.durationHours
+          ? Math.min(1, Math.max(0, (c.maxHours - req.durationHours) / 8))
+          : Math.min(1, c.maxHours / 12);
+      const descriptionFit = mentionsRequestedEvent(c.description, req.eventType)
+        ? 1
+        : hasConcreteProfileSignal(c.description) ? 0.5 : 0;
+      const factors = {
+        budget: budgetHeadroom,
+        format: formatFocus,
+        language: languageFit,
+        hours: hoursFit,
+        description: descriptionFit,
+      };
+      // The three dimensions displayed to the customer are the dimensions
+      // that control the ranking. Price and format remain small tie-breakers.
+      const score = criteria.reduce(
+        (total, criterion, index) =>
+          total + (3 - index) * factors[criterion.key],
+        0.25 * budgetHeadroom + 0.25 * formatFocus,
+      );
 
       return { id: c.id, score };
     });

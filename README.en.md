@@ -4,6 +4,8 @@
 
 [Русский](README.md) · [Қазақша](README.kk.md) · **English**
 
+**Backup demo video (2:36):** [docs/demo/toimatch-demo.mp4](docs/demo/toimatch-demo.mp4) — the full check scenario with captions (Russian UI).
+
 ## How to run
 You only need Docker (with Docker Compose v2). No keys required.
 

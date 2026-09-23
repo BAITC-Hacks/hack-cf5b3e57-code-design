@@ -4,6 +4,8 @@
 
 [Русский](README.md) · **Қазақша** · [English](README.en.md)
 
+**Демо-бейне (2:36):** [docs/demo/toimatch-demo.mp4](docs/demo/toimatch-demo.mp4) — тексерудің толық сценарийі, жазулары бар.
+
 ## Қалай іске қосу
 Тек Docker (Docker Compose v2-мен) қажет. Кілттер қажет емес.
 

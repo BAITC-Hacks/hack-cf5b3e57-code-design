@@ -4,6 +4,8 @@
 
 **Русский** · [Қазақша](README.kk.md) · [English](README.en.md)
 
+**Запасное видео демо (2:36):** [docs/demo/toimatch-demo.mp4](docs/demo/toimatch-demo.mp4) — весь сценарий проверки с подписями.
+
 ## Как запустить
 Нужен только Docker (с Docker Compose v2). Ключи не нужны.
 

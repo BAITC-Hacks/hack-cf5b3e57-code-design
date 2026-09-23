@@ -308,6 +308,28 @@ export default async function CatalogPage({
           </ul>
         </nav>
 
+        <section className={styles.aiBanner}>
+          <div className={styles.aiBannerCopy}>
+            <p className={styles.bannerEyebrow}>{messages.catalog.bannerEyebrow}</p>
+            <h2>{messages.catalog.bannerTitle}</h2>
+            <p>{messages.catalog.bannerText}</p>
+            <Link href="/match">
+              {messages.catalog.startMatch}
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m7 4 6 6-6 6" />
+              </svg>
+            </Link>
+          </div>
+          <div className={styles.aiBannerMascot} aria-hidden="true">
+            <Image
+              alt=""
+              fill
+              sizes="(max-width: 760px) 160px, 240px"
+              src="/mascot/nurlan-found.webp"
+            />
+          </div>
+        </section>
+
         <section className={styles.catalog} id="catalog-results">
           <div className={styles.catalogHeading}>
             <h2>
@@ -380,27 +402,6 @@ export default async function CatalogPage({
           </div>
         </section>
 
-        <section className={styles.aiBanner}>
-          <div className={styles.aiBannerCopy}>
-            <p className={styles.bannerEyebrow}>{messages.catalog.bannerEyebrow}</p>
-            <h2>{messages.catalog.bannerTitle}</h2>
-            <p>{messages.catalog.bannerText}</p>
-            <Link href="/match">
-              {messages.catalog.startMatch}
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="m7 4 6 6-6 6" />
-              </svg>
-            </Link>
-          </div>
-          <div className={styles.aiBannerMascot} aria-hidden="true">
-            <Image
-              alt=""
-              fill
-              sizes="(max-width: 760px) 160px, 240px"
-              src="/mascot/nurlan-found.webp"
-            />
-          </div>
-        </section>
       </main>
 
       <SiteFooter />

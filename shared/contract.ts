@@ -106,6 +106,46 @@ export interface MatchResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Каталог (`GET /api/v1/contractors`)
+// ---------------------------------------------------------------------------
+
+export interface ContractorListQuery {
+  city?: string;
+  category?: string;
+  eventFormat?: string;
+  language?: string;
+  priceMin?: number;
+  priceMax?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ContractorListItem {
+  id: string;
+  anonName: string;
+  categories: string[];
+  city: string;
+  priceFromKzt: number;
+  eventFormats: string[];
+  languages: string[];
+  maxHours: number | null;
+  flags: CardFlags;
+}
+
+export interface ContractorListResponse {
+  items: ContractorListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** Полный профиль подрядчика, включая описание и календарь. */
+export interface ContractorDetail extends ContractorListItem {
+  description: string;
+  busyDates: string[];
+}
+
+// ---------------------------------------------------------------------------
 // SSE-события для `/api/v1/match/stream`
 // ---------------------------------------------------------------------------
 

@@ -80,6 +80,33 @@
   opacity: 0.45;
 }
 
+.modeSwitch {
+  display: flex;
+  gap: 5px;
+  padding: 9px 20px;
+  border-bottom: 1px solid var(--tm-line);
+  background: var(--tm-surface);
+}
+
+.modeSwitch button {
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--tm-muted);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 750;
+}
+
+.modeSwitch button:hover { color: var(--tm-ink); }
+.modeSwitch button.selectedMode {
+  border-color: var(--tm-line);
+  background: var(--tm-ocean);
+  color: var(--tm-ocean-ink);
+}
+
 .error {
   display: flex;
   width: min(calc(100% - 64px), 1280px);

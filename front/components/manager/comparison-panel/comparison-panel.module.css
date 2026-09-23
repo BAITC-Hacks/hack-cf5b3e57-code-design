@@ -5,6 +5,8 @@
 .date { flex-wrap: wrap; gap: 8px; }
 .columns li { align-items: start; }
 .columns li em { grid-column: 2 / -1; justify-self: start; }
+.availability { margin: 12px 0 0; padding: 9px 11px; border-radius: 9px; background: var(--tm-ember-soft); color: var(--tm-ink); font-size: 12px; line-height: 1.4; }
+.cardReason { grid-column: 2 / -1; margin: 0; color: var(--tm-muted); font-size: 12px; line-height: 1.5; }
 .columns { min-width: 0; }
 .columns > section { min-width: 0; }
 @media (max-width: 600px) { .panel > button { min-width: 0; } }

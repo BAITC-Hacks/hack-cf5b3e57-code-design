@@ -54,7 +54,7 @@
 .list li {
   display: grid;
   min-height: 59px;
-  grid-template-columns: 32px minmax(0, 1fr) auto;
+  grid-template-columns: 32px minmax(0, 1fr);
   align-items: center;
   gap: 10px;
   padding: 8px 9px;
@@ -113,23 +113,13 @@
   white-space: nowrap;
 }
 
-.list button {
-  padding: 6px 7px;
-  border: 0;
-  background: transparent;
-  color: var(--tm-ocean-ink);
-  cursor: pointer;
+.note {
+  margin-top: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--tm-line);
+  color: var(--tm-muted);
   font-size: 12px;
-  font-weight: 750;
-}
-
-.list button:hover {
-  text-decoration: underline;
-}
-
-.list button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  line-height: 1.55;
 }
 
 @media (max-width: 900px) {
@@ -138,6 +128,5 @@
   }
 }
 
-.list button { min-height: 44px; }
 .field > span { white-space: normal; overflow-wrap: anywhere; }
 .field strong { flex-wrap: wrap; }

@@ -90,6 +90,13 @@
   animation-delay: 0.26s;
 }
 
+.status {
+  margin-left: 7px;
+  color: var(--tm-muted);
+  font-size: 12px;
+  line-height: 1.35;
+}
+
 @keyframes pulse {
   0%,
   100% {

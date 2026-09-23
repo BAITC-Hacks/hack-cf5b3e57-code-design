@@ -7,6 +7,7 @@ import styles from "./quick-replies.module.css";
 export interface QuickReply {
   label: string;
   value: string;
+  displayValue?: string;
 }
 
 export function QuickReplies({

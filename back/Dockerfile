@@ -1,19 +1,20 @@
 FROM node:22-alpine
 
-WORKDIR /app
+WORKDIR /workspace/back
 
 RUN apk add --no-cache openssl
 
-COPY package*.json ./
-COPY prisma ./prisma
+COPY back/package*.json ./
+COPY back/prisma ./prisma
 
-RUN npm install --legacy-peer-deps
+RUN npm ci --legacy-peer-deps
 
-COPY . .
+COPY back/ ./
+COPY shared/ ../shared/
 
 RUN npx prisma generate
 RUN npm run build
 
 EXPOSE 3001
 
-CMD ["sh", "-c", "npx prisma migrate deploy && node dist/main"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npx prisma db seed && node dist/main.js"]

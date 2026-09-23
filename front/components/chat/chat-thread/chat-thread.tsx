@@ -11,9 +11,10 @@ interface ChatThreadProps {
   copy: ChatMessages;
   messages: readonly ChatTranscriptMessage[];
   pending: boolean;
+  pendingLabel?: string;
 }
 
-export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
+export function ChatThread({ copy, messages, pending, pendingLabel }: ChatThreadProps) {
   const reduceMotion = useReducedMotion();
   const bottomRef = useRef<HTMLDivElement>(null);
 
@@ -62,10 +63,11 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
           >
             <span className={styles.avatar} aria-hidden="true">T</span>
             <div className={`${styles.message} ${styles.typing}`}>
-              <span className="visually-hidden">{copy.assistant.searching}</span>
+              <span className="visually-hidden">{pendingLabel ?? copy.assistant.searching}</span>
               <i />
               <i />
               <i />
+              {pendingLabel && <span className={styles.status}>{pendingLabel}</span>}
             </div>
           </motion.div>
         )}

@@ -8,7 +8,7 @@ import { Icon } from "../shared/icon";
 import type { DateComparison } from "../shared/manager-types";
 import styles from "./comparison-panel.module.css";
 
-function Results({ first, second }: DateComparison) {
+function Results({ firstDate, first, secondDate, second }: DateComparison) {
   const { locale } = useLocale();
   const messages = MANAGER_MESSAGES[locale].comparison;
   const firstIds = new Set(first.cards.map((card) => card.id));
@@ -17,13 +17,36 @@ function Results({ first, second }: DateComparison) {
   const rightOnly = second.cards.filter((card) => !firstIds.has(card.id));
   const dateFormatter = new Intl.DateTimeFormat(locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU", { day: "2-digit", month: "long" });
   const columns: { date: string; response: MatchResponse; unique: typeof leftOnly }[] = [
-    { date: dateFormatter.format(new Date("2026-10-16T12:00:00")), response: first, unique: leftOnly },
-    { date: dateFormatter.format(new Date("2026-10-23T12:00:00")), response: second, unique: rightOnly },
+    { date: dateFormatter.format(new Date(`${firstDate}T12:00:00Z`)), response: first, unique: leftOnly },
+    { date: dateFormatter.format(new Date(`${secondDate}T12:00:00Z`)), response: second, unique: rightOnly },
   ];
   return (
     <div className={styles.results}>
-      <div className={styles.summary}><span>{messages.changed(leftOnly.length + rightOnly.length)}</span><p>{leftOnly.length ? messages.dropped(leftOnly.map((card) => card.anonName).join(", ")) : messages.unchanged}</p></div>
-      <div className={styles.columns}>{columns.map((column) => { const dateReason = column.response.funnel.find((step) => step.step === "date"); return <section key={column.date}><div className={styles.date}><strong>{column.date}</strong><span>{messages.count(column.response.cards.length)}</span></div><ol>{column.response.cards.map((card) => <li key={card.id}><ContractorPhoto id={card.id} name={card.anonName} /><span><strong>{card.anonName}</strong><small>{card.id}</small></span>{column.unique.some((item) => item.id === card.id) && <em>{messages.onlyHere}</em>}</li>)}</ol>{dateReason && <p className={styles.reason}>{dateReason.removedReason}</p>}</section>; })}</div>
+      <div className={styles.summary}>
+        <span>{messages.changed(leftOnly.length + rightOnly.length)}</span>
+        <p>{leftOnly.length ? messages.firstOnly(leftOnly.map((card) => card.anonName).join(", ")) : messages.unchanged}</p>
+      </div>
+      <div className={styles.columns}>
+        {columns.map((column) => {
+          const dateStep = column.response.funnel.find((step) => step.step === "date");
+          return (
+            <section key={column.date}>
+              <div className={styles.date}><strong>{column.date}</strong><span>{messages.count(column.response.cards.length)}</span></div>
+              {dateStep && <p className={styles.availability}>{messages.availabilityRemoved(dateStep.before - dateStep.after)}</p>}
+              <ol>
+                {column.response.cards.map((card) => (
+                  <li key={card.id}>
+                    <ContractorPhoto id={card.id} name={card.anonName} />
+                    <span className={styles.identity}><strong>{card.anonName}</strong><small>{card.id}</small></span>
+                    {column.unique.some((item) => item.id === card.id) && <em>{messages.onlyHere}</em>}
+                    <p className={styles.cardReason}>{card.reason}</p>
+                  </li>
+                ))}
+              </ol>
+            </section>
+          );
+        })}
+      </div>
     </div>
   );
 }

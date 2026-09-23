@@ -1,27 +1,23 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  CATEGORIES,
-  CITIES,
-  EVENT_FORMATS,
-  LANGUAGES,
+import type {
+  ChatAttachment,
+  ChatCreateSessionResponse,
+  ChatMode,
 } from "../../../../shared/contract";
-import type { MatchResponse } from "../../../../shared/contract";
+import { ChatApiError, createChatSession, sendChatMessage } from "@/lib/chat/chat-api";
 import {
   EMPTY_CHAT_DRAFT,
-  getNextChatField,
-  invalidMessage,
   parseChatInput,
-  toMatchRequest,
   type ChatDraft,
   type ChatTranscriptMessage,
 } from "@/lib/chat/chat-assistant";
 import { useLocale } from "@/lib/i18n/locale-provider";
-import { CHAT_MESSAGES, type ChatField } from "@/lib/i18n/messages/chat";
-import { MatchApiError, requestMatch } from "@/lib/match-api";
+import { CHAT_MESSAGES } from "@/lib/i18n/messages/chat";
+import { ChatBundleResults } from "../chat-bundle-results/chat-bundle-results";
 import { ChatComposer } from "../chat-composer/chat-composer";
 import { ChatHeader } from "../chat-header/chat-header";
 import { ChatHero } from "../chat-hero/chat-hero";
@@ -31,166 +27,196 @@ import { ChatThread } from "../chat-thread/chat-thread";
 import type { QuickReply } from "../quick-replies/quick-replies";
 import styles from "./chat-experience.module.css";
 
-type ChatPhase = "collecting" | "loading" | "result" | "error";
+type ChatPhase = "connecting" | "ready" | "loading" | "error";
 
-function initialMessages(copy: (typeof CHAT_MESSAGES)["ru"]): ChatTranscriptMessage[] {
-  return [
-    { id: "welcome", role: "assistant", text: copy.assistant.greeting },
-    { id: "transparency", role: "assistant", text: copy.assistant.transparency },
-    { id: "first-question", role: "assistant", text: copy.fields.category.prompt },
-  ];
+function isAbortError(error: unknown) {
+  return error instanceof DOMException && error.name === "AbortError";
 }
 
 export function ChatExperience() {
   const { locale } = useLocale();
   const copy = CHAT_MESSAGES[locale];
   const reduceMotion = useReducedMotion();
+  const [mode, setMode] = useState<ChatMode>("search");
+  const [session, setSession] = useState<ChatCreateSessionResponse | null>(null);
+  const [phase, setPhase] = useState<ChatPhase>("connecting");
+  const [messages, setMessages] = useState<ChatTranscriptMessage[]>([]);
   const [draft, setDraft] = useState<ChatDraft>(EMPTY_CHAT_DRAFT);
-  const [activeField, setActiveField] = useState<ChatField | null>("category");
-  const [messages, setMessages] = useState<ChatTranscriptMessage[]>(() => initialMessages(copy));
-  const [phase, setPhase] = useState<ChatPhase>("collecting");
-  const [result, setResult] = useState<MatchResponse | null>(null);
+  const [result, setResult] = useState<ChatAttachment | null>(null);
+  const [toolStatus, setToolStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const messageSequence = useRef(3);
+  const [lastFailedText, setLastFailedText] = useState<string | null>(null);
   const controllerRef = useRef<AbortController | null>(null);
+  const operationRef = useRef(0);
+  const messageSequence = useRef(0);
   const resultRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => () => controllerRef.current?.abort(), []);
-
-  const quickReplies = useMemo<readonly QuickReply[]>(() => {
-    switch (activeField) {
-      case "category":
-        return CATEGORIES.map((value) => ({ label: copy.labels.categories[value], value }));
-      case "city":
-        return CITIES.map((value) => ({ label: copy.labels.cities[value], value }));
-      case "date":
-        return copy.quickDates;
-      case "eventType":
-        return EVENT_FORMATS.map((value) => ({ label: copy.labels.eventFormats[value], value }));
-      case "budgetKzt":
-        return copy.quickBudgets;
-      case "language":
-        return [
-          ...LANGUAGES.map((value) => ({ label: copy.labels.languages[value], value })),
-          { label: copy.actions.anyLanguage, value: "any" },
-        ];
-      default:
-        return [];
+  const loadSession = useCallback(async (
+    nextMode: ChatMode,
+    controller: AbortController,
+    operation: number,
+  ) => {
+    try {
+      const created = await createChatSession({ mode: nextMode, locale }, controller.signal);
+      if (operationRef.current !== operation) return;
+      setSession(created);
+      setMessages([{ id: `welcome-${created.sessionId}`, role: "assistant", text: created.greeting }]);
+      setDraft(EMPTY_CHAT_DRAFT);
+      setResult(null);
+      setError(null);
+      setPhase("ready");
+    } catch (requestError) {
+      if (operationRef.current !== operation || isAbortError(requestError)) return;
+      setError(requestError instanceof ChatApiError ? requestError.message : copy.assistant.sessionError);
+      setPhase("error");
+    } finally {
+      if (controllerRef.current === controller) controllerRef.current = null;
     }
-  }, [activeField, copy]);
+  }, [copy.assistant.sessionError, locale]);
 
-  function appendMessage(role: ChatTranscriptMessage["role"], text: string) {
-    messageSequence.current += 1;
-    const message = { id: `chat-${messageSequence.current}`, role, text };
-    setMessages((current) => [...current, message]);
-  }
-
-  function appendAssistant(...texts: string[]) {
-    setMessages((current) => [
-      ...current,
-      ...texts.map((text) => {
-        messageSequence.current += 1;
-        return {
-          id: `chat-${messageSequence.current}`,
-          role: "assistant" as const,
-          text,
-        };
-      }),
-    ]);
-  }
-
-  async function runMatch(nextDraft: ChatDraft) {
-    controllerRef.current?.abort();
+  useEffect(() => {
     const controller = new AbortController();
+    const operation = ++operationRef.current;
     controllerRef.current = controller;
-    setPhase("loading");
+    void loadSession(mode, controller, operation);
+    return () => {
+      controller.abort();
+      operationRef.current += 1;
+    };
+  }, [mode, loadSession]);
+
+  function resetState() {
+    messageSequence.current = 0;
+    setSession(null);
+    setMessages([]);
+    setDraft(EMPTY_CHAT_DRAFT);
     setResult(null);
     setError(null);
+    setLastFailedText(null);
+    setToolStatus(null);
+    setPhase("connecting");
+  }
+
+  function startSession(nextMode: ChatMode) {
+    controllerRef.current?.abort();
+    const controller = new AbortController();
+    const operation = ++operationRef.current;
+    controllerRef.current = controller;
+    resetState();
+    void loadSession(nextMode, controller, operation);
+  }
+
+  useEffect(() => {
+    if (!result || phase !== "ready") return;
+    window.requestAnimationFrame(() => {
+      resultRef.current?.focus({ preventScroll: true });
+      resultRef.current?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  }, [phase, reduceMotion, result]);
+
+  const quickReplies = useMemo<readonly QuickReply[]>(() => {
+    if (messages.some((message) => message.role === "user")) return [];
+    return copy.examples[mode];
+  }, [copy.examples, messages, mode]);
+
+  const statusForTool = useCallback((name: string) => {
+    if (name === "search_contractors") return copy.tools.searching;
+    if (name === "build_event_bundle") return copy.tools.bundle;
+    if (name === "estimate_bundle_minimum") return copy.tools.estimating;
+    return copy.assistant.searching;
+  }, [copy]);
+
+  async function sendMessage(value: string, displayValue = value) {
+    if (!session || session.mode !== mode || session.locale !== locale ||
+      phase === "loading" || phase === "connecting") return;
+    const controller = new AbortController();
+    const operation = ++operationRef.current;
+    controllerRef.current = controller;
+    const replyId = `reply-${++messageSequence.current}`;
+    const userId = `user-${++messageSequence.current}`;
+    let streamedText = "";
+
+    setMessages((current) => [...current, { id: userId, role: "user", text: displayValue }]);
+    setDraft((current) => parseChatInput(value, current, null, copy.labels).draft);
+    setResult(null);
+    setError(null);
+    setLastFailedText(null);
+    setToolStatus(null);
+    setPhase("loading");
 
     try {
-      const response = await requestMatch(toMatchRequest(nextDraft, locale), controller.signal);
-      setResult(response);
-      setPhase("result");
-      appendAssistant(copy.assistant.resultReady);
-      window.requestAnimationFrame(() => {
-        resultRef.current?.focus({ preventScroll: true });
-        resultRef.current?.scrollIntoView({
-          behavior: reduceMotion ? "auto" : "smooth",
-          block: "start",
-        });
-      });
+      await sendChatMessage(session.sessionId, { content: value }, (event) => {
+        if (operationRef.current !== operation) return;
+        switch (event.type) {
+          case "token":
+            streamedText += event.data.text;
+            setMessages((current) => {
+              const response = { id: replyId, role: "assistant" as const, text: streamedText };
+              return current.some((message) => message.id === replyId)
+                ? current.map((message) => message.id === replyId ? response : message)
+                : [...current, response];
+            });
+            break;
+          case "tool_start":
+            setToolStatus(statusForTool(String(event.data.name)));
+            break;
+          case "attachment":
+            setResult(event.data);
+            break;
+          case "done":
+            setMessages((current) => {
+              const response = {
+                id: replyId,
+                role: "assistant" as const,
+                text: event.data.message.content,
+              };
+              return current.some((message) => message.id === replyId)
+                ? current.map((message) => message.id === replyId ? response : message)
+                : [...current, response];
+            });
+            if (event.data.message.attachments?.length) {
+              setResult(event.data.message.attachments.at(-1) ?? null);
+            }
+            setToolStatus(null);
+            break;
+          case "error":
+            break;
+        }
+      }, controller.signal);
+      if (operationRef.current === operation) setPhase("ready");
     } catch (requestError) {
-      if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-      const message = requestError instanceof MatchApiError
-        ? requestError.message
-        : copy.assistant.error;
-      setError(message);
+      if (operationRef.current !== operation || isAbortError(requestError)) return;
+      setError(requestError instanceof ChatApiError ? requestError.message : copy.assistant.error);
+      setLastFailedText(value);
+      setToolStatus(null);
       setPhase("error");
-      appendAssistant(copy.assistant.error);
     } finally {
       if (controllerRef.current === controller) controllerRef.current = null;
     }
   }
 
-  function handleSend(value: string, displayValue = value) {
-    if (phase === "loading") return;
-    appendMessage("user", displayValue);
-
-    const expectedField = activeField;
-    const parsed = parseChatInput(value, draft, expectedField, copy.labels);
-    setDraft(parsed.draft);
-
-    if (expectedField && !parsed.recognized.includes(expectedField)) {
-      appendAssistant(invalidMessage(expectedField, copy), copy.fields[expectedField].prompt);
-      return;
-    }
-
-    if (!expectedField && parsed.recognized.length === 0) {
-      appendAssistant(copy.assistant.noRecognition);
-      return;
-    }
-
-    const nextField = getNextChatField(parsed.draft);
-    if (nextField) {
-      setActiveField(nextField);
-      setPhase("collecting");
-      appendAssistant(copy.assistant.understood, copy.fields[nextField].prompt);
-      return;
-    }
-
-    setActiveField(null);
-    appendAssistant(
-      getNextChatField(draft) === null ? copy.assistant.changed : copy.assistant.understood,
-      copy.assistant.searching,
-    );
-    void runMatch(parsed.draft);
-  }
-
-  function handleEdit(field: ChatField) {
+  function switchMode(nextMode: ChatMode) {
+    if (nextMode === mode) return;
     controllerRef.current?.abort();
-    setActiveField(field);
-    setPhase("collecting");
-    setResult(null);
-    setError(null);
-    appendAssistant(copy.fields[field].prompt);
+    operationRef.current += 1;
+    resetState();
+    setMode(nextMode);
   }
 
-  function handleRestart() {
-    controllerRef.current?.abort();
-    messageSequence.current = 4;
-    setDraft(EMPTY_CHAT_DRAFT);
-    setActiveField("category");
-    setPhase("collecting");
-    setResult(null);
-    setError(null);
-    setMessages([
-      ...initialMessages(copy).slice(0, 2),
-      { id: "restart", role: "assistant", text: copy.assistant.restarted },
-      { id: "restart-question", role: "assistant", text: copy.fields.category.prompt },
-    ]);
+  function retry() {
+    if (!session) {
+      void startSession(mode);
+    } else if (lastFailedText) {
+      void sendMessage(lastFailedText);
+    }
   }
 
-  const pending = phase === "loading";
+  const sessionReady = session?.mode === mode && session.locale === locale;
+  const pending = phase === "connecting" || phase === "loading" ||
+    (phase !== "error" && !sessionReady);
 
   return (
     <div className={styles.page}>
@@ -210,51 +236,66 @@ export function ChatExperience() {
               <span aria-hidden="true" />
               <strong>{copy.assistant.name}</strong>
             </div>
-            <button disabled={pending} onClick={handleRestart} type="button">
+            <button onClick={() => void startSession(mode)} type="button">
               {copy.actions.restart}
             </button>
           </div>
-          <ChatThread copy={copy} messages={messages} pending={pending} />
+          <div aria-label={copy.mode.label} className={styles.modeSwitch} role="group">
+            {(["search", "bundle"] as const).map((option) => (
+              <button
+                aria-pressed={mode === option}
+                className={mode === option ? styles.selectedMode : undefined}
+                key={option}
+                onClick={() => switchMode(option)}
+                type="button"
+              >
+                {copy.mode[option]}
+              </button>
+            ))}
+          </div>
+          <ChatThread
+            copy={copy}
+            messages={messages}
+            pending={pending}
+            pendingLabel={!sessionReady ? copy.assistant.connecting : toolStatus ?? undefined}
+          />
           <ChatComposer
             copy={copy}
-            disabled={pending}
-            focusKey={activeField ?? phase}
-            onSend={handleSend}
-            placeholder={activeField ? copy.fields[activeField].placeholder : copy.actions.change}
+            disabled={pending || !sessionReady}
+            focusKey={`${mode}-${phase}`}
+            onSend={(value, display) => void sendMessage(value, display)}
+            placeholder={copy.composer.placeholder}
             quickReplies={quickReplies}
           />
         </motion.section>
 
-        <ChatProgress
-          activeField={activeField}
-          copy={copy}
-          draft={draft}
-          locale={locale}
-          onEdit={handleEdit}
-          pending={pending}
-        />
+        <ChatProgress copy={copy} draft={draft} locale={locale} mode={mode} />
       </main>
 
       <div className="visually-hidden" aria-live="polite" aria-atomic="true">
-        {pending ? copy.assistant.searching : error ?? result?.summary ?? ""}
+        {toolStatus ?? (phase === "connecting" ? copy.assistant.connecting : error ?? "")}
       </div>
 
       {error && (
         <section className={styles.error} role="alert">
           <p>{error}</p>
           <div>
-            <button onClick={() => {
-              appendAssistant(copy.assistant.searching);
-              void runMatch(draft);
-            }} type="button">
-              {copy.actions.retry}
+            {(!session || lastFailedText) && (
+              <button onClick={retry} type="button">{copy.actions.retry}</button>
+            )}
+            <button onClick={() => void startSession(mode)} type="button">
+              {copy.actions.restart}
             </button>
-            <button onClick={handleRestart} type="button">{copy.actions.restart}</button>
           </div>
         </section>
       )}
 
-      {result && <ChatResults copy={copy} locale={locale} result={result} sectionRef={resultRef} />}
+      {result?.type === "match" && (
+        <ChatResults copy={copy} locale={locale} result={result.match} sectionRef={resultRef} />
+      )}
+      {result?.type === "bundle" && (
+        <ChatBundleResults bundle={result.bundle} copy={copy} locale={locale} sectionRef={resultRef} />
+      )}
 
       <footer className={styles.footer}>
         <strong>{copy.brand}</strong>

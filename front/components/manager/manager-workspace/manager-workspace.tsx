@@ -29,6 +29,15 @@ import type { DemoPreset } from "../shared/manager-data";
 import type { DateComparison, RunStatus, TimelineItem } from "../shared/manager-types";
 import styles from "./manager-workspace.module.css";
 
+const LAST_DATASET_DATE = "2026-12-31";
+
+function comparisonDate(date: string): string {
+  const next = new Date(`${date}T12:00:00Z`);
+  next.setUTCDate(next.getUTCDate() + (date > "2026-12-24" ? -7 : 7));
+  const result = next.toISOString().slice(0, 10);
+  return result <= LAST_DATASET_DATE ? result : date;
+}
+
 export function ManagerWorkspace() {
   const { locale } = useLocale();
   const messages = MANAGER_MESSAGES[locale];
@@ -45,8 +54,10 @@ export function ManagerWorkspace() {
   const [isComparing, setIsComparing] = useState(false);
   const [comparison, setComparison] = useState<DateComparison | null>(null);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
+  const [durationMs, setDurationMs] = useState<number | null>(null);
   const streamCloseRef = useRef<null | (() => void)>(null);
   const compareCloseRef = useRef<null | (() => void)>(null);
+  const startedAtRef = useRef<number | null>(null);
   const generationRef = useRef(0);
   const eventIdRef = useRef(0);
 
@@ -80,10 +91,11 @@ export function ManagerWorkspace() {
     generationRef.current += 1;
     const generation = generationRef.current;
     stopConnections();
+    startedAtRef.current = performance.now();
     const localizedRequest = { ...nextRequest, locale };
     setRequest(localizedRequest);
     setStatus("connecting"); setTimeline([]); setCriteria([]); setFunnel([]); setRankedIds([]); setCards([]); setCritic(null); setResult(null); setError(null);
-    setComparison(null); setComparisonError(null); setIsComparing(false); eventIdRef.current = 0;
+    setComparison(null); setComparisonError(null); setIsComparing(false); setDurationMs(null); eventIdRef.current = 0;
     const current = () => generationRef.current === generation;
     streamCloseRef.current = openMatchStream(localizedRequest, {
       open: () => { if (current()) setStatus("running"); },
@@ -92,7 +104,7 @@ export function ManagerWorkspace() {
       ranked: (payload) => { if (!current()) return; setRankedIds(payload.ids); appendTimeline("ranked", messages.pipeline.rankedTitle, payload.ids.length ? messages.pipeline.rankedOrder(payload.ids) : messages.pipeline.rankedEmpty); },
       card: (payload) => { if (!current()) return; setCards((items) => [...items, payload]); appendTimeline("card", messages.pipeline.cardTitle(payload.anonName), messages.pipeline.cardDetail(payload.factsUsed.length)); },
       critic: (payload) => { if (!current()) return; setCritic(payload); appendTimeline("critic", payload.ok ? messages.pipeline.criticOk : messages.pipeline.criticProblems, payload.ok ? messages.pipeline.criticOkDetail : messages.pipeline.criticProblemsDetail(payload.problems.length)); },
-      done: (payload) => { if (!current()) return; setResult(payload); setCriteria(payload.criteria); setFunnel(payload.funnel); setCards(payload.cards); setStatus("done"); streamCloseRef.current = null; appendTimeline("done", messages.pipeline.doneTitle, messages.pipeline.doneDetail(messages.cards.outcomes[payload.outcome].label, payload.cards.length)); },
+      done: (payload) => { if (!current()) return; setDurationMs(startedAtRef.current === null ? null : Math.round(performance.now() - startedAtRef.current)); setResult(payload); setCriteria(payload.criteria); setFunnel(payload.funnel); setCards(payload.cards); setStatus("done"); streamCloseRef.current = null; appendTimeline("done", messages.pipeline.doneTitle, messages.pipeline.doneDetail(messages.cards.outcomes[payload.outcome].label, payload.cards.length)); },
       error: () => { if (current()) failRun(messages.errors.connection); },
       connectionError: () => { if (current()) failRun(messages.errors.connection); },
       parseError: () => { if (current()) failRun(messages.errors.parse); },
@@ -117,12 +129,14 @@ export function ManagerWorkspace() {
     stopConnections();
     setStatus((current) => current === "running" || current === "connecting" ? "cancelled" : current);
     setIsComparing(true); setComparison(null); setComparisonError(null);
-    const first = collectMatchResult({ ...request, date: "2026-10-16", locale });
-    const second = collectMatchResult({ ...request, date: "2026-10-23", locale });
+    const firstDate = request.date;
+    const secondDate = comparisonDate(firstDate);
+    const first = collectMatchResult({ ...request, date: firstDate, locale });
+    const second = collectMatchResult({ ...request, date: secondDate, locale });
     compareCloseRef.current = () => { first.cancel(); second.cancel(); };
     try {
       const [firstResult, secondResult] = await Promise.all([first.result, second.result]);
-      if (generationRef.current === generation) setComparison({ first: firstResult, second: secondResult });
+      if (generationRef.current === generation) setComparison({ firstDate, first: firstResult, secondDate, second: secondResult });
     } catch (caught) {
       if (generationRef.current === generation && (!(caught instanceof Error) || caught.name !== "AbortError")) setComparisonError(messages.comparison.failed);
     } finally {
@@ -145,7 +159,7 @@ export function ManagerWorkspace() {
         <FunnelView steps={funnel} />
       </section>
       <section className={styles.insights}><CriteriaPanel criteria={criteria} rankedIds={rankedIds} /><CriticPanel critic={critic} /></section>
-      <ManagerResults cards={cards} result={result} />
+      <ManagerResults cards={cards} result={result} durationMs={durationMs} />
       <ComparisonPanel comparing={isComparing} comparison={comparison} error={comparisonError} onCompare={compareDates} />
       <JsonPanel result={result} />
     </ManagerShell>

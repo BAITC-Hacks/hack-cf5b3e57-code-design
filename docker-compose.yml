@@ -19,8 +19,8 @@ services:
 
   backend:
     build:
-      context: ./back
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: back/Dockerfile
     container_name: hackaton-backend
     restart: unless-stopped
     depends_on:
@@ -29,8 +29,41 @@ services:
     environment:
       DATABASE_URL: postgresql://postgres:postgres@postgres:5432/hackaton?schema=public
       PORT: 3001
+      MOCK: ${MOCK:-1}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      MODEL_MAIN: ${MODEL_MAIN:-gpt-4o-mini}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
     ports:
       - "3001:3001"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3001/api/v1/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 90s
+
+  frontend:
+    build:
+      context: .
+      dockerfile: front/Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:3001}
+    container_name: hackaton-frontend
+    restart: unless-stopped
+    depends_on:
+      backend:
+        condition: service_healthy
+    environment:
+      BACKEND_URL: http://backend:3001
+      PORT: 3000
+    ports:
+      - "3000:3000"
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:3000/match').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 30s
 
 volumes:
   postgres_data:

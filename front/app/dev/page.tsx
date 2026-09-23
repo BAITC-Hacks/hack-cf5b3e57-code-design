@@ -51,7 +51,14 @@ function HealthPanel() {
   };
 
   useEffect(() => {
-    load();
+    const controller = new AbortController();
+    void fetch(`${API}/api/v1/health`, { signal: controller.signal })
+      .then((res) => res.json())
+      .then(setData)
+      .catch((error: unknown) => {
+        if (!controller.signal.aborted) setErr((error as Error).message);
+      });
+    return () => controller.abort();
   }, []);
 
   return (
@@ -363,7 +370,6 @@ function ChatPanel() {
       const dec = new TextDecoder();
       let buf = '';
       // разбираем SSE построчно: event: X \n data: Y \n\n
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;

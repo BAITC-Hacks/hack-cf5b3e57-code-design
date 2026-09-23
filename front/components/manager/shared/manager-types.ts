@@ -20,6 +20,8 @@ export type TimelineItem = {
 };
 
 export type DateComparison = {
+  firstDate: string;
   first: MatchResponse;
+  secondDate: string;
   second: MatchResponse;
 };

@@ -40,7 +40,7 @@ export function ChatComposer({
 
   function handleQuickReply(item: QuickReply) {
     if (disabled) return;
-    onSend(item.value, item.label);
+    onSend(item.value, item.displayValue ?? item.value);
     setValue("");
   }
 

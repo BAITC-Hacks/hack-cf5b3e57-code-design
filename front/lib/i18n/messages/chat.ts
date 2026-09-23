@@ -45,6 +45,26 @@ export interface ChatMessages {
     pending: string;
     edit: string;
     optional: string;
+    note: string;
+  };
+  mode: {
+    search: string;
+    bundle: string;
+    label: string;
+  };
+  examples: Record<"search" | "bundle", readonly { label: string; value: string; displayValue: string }[]>;
+  tools: {
+    searching: string;
+    bundle: string;
+    estimating: string;
+  };
+  bundle: {
+    eyebrow: string;
+    title: string;
+    required: string;
+    recommended: string;
+    allocation: string;
+    none: string;
   };
   assistant: {
     name: string;
@@ -60,12 +80,15 @@ export interface ChatMessages {
     invalidBudget: string;
     restarted: string;
     error: string;
+    connecting: string;
+    sessionError: string;
   };
   composer: {
     label: string;
     send: string;
     sending: string;
     hint: string;
+    placeholder: string;
   };
   actions: {
     anyLanguage: string;
@@ -112,7 +135,7 @@ const messages = {
       title: "Опишите событие.",
       accent: "Остальное соберём вместе.",
       description:
-        "Помощник задаст короткие вопросы, проверит ваш запрос по каталогу и покажет до трёх вариантов с доказательствами.",
+        "Опишите заказ в свободной форме: ассистент уточнит недостающее и покажет проверяемый подбор или пакет подрядчиков.",
       badge: "Работает на matching engine",
     },
     fields: {
@@ -148,12 +171,37 @@ const messages = {
       },
     },
     progress: {
-      eyebrow: "Параметры запроса",
-      title: "Что уже понятно",
+      eyebrow: "Подсказка из диалога",
+      title: "Упомянутые условия",
       complete: "Заполнено",
       pending: "Ждёт ответа",
       edit: "Изменить",
       optional: "необязательно",
+      note: "Это подсказка из ваших сообщений. Окончательные условия и результаты определяет backend.",
+    },
+    mode: { search: "Один подрядчик", bundle: "Пакет мероприятия", label: "Режим ассистента" },
+    examples: {
+      search: [
+        { label: "Ведущий · корпоратив · Алматы", value: "Нужен Ведущий в Алматы на корпоратив 2026-10-16, бюджет 1000000 ₸", displayValue: "Нужен ведущий в Алматы на корпоратив 16.10.2026, бюджет 1 000 000 ₸." },
+        { label: "Флорист · свадьба · Алматы", value: "Нужен Флорист в Алматы на свадьба 2026-10-15, бюджет 300000 ₸", displayValue: "Нужен флорист в Алматы на свадьбу 15.10.2026, бюджет 300 000 ₸." },
+      ],
+      bundle: [
+        { label: "Свадьба · Алматы", value: "Собери полный пакет на свадьба в Алматы 2026-10-16, бюджет 5000000 ₸", displayValue: "Собери полный пакет на свадьбу в Алматы 16.10.2026, бюджет 5 000 000 ₸." },
+        { label: "Корпоратив · Алматы", value: "Собери полный пакет на корпоратив в Алматы 2026-10-16, бюджет 5000000 ₸", displayValue: "Собери полный пакет на корпоратив в Алматы 16.10.2026, бюджет 5 000 000 ₸." },
+      ],
+    },
+    tools: {
+      searching: "Ищу подрядчиков и проверяю факты…",
+      bundle: "Собираю пакет по категориям…",
+      estimating: "Оцениваю минимальный бюджет пакета…",
+    },
+    bundle: {
+      eyebrow: "Ответ ассистента",
+      title: "Пакет мероприятия",
+      required: "Обязательные категории",
+      recommended: "Дополнительные категории",
+      allocation: "Бюджет",
+      none: "Категории не добавлены.",
     },
     assistant: {
       name: "Ассистент ToiMatch",
@@ -161,7 +209,7 @@ const messages = {
       greeting:
         "Здравствуйте! Я помогу сформировать точный запрос и найти подходящих подрядчиков.",
       transparency:
-        "Я не импровизирую как свободный чат-бот: собираю факты и передаю их в детерминированный matching engine.",
+        "Ассистент уточняет запрос, а карточки и факты берёт из каталога через matching engine.",
       understood: "Принято. Зафиксировал параметры и двигаюсь дальше.",
       changed: "Параметр обновлён. Пересчитываю подбор по новым условиям.",
       searching: "Запрос готов. Проверяю город, дату, формат, бюджет и язык…",
@@ -171,18 +219,21 @@ const messages = {
       invalidBudget: "Не удалось распознать бюджет. Например: 300 000 ₸ или 1 млн.",
       restarted: "Начнём заново. Сначала определим, какой подрядчик нужен.",
       error: "Подбор сейчас не завершился. Проверьте, запущен ли backend, и повторите попытку.",
+      connecting: "Открываю диалог с ассистентом…",
+      sessionError: "Не удалось открыть диалог. Проверьте подключение к backend и попробуйте снова.",
     },
     composer: {
       label: "Ваш ответ",
       send: "Отправить",
       sending: "Проверяем…",
-      hint: "Можно написать несколько параметров сразу — например: «Ведущий, Алматы, корпоратив 16.10, бюджет 1 млн».",
+      hint: "Напишите свободно или нажмите пример. Для точного результата укажите город, дату, формат и бюджет.",
+      placeholder: "Расскажите о мероприятии или задайте вопрос",
     },
     actions: {
       anyLanguage: "Любой язык",
       restart: "Начать заново",
       change: "Изменить условия",
-      retry: "Повторить подбор",
+      retry: "Отправить снова",
     },
     result: {
       photo: "Фото: ИИ-иллюстрация", photoMissing: "Фото недоступно",
@@ -237,7 +288,7 @@ const messages = {
       title: "Іс-шараны сипаттаңыз.",
       accent: "Қалғанын бірге жинаймыз.",
       description:
-        "Көмекші қысқа сұрақтар қояды, сұранысты каталог бойынша тексереді және дәлелдері бар үш нұсқаға дейін көрсетеді.",
+        "Тапсырысты еркін сипаттаңыз: көмекші қажет мәліметті нақтылап, тексерілетін таңдау немесе мердігерлер пакетін көрсетеді.",
       badge: "Matching engine арқылы жұмыс істейді",
     },
     fields: {
@@ -273,12 +324,37 @@ const messages = {
       },
     },
     progress: {
-      eyebrow: "Сұраныс параметрлері",
-      title: "Не белгілі",
+      eyebrow: "Диалогтан алынған мәлімет",
+      title: "Аталған шарттар",
       complete: "Толтырылды",
       pending: "Жауап күтуде",
       edit: "Өзгерту",
       optional: "міндетті емес",
+      note: "Бұл — хабарламаларыңыздан алынған көмекші мәлімет. Соңғы шарттар мен нәтижені backend анықтайды.",
+    },
+    mode: { search: "Бір мердігер", bundle: "Іс-шара пакеті", label: "Көмекші режимі" },
+    examples: {
+      search: [
+        { label: "Жүргізуші · корпоратив · Алматы", value: "Нужен Ведущий в Алматы на корпоратив 2026-10-16, бюджет 1000000 ₸", displayValue: "2026 жылғы 16 қазанда Алматыдағы корпоративке жүргізуші керек. Бюджет: 1 000 000 ₸." },
+        { label: "Флорист · үйлену тойы · Алматы", value: "Нужен Флорист в Алматы на свадьба 2026-10-15, бюджет 300000 ₸", displayValue: "2026 жылғы 15 қазанда Алматыдағы үйлену тойына флорист керек. Бюджет: 300 000 ₸." },
+      ],
+      bundle: [
+        { label: "Үйлену тойы · Алматы", value: "Собери полный пакет на свадьба в Алматы 2026-10-16, бюджет 5000000 ₸", displayValue: "2026 жылғы 16 қазанда Алматыдағы үйлену тойына толық пакет құрастыр. Бюджет: 5 000 000 ₸." },
+        { label: "Корпоратив · Алматы", value: "Собери полный пакет на корпоратив в Алматы 2026-10-16, бюджет 5000000 ₸", displayValue: "2026 жылғы 16 қазанда Алматыдағы корпоративке толық пакет құрастыр. Бюджет: 5 000 000 ₸." },
+      ],
+    },
+    tools: {
+      searching: "Мердігерлерді іздеп, деректерді тексеремін…",
+      bundle: "Санаттар бойынша пакет құрастырамын…",
+      estimating: "Пакеттің ең аз бюджетін есептеймін…",
+    },
+    bundle: {
+      eyebrow: "Көмекшінің жауабы",
+      title: "Іс-шара пакеті",
+      required: "Міндетті санаттар",
+      recommended: "Қосымша санаттар",
+      allocation: "Бюджет",
+      none: "Санаттар қосылмады.",
     },
     assistant: {
       name: "ToiMatch көмекшісі",
@@ -286,7 +362,7 @@ const messages = {
       greeting:
         "Сәлеметсіз бе! Нақты сұраныс құрып, сәйкес мердігерлерді табуға көмектесемін.",
       transparency:
-        "Мен еркін чат-бот сияқты болжам жасамаймын: деректерді жинап, оларды детерминделген matching engine-ге жіберемін.",
+        "Көмекші сұранысты нақтылайды, ал карточкалар мен деректерді каталогтан matching engine арқылы алады.",
       understood: "Қабылданды. Параметрлерді белгілеп, келесі қадамға өтемін.",
       changed: "Параметр жаңартылды. Жаңа шарттар бойынша таңдауды қайта есептеймін.",
       searching: "Сұраныс дайын. Қаланы, күнді, форматты, бюджетті және тілді тексеремін…",
@@ -296,18 +372,21 @@ const messages = {
       invalidBudget: "Бюджетті тани алмадым. Мысалы: 300 000 ₸ немесе 1 млн.",
       restarted: "Қайта бастайық. Алдымен қандай мердігер қажет екенін анықтаймыз.",
       error: "Таңдау аяқталмады. Backend іске қосылғанын тексеріп, қайта көріңіз.",
+      connecting: "Көмекшімен диалог ашылып жатыр…",
+      sessionError: "Диалог ашылмады. Backend байланысын тексеріп, қайта көріңіз.",
     },
     composer: {
       label: "Сіздің жауабыңыз",
       send: "Жіберу",
       sending: "Тексерудеміз…",
-      hint: "Бірнеше параметрді бірге жаза аласыз: «Жүргізуші, Алматы, корпоратив 16.10, бюджет 1 млн».",
+      hint: "Еркін жазыңыз немесе мысалды таңдаңыз. Нақты нәтиже үшін қала, күн, формат пен бюджетті көрсетіңіз.",
+      placeholder: "Іс-шараны сипаттаңыз немесе сұрақ қойыңыз",
     },
     actions: {
       anyLanguage: "Кез келген тіл",
       restart: "Қайта бастау",
       change: "Шарттарды өзгерту",
-      retry: "Қайта таңдау",
+      retry: "Қайта жіберу",
     },
     result: {
       photo: "Фото: ЖИ иллюстрациясы", photoMissing: "Фото қолжетімсіз",
@@ -362,7 +441,7 @@ const messages = {
       title: "Describe your event.",
       accent: "We will shape the rest together.",
       description:
-        "The assistant asks short questions, checks your request against the catalog and shows up to three evidence-backed options.",
+        "Describe your request freely: the assistant will ask for missing details and show a verifiable match or event bundle.",
       badge: "Powered by the matching engine",
     },
     fields: {
@@ -398,12 +477,37 @@ const messages = {
       },
     },
     progress: {
-      eyebrow: "Request details",
-      title: "What we know",
+      eyebrow: "Clues from the conversation",
+      title: "Details mentioned",
       complete: "Completed",
       pending: "Waiting for answer",
       edit: "Edit",
       optional: "optional",
+      note: "This is a hint extracted from your messages. The backend determines the final request and results.",
+    },
+    mode: { search: "One contractor", bundle: "Event bundle", label: "Assistant mode" },
+    examples: {
+      search: [
+        { label: "Host · corporate · Almaty", value: "Нужен Ведущий в Алматы на корпоратив 2026-10-16, бюджет 1000000 ₸", displayValue: "I need a host in Almaty for a corporate event on 16 October 2026. Budget: ₸1,000,000." },
+        { label: "Florist · wedding · Almaty", value: "Нужен Флорист в Алматы на свадьба 2026-10-15, бюджет 300000 ₸", displayValue: "I need a florist in Almaty for a wedding on 15 October 2026. Budget: ₸300,000." },
+      ],
+      bundle: [
+        { label: "Wedding · Almaty", value: "Собери полный пакет на свадьба в Алматы 2026-10-16, бюджет 5000000 ₸", displayValue: "Build a full wedding bundle in Almaty for 16 October 2026. Budget: ₸5,000,000." },
+        { label: "Corporate · Almaty", value: "Собери полный пакет на корпоратив в Алматы 2026-10-16, бюджет 5000000 ₸", displayValue: "Build a full corporate event bundle in Almaty for 16 October 2026. Budget: ₸5,000,000." },
+      ],
+    },
+    tools: {
+      searching: "Searching contractors and checking facts…",
+      bundle: "Assembling the bundle by category…",
+      estimating: "Estimating the bundle minimum budget…",
+    },
+    bundle: {
+      eyebrow: "Assistant response",
+      title: "Event bundle",
+      required: "Required categories",
+      recommended: "Additional categories",
+      allocation: "Budget",
+      none: "No categories added.",
     },
     assistant: {
       name: "ToiMatch assistant",
@@ -411,7 +515,7 @@ const messages = {
       greeting:
         "Hello! I will help shape a precise request and find suitable contractors.",
       transparency:
-        "I do not improvise like an open-ended chatbot: I collect facts and pass them to a deterministic matching engine.",
+        "The assistant clarifies your request, while cards and facts come from the catalog through the matching engine.",
       understood: "Got it. I have saved those details and will move to the next step.",
       changed: "That detail is updated. I will recalculate the match using the new conditions.",
       searching: "The request is ready. Checking city, date, format, budget and language…",
@@ -421,18 +525,21 @@ const messages = {
       invalidBudget: "I could not recognise the budget. For example: 300,000 ₸ or 1 million.",
       restarted: "Let us start again. First, we will identify the contractor category.",
       error: "Matching did not finish. Check that the backend is running and try again.",
+      connecting: "Opening a conversation with the assistant…",
+      sessionError: "The conversation could not be opened. Check the backend connection and try again.",
     },
     composer: {
       label: "Your answer",
       send: "Send",
       sending: "Checking…",
-      hint: "You can include several details at once, such as “Host, Almaty, corporate event on 16.10, budget 1 million”.",
+      hint: "Write freely or choose an example. Include city, date, event type and budget for a precise result.",
+      placeholder: "Describe your event or ask a question",
     },
     actions: {
       anyLanguage: "Any language",
       restart: "Start over",
       change: "Change details",
-      retry: "Retry matching",
+      retry: "Send again",
     },
     result: {
       photo: "Photo: AI illustration", photoMissing: "Photo unavailable",

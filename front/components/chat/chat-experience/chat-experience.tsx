@@ -120,11 +120,11 @@ export function ChatExperience() {
     messageController.current = controller;
     const streamId = `stream-${crypto.randomUUID()}`;
     let streamedText = "";
+    let hasAttachment = false;
     let terminalError = false;
 
     setLastMessage(content);
     setMessages((current) => [...current, localMessage("user", displayValue)]);
-    setAttachment(null);
     setTool(null);
     setError(null);
     setPhase("streaming");
@@ -135,6 +135,9 @@ export function ChatExperience() {
         { content },
         (event) => {
           if (event.type === "token") {
+            // The attachment is the canonical result; avoid streaming the same
+            // summary into a second, competing block of prose.
+            if (hasAttachment) return;
             streamedText += event.data.text;
             setMessages((current) => {
               const streamMessage: ChatMessage = {
@@ -154,10 +157,26 @@ export function ChatExperience() {
             return;
           }
           if (event.type === "tool_start") {
+            // A recalculation invalidates the previous result. A clarification
+            // or an unchanged-category acknowledgement does not.
+            setAttachment(null);
             setTool(event.data.name);
             return;
           }
           if (event.type === "attachment") {
+            hasAttachment = true;
+            setMessages((current) => {
+              const placeholder: ChatMessage = {
+                id: streamId,
+                role: "assistant",
+                content: copy.assistant.attachmentReady,
+                createdAt: new Date().toISOString(),
+                attachments: [event.data],
+              };
+              return current.some((message) => message.id === streamId)
+                ? current.map((message) => message.id === streamId ? placeholder : message)
+                : [...current, placeholder];
+            });
             setAttachment(event.data);
             focusAttachment();
             return;
@@ -204,12 +223,6 @@ export function ChatExperience() {
   }
 
   const pending = phase === "starting" || phase === "streaming";
-  const summary =
-    attachment?.type === "match"
-      ? attachment.match.summary
-      : attachment?.type === "bundle"
-        ? attachment.bundle.summary
-        : "";
 
   return (
     <div className={siteStyles.shell}>
@@ -244,7 +257,7 @@ export function ChatExperience() {
               </button>
             </div>
           </div>
-          <ChatThread copy={copy} messages={messages} pending={pending} />
+          <ChatThread copy={copy} messages={messages} pending={pending && !attachment} />
           <ChatComposer
             copy={copy}
             disabled={pending || !sessionId}
@@ -254,10 +267,6 @@ export function ChatExperience() {
             quickReplies={quickReplies}
           />
         </motion.section>
-
-        <div className="visually-hidden" aria-live="polite" aria-atomic="true">
-          {pending ? copy.assistant.searching : error ?? summary}
-        </div>
 
         {error && (
           <section className={styles.error} role="alert">

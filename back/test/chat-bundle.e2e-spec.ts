@@ -246,8 +246,180 @@ async function collect(
   return events;
 }
 
+function completedBundle(events: ChatStreamEvent[]): {
+  bundle: EventBundle;
+  content: string;
+} {
+  expect(events.some((event) => event.type === 'error')).toBe(false);
+  const done = events.find((event) => event.type === 'done');
+  if (done?.type !== 'done') throw new Error('missing done event');
+  const attachment = done.data.message.attachments?.find(
+    (item) => item.type === 'bundle',
+  );
+  if (attachment?.type !== 'bundle')
+    throw new Error('missing bundle attachment');
+  return {
+    bundle: attachment.bundle,
+    content: done.data.message.content,
+  };
+}
+
+function foundRequired(bundle: EventBundle): number {
+  return bundle.required.filter((item) => item.match.cards.length > 0).length;
+}
+
 describe('bundle chat in MOCK mode', () => {
   beforeAll(() => expect(contractors).toHaveLength(66));
+
+  it('uses the date and 5m budget from the first natural-language message without repeated questions', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+      const events = await collect(
+        chat.streamMessage(
+          sessionId,
+          'Привет. Я хочу организовать свадьбу в Астане на 17 октября. Бюджет 5 млн',
+        ),
+      );
+
+      expect(events.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls.map(([name]) => name)).toEqual([
+        'estimate_bundle_minimum',
+        'build_event_bundle',
+      ]);
+      const estimate = (await execute.mock.results[0].value) as {
+        totalMinKzt: number;
+      };
+      expect(estimate.totalMinKzt).toBeLessThan(5_000_000);
+      expect(execute).toHaveBeenCalledWith(
+        'build_event_bundle',
+        expect.objectContaining({
+          city: 'Астана',
+          date: '2026-10-17',
+          eventType: 'свадьба',
+          totalBudgetKzt: 5_000_000,
+        }),
+      );
+
+      const attachment = events.find(
+        (event): event is Extract<ChatStreamEvent, { type: 'attachment' }> =>
+          event.type === 'attachment',
+      );
+      expect(attachment?.data.type).toBe('bundle');
+      if (attachment?.data.type !== 'bundle') {
+        throw new Error('missing bundle attachment');
+      }
+      const { bundle } = attachment.data;
+      expect(bundle.city).toBe('Астана');
+      expect(bundle.date).toBe('2026-10-17');
+      expect(bundle.totalBudgetKzt).toBe(5_000_000);
+
+      for (const item of [...bundle.required, ...bundle.recommended]) {
+        for (const card of item.match.cards) {
+          const source = contractors.find((row) => row.id === card.id);
+          expect(source).toBeDefined();
+          expect(source?.city).toBe('Астана');
+          expect(source?.categories).toContain(item.category);
+          expect(source?.eventFormats).toContain('свадьба');
+          expect(source?.busyDates).not.toContain('2026-10-17');
+          expect(card.priceFromKzt).toBeLessThanOrEqual(
+            item.allocatedBudgetKzt,
+          );
+        }
+      }
+
+      const done = events.find((event) => event.type === 'done');
+      if (done?.type !== 'done') throw new Error('missing done event');
+      expect(done.data.message.attachments).toEqual([attachment.data]);
+      expect(done.data.message.content).not.toMatch(
+        /какой.{0,30}бюджет|сколько часов|какой язык|поднять бюджет|нужно минимум/iu,
+      );
+
+      for (const message of [
+        '5 часов',
+        'русский',
+        'У меня же уже 5 миллионов бюджет',
+      ]) {
+        const followUp = await collect(chat.streamMessage(sessionId, message));
+        expect(followUp.some((event) => event.type === 'error')).toBe(false);
+        const latestBuildCall = execute.mock.calls
+          .filter(([name]) => name === 'build_event_bundle')
+          .at(-1);
+        expect(latestBuildCall?.[1]).toEqual(
+          expect.objectContaining({
+            city: 'Астана',
+            date: '2026-10-17',
+            totalBudgetKzt: 5_000_000,
+          }),
+        );
+        const followUpDone = followUp.find((event) => event.type === 'done');
+        if (followUpDone?.type !== 'done') {
+          throw new Error('missing follow-up done event');
+        }
+        expect(followUpDone.data.message.content).not.toMatch(
+          /какой.{0,30}бюджет|сколько часов|какой язык|поднять бюджет|нужно минимум/iu,
+        );
+        const followUpBundle = followUpDone.data.message.attachments?.find(
+          (item) => item.type === 'bundle',
+        );
+        expect(followUpBundle?.type).toBe('bundle');
+        if (followUpBundle?.type === 'bundle') {
+          expect(followUpBundle.bundle.date).toBe('2026-10-17');
+          expect(followUpBundle.bundle.totalBudgetKzt).toBe(5_000_000);
+        }
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('preserves date and city when the budget arrives in the next message', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+      const first = await collect(
+        chat.streamMessage(sessionId, 'Планирую свадьбу в Астане 17 октября'),
+      );
+      expect(first.some((event) => event.type === 'error')).toBe(false);
+      expect(execute).not.toHaveBeenCalled();
+      const firstDone = first.find((event) => event.type === 'done');
+      if (firstDone?.type !== 'done') throw new Error('missing first done');
+      expect(firstDone.data.message.content).toMatch(/бюджет/i);
+      expect(firstDone.data.message.content).not.toMatch(
+        /какую дату|в каком городе/i,
+      );
+
+      const second = await collect(chat.streamMessage(sessionId, '5 млн'));
+      expect(second.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls.map(([name]) => name)).toEqual([
+        'estimate_bundle_minimum',
+        'build_event_bundle',
+      ]);
+      expect(execute).toHaveBeenCalledWith(
+        'build_event_bundle',
+        expect.objectContaining({
+          city: 'Астана',
+          date: '2026-10-17',
+          eventType: 'свадьба',
+          totalBudgetKzt: 5_000_000,
+        }),
+      );
+      const secondDone = second.find((event) => event.type === 'done');
+      if (secondDone?.type !== 'done') throw new Error('missing second done');
+      const bundle = secondDone.data.message.attachments?.find(
+        (attachment) => attachment.type === 'bundle',
+      );
+      expect(bundle?.type).toBe('bundle');
+      if (bundle?.type === 'bundle') {
+        expect(bundle.bundle.date).toBe('2026-10-17');
+        expect(bundle.bundle.totalBudgetKzt).toBe(5_000_000);
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 
   it('estimates first and stops before bundle creation when budget is insufficient', async () => {
     const { chat, execute } = createHarness();
@@ -343,7 +515,7 @@ describe('bundle chat in MOCK mode', () => {
   });
 
   it('does not repeat a model-invented contractor ID in final prose', async () => {
-    const { chat, openai } = createHarness();
+    const { chat, execute, openai } = createHarness();
     const invented =
       'Добавил в пакет подрядчика HK-99999 — он идеально подходит.';
     const toolCall = {
@@ -353,9 +525,9 @@ describe('bundle chat in MOCK mode', () => {
         name: 'build_event_bundle',
         arguments: JSON.stringify({
           city: 'Астана',
-          date: '2026-10-15',
+          date: '2026-10-10',
           eventType: 'свадьба',
-          totalBudgetKzt: 10_000_000,
+          totalBudgetKzt: 1_000_000,
           requiredCategories: [
             'Ведущий',
             'Банкетный зал',
@@ -389,15 +561,255 @@ describe('bundle chat in MOCK mode', () => {
     const events = await collect(
       chat.streamMessage(
         sessionId,
-        'Свадьба в Астана 2026-10-15, бюджет 10000000 тенге.',
+        'Свадьба в Астане 2026-10-17, бюджет 5000000 тенге.',
       ),
     );
     expect(events.some((event) => event.type === 'error')).toBe(false);
     const attachment = events.find((event) => event.type === 'attachment');
     expect(attachment).toBeDefined();
+    expect(execute).toHaveBeenCalledWith(
+      'build_event_bundle',
+      expect.objectContaining({
+        city: 'Астана',
+        date: '2026-10-17',
+        totalBudgetKzt: 5_000_000,
+      }),
+    );
+    if (
+      attachment?.type === 'attachment' &&
+      attachment.data.type === 'bundle'
+    ) {
+      expect(attachment.data.bundle.date).toBe('2026-10-17');
+      expect(attachment.data.bundle.totalBudgetKzt).toBe(5_000_000);
+      for (const item of [
+        ...attachment.data.bundle.required,
+        ...attachment.data.bundle.recommended,
+      ]) {
+        for (const card of item.match.cards) {
+          expect(sourceIds.has(card.id)).toBe(true);
+        }
+      }
+    }
     const done = events.find((event) => event.type === 'done');
     if (done?.type !== 'done') throw new Error('missing done event');
     expect(done.data.message.content).not.toContain('HK-99999');
-    expect(complete).toHaveBeenCalledTimes(1);
+    // Complete requests execute with server-verified slots, not model tool args.
+    expect(complete).not.toHaveBeenCalled();
+  });
+
+  it('honors an excluded required category across repeated turns and restores it when asked', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+      const first = completedBundle(
+        await collect(
+          chat.streamMessage(
+            sessionId,
+            'Свадьба в Астане 17 октября, бюджет 5 млн ₸',
+          ),
+        ),
+      );
+      expect(first.bundle.required.map((item) => item.category)).toEqual([
+        'Ведущий',
+        'Банкетный зал',
+        'Фотограф',
+        'Декоратор',
+      ]);
+      expect(foundRequired(first.bundle)).toBe(3);
+      expect(
+        first.bundle.required.find((item) => item.category === 'Ведущий')?.match
+          .cards.length,
+      ).toBeGreaterThan(0);
+
+      const excluded = completedBundle(
+        await collect(chat.streamMessage(sessionId, 'Мне не нужен декоратор')),
+      );
+      expect(excluded.bundle.required.map((item) => item.category)).toEqual([
+        'Ведущий',
+        'Банкетный зал',
+        'Фотограф',
+      ]);
+      expect(foundRequired(excluded.bundle)).toBe(3);
+      expect(excluded.bundle.city).toBe('Астана');
+      expect(excluded.bundle.date).toBe('2026-10-17');
+      expect(excluded.bundle.totalBudgetKzt).toBe(5_000_000);
+      expect(excluded.content).not.toMatch(
+        /3 из 4 обязательных|декоратор\s*[—-]\s*не найден/iu,
+      );
+      expect(excluded.content.length).toBeLessThan(1_000);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'build_event_bundle',
+        expect.objectContaining({
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+          city: 'Астана',
+          date: '2026-10-17',
+          totalBudgetKzt: 5_000_000,
+        }),
+      ]);
+
+      const callsBeforeRepeat = execute.mock.calls.length;
+      const repeated = await collect(
+        chat.streamMessage(
+          sessionId,
+          'Я же говорю, что мне не нужен декоратор',
+        ),
+      );
+      expect(repeated.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls).toHaveLength(callsBeforeRepeat);
+      const repeatedDone = repeated.find((event) => event.type === 'done');
+      if (repeatedDone?.type !== 'done')
+        throw new Error('missing repeated-action done event');
+      expect(repeatedDone.data.message.content.length).toBeLessThan(300);
+      expect(repeatedDone.data.message.content).toMatch(/декоратор/iu);
+
+      const newDate = completedBundle(
+        await collect(chat.streamMessage(sessionId, 'А на 18 октября?')),
+      );
+      expect(newDate.bundle.city).toBe('Астана');
+      expect(newDate.bundle.date).toBe('2026-10-18');
+      expect(newDate.bundle.totalBudgetKzt).toBe(5_000_000);
+      expect(newDate.bundle.required.map((item) => item.category)).toEqual([
+        'Ведущий',
+        'Банкетный зал',
+        'Фотограф',
+      ]);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'build_event_bundle',
+        expect.objectContaining({
+          city: 'Астана',
+          date: '2026-10-18',
+          totalBudgetKzt: 5_000_000,
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+        }),
+      ]);
+
+      const restored = completedBundle(
+        await collect(
+          chat.streamMessage(sessionId, 'Добавь декоратора обратно'),
+        ),
+      );
+      expect(restored.bundle.required.map((item) => item.category)).toEqual([
+        'Ведущий',
+        'Банкетный зал',
+        'Фотограф',
+        'Декоратор',
+      ]);
+      expect(restored.bundle.date).toBe('2026-10-18');
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('handles the reported Almaty date change and decorator opt-out without resetting the request', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+      const first = completedBundle(
+        await collect(
+          chat.streamMessage(
+            sessionId,
+            'Пакет на свадьбу · Алматы · 16 октября · 5 млн ₸',
+          ),
+        ),
+      );
+      expect(first.bundle.city).toBe('Алматы');
+      expect(first.bundle.date).toBe('2026-10-16');
+      expect(first.bundle.totalBudgetKzt).toBe(5_000_000);
+
+      const second = await collect(
+        chat.streamMessage(sessionId, 'А на 17 октября?'),
+      );
+      expect(second.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'estimate_bundle_minimum',
+        expect.objectContaining({
+          city: 'Алматы',
+          date: '2026-10-17',
+          requiredCategories: [
+            'Ведущий',
+            'Банкетный зал',
+            'Фотограф',
+            'Декоратор',
+          ],
+        }),
+      ]);
+      const secondDone = second.find((event) => event.type === 'done');
+      if (secondDone?.type !== 'done')
+        throw new Error('missing second done event');
+      expect(secondDone.data.message.content).toMatch(/6\s*500\s*000/iu);
+      expect(secondDone.data.message.content).not.toMatch(
+        /поднять бюджет до 5\s*000\s*000/iu,
+      );
+      expect(secondDone.data.message.attachments).toBeUndefined();
+
+      const excluded = completedBundle(
+        await collect(chat.streamMessage(sessionId, 'Мне не нужен декоратор')),
+      );
+      expect(excluded.bundle.city).toBe('Алматы');
+      expect(excluded.bundle.date).toBe('2026-10-17');
+      expect(excluded.bundle.totalBudgetKzt).toBe(5_000_000);
+      expect(excluded.bundle.required.map((item) => item.category)).toEqual([
+        'Ведущий',
+        'Банкетный зал',
+        'Фотограф',
+      ]);
+      expect(foundRequired(excluded.bundle)).toBe(3);
+      expect(excluded.content).not.toMatch(/\bдекоратор\s*[—-]\s*не найден/iu);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'build_event_bundle',
+        expect.objectContaining({
+          city: 'Алматы',
+          date: '2026-10-17',
+          totalBudgetKzt: 5_000_000,
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+        }),
+      ]);
+
+      const reducedBudget = await collect(
+        chat.streamMessage(sessionId, 'У меня сократился бюджет до 4млн'),
+      );
+      expect(reducedBudget.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'estimate_bundle_minimum',
+        expect.objectContaining({
+          city: 'Алматы',
+          date: '2026-10-17',
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+        }),
+      ]);
+      const reducedDone = reducedBudget.find((event) => event.type === 'done');
+      if (reducedDone?.type !== 'done')
+        throw new Error('missing reduced-budget done event');
+      expect(reducedDone.data.message.content).toMatch(/4\s*700\s*000/iu);
+      expect(reducedDone.data.message.content).toMatch(/4\s*000\s*000/iu);
+      expect(reducedDone.data.message.attachments).toBeUndefined();
+
+      const callsBeforeRepeatedRemoval = execute.mock.calls.length;
+      const repeatedRemoval = await collect(
+        chat.streamMessage(sessionId, 'Убрать категорию декораторов'),
+      );
+      expect(repeatedRemoval.some((event) => event.type === 'error')).toBe(
+        false,
+      );
+      expect(execute.mock.calls).toHaveLength(callsBeforeRepeatedRemoval);
+      expect(repeatedRemoval.some((event) => event.type === 'tool_start')).toBe(
+        false,
+      );
+      const removalDone = repeatedRemoval.find(
+        (event) => event.type === 'done',
+      );
+      if (removalDone?.type !== 'done')
+        throw new Error('missing repeated-removal done event');
+      expect(removalDone.data.message.content).toMatch(/декоратор/iu);
+      expect(removalDone.data.message.content).toMatch(
+        /уже исключен|уже исключена/iu,
+      );
+      expect(removalDone.data.message.content.length).toBeLessThan(160);
+      expect(removalDone.data.message.attachments).toBeUndefined();
+    } finally {
+      jest.useRealTimers();
+    }
   });
 });

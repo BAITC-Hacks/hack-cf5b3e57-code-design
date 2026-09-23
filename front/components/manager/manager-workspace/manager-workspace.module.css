@@ -1,0 +1,5 @@
+.workspace { display: grid; grid-template-columns: minmax(330px, .82fr) minmax(430px, 1.45fr); gap: 20px; align-items: stretch; }
+.requestColumn { display: grid; align-content: start; gap: 20px; }
+.insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+@media (max-width: 1120px) { .workspace { grid-template-columns: minmax(300px, .9fr) minmax(400px, 1.2fr); } }
+@media (max-width: 840px) { .workspace, .insights { grid-template-columns: 1fr; } }

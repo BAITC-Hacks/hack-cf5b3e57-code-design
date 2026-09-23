@@ -1,8 +1,8 @@
 .form {
   display: grid;
   min-width: 0;
-  gap: 16px;
-  padding: 24px;
+  gap: 12px;
+  padding: 20px;
   border: 1px solid var(--tm-line);
   border-radius: var(--tm-radius-card);
   background: var(--tm-surface);
@@ -95,12 +95,12 @@
 .panel {
   display: grid;
   min-width: 0;
-  gap: 20px;
+  gap: 14px;
 }
 
 .description {
   color: var(--tm-muted);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -108,21 +108,22 @@
   display: grid;
   min-width: 0;
   grid-template-columns: minmax(0, 1fr);
-  gap: 16px;
+  align-items: start;
+  gap: 12px;
 }
 
 .priceRow {
   display: grid;
   min-width: 0;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 12px;
+  gap: 10px;
 }
 
 .field {
   display: grid;
   min-width: 0;
   align-content: start;
-  gap: 8px;
+  gap: 6px;
 }
 
 .field > span {
@@ -134,16 +135,22 @@
 .field input {
   width: 100%;
   min-width: 0;
-  min-height: 48px;
-  padding: 10px 14px;
+  min-height: 44px;
+  padding: 8px 12px;
   border: 1px solid var(--tm-field-border);
   border-radius: var(--tm-radius-field);
   background: var(--tm-surface);
   color: var(--tm-ink);
-  font-size: 16px;
+  font-size: 15px;
   transition: border-color 140ms ease;
   -moz-appearance: textfield;
   appearance: textfield;
+}
+
+.field :global([role="combobox"]) {
+  min-height: 44px;
+  padding-inline: 12px;
+  font-size: 15px;
 }
 
 .field input::-webkit-outer-spin-button,
@@ -164,16 +171,16 @@
 .submit {
   display: inline-flex;
   width: 100%;
-  min-height: 52px;
+  min-height: 46px;
   align-items: center;
   justify-content: center;
-  padding: 12px 20px;
+  padding: 10px 18px;
   border: 0;
   border-radius: var(--tm-radius-field);
   background: var(--tm-ember);
   color: var(--tm-ink);
   cursor: pointer;
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 600;
   transition: background 160ms ease, box-shadow 160ms ease;
 }

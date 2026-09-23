@@ -10,6 +10,14 @@ import type {
   ChatSseEventMap,
 } from "../../../../shared/contract";
 import { ChatApiError, createChatSession, streamChatMessage } from "@/lib/chat/chat-api";
+import {
+  dedupeChatMessages,
+  emptyChatState,
+  loadChatState,
+  saveChatState,
+  type StoredChatConversation,
+  type StoredChatState,
+} from "@/lib/chat/chat-storage";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import { CHAT_MESSAGES } from "@/lib/i18n/messages/chat";
 import { ChatAttachmentResults } from "../chat-attachment-results/chat-attachment-results";
@@ -33,6 +41,40 @@ function localMessage(role: ChatMessage["role"], content: string): ChatMessage {
   };
 }
 
+function latestAttachment(messages: readonly ChatMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const attachment = messages[index].attachments?.at(-1);
+    if (attachment) return attachment;
+  }
+
+  return null;
+}
+
+function replaceStreamingMessage(
+  messages: readonly ChatMessage[],
+  streamId: string,
+  finalMessage: ChatMessage,
+) {
+  const streamIndex = messages.findIndex((message) => message.id === streamId);
+  if (streamIndex >= 0) {
+    return messages.flatMap((message, index) => {
+      if (index === streamIndex) return [finalMessage];
+      return message.id === finalMessage.id ? [] : [message];
+    });
+  }
+
+  const finalIndex = messages.findIndex(
+    (message) => message.id === finalMessage.id,
+  );
+  if (finalIndex >= 0) {
+    return messages.map((message, index) =>
+      index === finalIndex ? finalMessage : message,
+    );
+  }
+
+  return [...messages, finalMessage];
+}
+
 export function ChatExperience() {
   const { locale } = useLocale();
   const copy = CHAT_MESSAGES[locale];
@@ -46,21 +88,55 @@ export function ChatExperience() {
   const [error, setError] = useState<string | null>(null);
   const [restartKey, setRestartKey] = useState(0);
   const [lastMessage, setLastMessage] = useState<string | null>(null);
+  const [storageReady, setStorageReady] = useState(false);
+  const activeModeRef = useRef<ChatMode>("search");
+  const conversationsRef = useRef<StoredChatState["conversations"]>({});
+  const didRestoreStorage = useRef(false);
+  const clearedModesRef = useRef(new Set<ChatMode>());
   const sessionController = useRef<AbortController | null>(null);
   const messageController = useRef<AbortController | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
+    if (didRestoreStorage.current) return;
+    didRestoreStorage.current = true;
+
+    const stored = loadChatState() ?? emptyChatState();
+    const restoredMode = stored.activeMode;
+    const conversation = stored.conversations[restoredMode];
+    const restoredMessages = conversation
+      ? dedupeChatMessages(conversation.messages)
+      : [];
+
+    conversationsRef.current = stored.conversations;
+    activeModeRef.current = restoredMode;
+    setMode(restoredMode);
+    setSessionId(conversation?.sessionId ?? null);
+    setMessages(restoredMessages);
+    setAttachment(
+      conversation?.attachment ?? latestAttachment(restoredMessages),
+    );
+    setLastMessage(
+      restoredMessages.findLast((message) => message.role === "user")
+        ?.content ?? null,
+    );
+    setPhase(conversation ? "ready" : "starting");
+    setStorageReady(true);
+  }, []);
+
+  useEffect(() => {
+    if (!storageReady || sessionId) return;
+
     sessionController.current?.abort();
     messageController.current?.abort();
     const controller = new AbortController();
     sessionController.current = controller;
 
     void (async () => {
+      // Let React Strict Mode run its first cleanup before opening a session.
       await Promise.resolve();
       if (controller.signal.aborted) return;
       setPhase("starting");
-      setSessionId(null);
       setMessages([]);
       setAttachment(null);
       setTool(null);
@@ -69,6 +145,7 @@ export function ChatExperience() {
       try {
         const session = await createChatSession({ mode, locale }, controller.signal);
         if (controller.signal.aborted) return;
+        clearedModesRef.current.delete(mode);
         setSessionId(session.sessionId);
         setMessages([localMessage("assistant", session.greeting)]);
         setPhase("ready");
@@ -84,7 +161,36 @@ export function ChatExperience() {
     })();
 
     return () => controller.abort();
-  }, [copy.assistant.error, locale, mode, restartKey]);
+  }, [copy.assistant.error, locale, mode, restartKey, sessionId, storageReady]);
+
+  useEffect(() => {
+    if (!storageReady || !sessionId) return;
+
+    const persistConversation = () => {
+      if (clearedModesRef.current.has(mode)) return;
+
+      const conversation: StoredChatConversation = {
+        attachment,
+        messages: dedupeChatMessages(messages),
+        sessionId,
+        updatedAt: Date.now(),
+      };
+      conversationsRef.current = {
+        ...conversationsRef.current,
+        [mode]: conversation,
+      };
+      saveChatState({
+        ...emptyChatState(activeModeRef.current),
+        conversations: conversationsRef.current,
+      });
+    };
+
+    const timer = window.setTimeout(persistConversation, 120);
+    return () => {
+      window.clearTimeout(timer);
+      persistConversation();
+    };
+  }, [attachment, messages, mode, sessionId, storageReady]);
 
   useEffect(
     () => () => {
@@ -119,11 +225,14 @@ export function ChatExperience() {
     const controller = new AbortController();
     messageController.current = controller;
     const streamId = `stream-${crypto.randomUUID()}`;
+    const streamCreatedAt = new Date().toISOString();
+    const userMessage = localMessage("user", displayValue);
     let streamedText = "";
     let terminalError = false;
+    let streamFinished = false;
 
     setLastMessage(content);
-    setMessages((current) => [...current, localMessage("user", displayValue)]);
+    setMessages((current) => dedupeChatMessages([...current, userMessage]));
     setAttachment(null);
     setTool(null);
     setError(null);
@@ -135,14 +244,15 @@ export function ChatExperience() {
         { content },
         (event) => {
           if (event.type === "token") {
+            if (streamFinished) return;
             streamedText += event.data.text;
+            const streamMessage: ChatMessage = {
+              id: streamId,
+              role: "assistant",
+              content: streamedText,
+              createdAt: streamCreatedAt,
+            };
             setMessages((current) => {
-              const streamMessage: ChatMessage = {
-                id: streamId,
-                role: "assistant",
-                content: streamedText,
-                createdAt: new Date().toISOString(),
-              };
               // Pure updater: React StrictMode may call it twice in development.
               if (!current.some((message) => message.id === streamId)) {
                 return [...current, streamMessage];
@@ -163,20 +273,18 @@ export function ChatExperience() {
             return;
           }
           if (event.type === "done") {
-            setMessages((current) => {
-              if (current.some((message) => message.id === streamId)) {
-                return current.map((message) =>
-                  message.id === streamId ? event.data.message : message,
-                );
-              }
-              return [...current, event.data.message];
-            });
+            if (streamFinished) return;
+            streamFinished = true;
+            setMessages((current) =>
+              replaceStreamingMessage(current, streamId, event.data.message),
+            );
             const finalAttachment = event.data.message.attachments?.at(-1);
             if (finalAttachment) setAttachment(finalAttachment);
             setPhase("ready");
             setTool(null);
             return;
           }
+          streamFinished = true;
           terminalError = true;
           setError(event.data.message || copy.assistant.error);
           setPhase("error");
@@ -198,8 +306,71 @@ export function ChatExperience() {
     }
   }
 
-  function restart() {
+  function persistModeState(activeMode: ChatMode) {
+    saveChatState({
+      ...emptyChatState(activeMode),
+      conversations: conversationsRef.current,
+    });
+  }
+
+  function cacheCurrentConversation() {
+    if (!sessionId || clearedModesRef.current.has(mode)) return;
+
+    conversationsRef.current = {
+      ...conversationsRef.current,
+      [mode]: {
+        attachment,
+        messages: dedupeChatMessages(messages),
+        sessionId,
+        updatedAt: Date.now(),
+      },
+    };
+  }
+
+  function changeMode(nextMode: ChatMode) {
+    if (nextMode === mode) return;
+
+    sessionController.current?.abort();
     messageController.current?.abort();
+    cacheCurrentConversation();
+
+    const conversation = conversationsRef.current[nextMode];
+    const restoredMessages = conversation
+      ? dedupeChatMessages(conversation.messages)
+      : [];
+
+    activeModeRef.current = nextMode;
+    persistModeState(nextMode);
+    setMode(nextMode);
+    setSessionId(conversation?.sessionId ?? null);
+    setMessages(restoredMessages);
+    setAttachment(
+      conversation?.attachment ?? latestAttachment(restoredMessages),
+    );
+    setLastMessage(
+      restoredMessages.findLast((message) => message.role === "user")
+        ?.content ?? null,
+    );
+    setTool(null);
+    setError(null);
+    setPhase(conversation ? "ready" : "starting");
+  }
+
+  function restart() {
+    sessionController.current?.abort();
+    messageController.current?.abort();
+    clearedModesRef.current.add(mode);
+    const nextConversations = { ...conversationsRef.current };
+    delete nextConversations[mode];
+    conversationsRef.current = nextConversations;
+    persistModeState(mode);
+    setSessionId(null);
+    setMessages([]);
+    setAttachment(null);
+    setLastMessage(null);
+    setTool(null);
+    setError(null);
+    setPhase("starting");
     setRestartKey((current) => current + 1);
   }
 
@@ -229,7 +400,7 @@ export function ChatExperience() {
               copy={copy}
               disabled={pending}
               mode={mode}
-              onChange={setMode}
+              onChange={changeMode}
             />
             <div className={styles.conversationMeta}>
               <p className={styles.status} data-phase={phase}>

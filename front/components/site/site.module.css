@@ -232,7 +232,7 @@
 /* Footer */
 
 .footer {
-  margin-top: auto;
+  margin-top: 20px;
   padding: 48px 0 32px;
   background: var(--tm-footer);
   color: #f3ece4;

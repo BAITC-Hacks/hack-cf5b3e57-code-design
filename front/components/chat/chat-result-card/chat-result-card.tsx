@@ -11,6 +11,7 @@ import {
 } from "@/components/shared/status-icons/status-icons";
 import type { Locale, MatchCard } from "../../../../shared/contract";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
+import { humanizeDates } from "../format-dates";
 import styles from "./chat-result-card.module.css";
 
 interface ChatResultCardProps {
@@ -51,11 +52,10 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
           />
         ) : (
           <div className={styles.placeholder} aria-hidden="true">
-            <span>{String(rank).padStart(2, "0")}</span>
             <strong>{category.slice(0, 1)}</strong>
           </div>
         )}
-        <span className={styles.rank}>#{rank}</span>
+        <span className={styles.rank} aria-label={`${copy.result.rank} ${rank}`}>{rank}</span>
         <span className={styles.photoLabel}>{imageFailed ? copy.result.photoMissing : copy.result.photo}</span>
       </div>
 
@@ -71,7 +71,7 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
         <p className={styles.price}>
           <span>{copy.result.from}</span> <strong>{price} ₸</strong>
         </p>
-        <p className={styles.reason}>{card.reason}</p>
+        <p className={styles.reason}>{humanizeDates(card.reason, locale)}</p>
 
         {flags.length > 0 && (
           <ul className={styles.flags}>
@@ -88,7 +88,7 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
                   {fact.verified ? <CheckStatusIcon /> : <ClaimedStatusIcon />}
                 </span>
                 <span>
-                  <strong>{fact.label}</strong>
+                  <strong>{humanizeDates(fact.label, locale)}</strong>
                   <small>{fact.verified ? copy.result.verified : copy.result.claimed}</small>
                 </span>
               </li>
@@ -97,7 +97,7 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
         </div>
 
         <Link className={styles.profileLink} href={`/contractor/${card.id}`}>
-          {card.id}
+          {copy.result.profile}
           <ExternalLinkIcon />
         </Link>
       </div>

@@ -15,16 +15,16 @@
 
   --color-ivory: #fff8f0;
   --color-surface: #ffffff;
-  --color-ink: #253d35;
-  --color-muted: #617067;
+  --color-ink: #1f1a17;
+  --color-muted: #675d55;
   --color-ocean: #9dd9d2;
   --color-gold: #f4d06f;
   --color-orange: #ff8811;
   --color-teal: #25685e;
   --color-amber: #914609;
-  --color-mint: #e7f1e9;
+  --color-mint: #e4f4f1;
   --color-warm: #fff0d9;
-  --color-line: #dce2d9;
+  --color-line: #eadfd2;
   --color-footer: #151515;
 
   /* Shared ToiMatch component tokens. */
@@ -45,7 +45,13 @@
   --tm-warn-soft: var(--color-warm);
   --tm-radius-card: 24px;
   --tm-radius-field: 12px;
-  --tm-shadow-card: 0 14px 36px rgb(37 61 53 / 10%);
+  --tm-shadow-card: 0 14px 36px rgb(31 26 23 / 8%);
+  --tm-shadow-soft: 0 6px 18px rgb(31 26 23 / 6%);
+  --tm-focus: #1f1a17;
+  --tm-field-border: #b9ab9c;
+  --tm-page-width: 1280px;
+  --tm-gutter: 32px;
+  --tm-section-gap: 64px;
 
   /* Compatibility aliases used by the existing component modules. */
   --color-gray: var(--color-muted);
@@ -56,7 +62,7 @@
 
   --font-primary: "Onest Variable", "Onest", "Montserrat", "Segoe UI", sans-serif;
   --font-display: "Onest Variable", "Onest", "Cormorant Garamond", "Segoe UI", sans-serif;
-  --header-h: 80px;
+  --header-h: 72px;
   --blog-bg: #ffffff;
   --policy-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --policy-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
@@ -82,12 +88,17 @@ html {
 
 body {
   min-height: 100vh;
+  overflow-x: clip;
   padding-bottom: env(safe-area-inset-bottom);
   background-color: var(--color-body);
   color: var(--color-dark);
   font-family: var(--font-primary);
+  font-size: 16px;
+  line-height: 1.5;
   text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
 }
+
 
 button,
 input,
@@ -114,8 +125,12 @@ svg {
 }
 
 :focus-visible {
-  outline: 3px solid rgb(37 104 94 / 34%);
-  outline-offset: 3px;
+  outline: 2px solid var(--tm-focus);
+  outline-offset: 2px;
+}
+
+button:disabled {
+  cursor: not-allowed;
 }
 
 .visually-hidden,
@@ -152,6 +167,20 @@ h6 {
 .title {
   text-align: center;
   font-size: var(--font-64);
+}
+
+@media (max-width: 1000px) {
+  :root {
+    --tm-gutter: 24px;
+    --tm-section-gap: 48px;
+  }
+}
+
+@media (max-width: 600px) {
+  :root {
+    --tm-gutter: 16px;
+    --tm-section-gap: 40px;
+  }
 }
 
 @supports (-webkit-touch-callout: none) {

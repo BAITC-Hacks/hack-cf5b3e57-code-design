@@ -1,32 +1,37 @@
 .list {
   display: flex;
-  max-height: 122px;
   flex-wrap: wrap;
-  gap: 7px;
-  overflow-y: auto;
-  padding: 2px 2px 4px;
-  scrollbar-width: thin;
+  gap: 8px;
+  padding: 2px;
 }
 
 .list button {
   min-height: 44px;
-  padding: 0 12px;
-  border: 1px solid var(--tm-muted);
+  max-width: 100%;
+  padding: 8px 14px;
+  border: 1px solid var(--tm-field-border);
   border-radius: 999px;
   background: var(--tm-surface);
-  color: var(--tm-muted);
+  color: var(--tm-ink);
   cursor: pointer;
-  font-size: 12px;
-  font-weight: 700;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.35;
+  text-align: left;
+  transition: background 160ms ease, border-color 160ms ease;
 }
 
 .list button:hover:not(:disabled) {
-  border-color: var(--tm-ink);
+  border-color: var(--tm-ember);
   background: var(--tm-ember-soft);
-  color: var(--tm-ink);
 }
 
 .list button:disabled {
-  cursor: not-allowed;
-  opacity: 0.45;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .list button {
+    transition: none;
+  }
 }

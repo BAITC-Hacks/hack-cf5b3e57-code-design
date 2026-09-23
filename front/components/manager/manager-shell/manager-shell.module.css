@@ -1,10 +1,10 @@
-.shell { min-height: 100vh; background: var(--tm-bg); color: var(--tm-ink); font-family: var(--font-primary), sans-serif; }
-.shell :where(button, a, input, select, summary, [tabindex]):focus-visible { outline: 3px solid var(--tm-ocean-ink); outline-offset: 4px; }
-.shell :where(button, input, select, h1, h2, h3, h4) { font-family: inherit; }
+.shell { min-height: 100vh; overflow-x: clip; background: var(--tm-bg); color: var(--tm-ink); font-family: var(--font-primary), sans-serif; }
+.shell :where(button, a, input, select, summary, textarea, [tabindex]):focus-visible { outline: 2px solid #1f1a17; outline-offset: 3px; }
+.shell :where(button, input, select, textarea, h1, h2, h3, h4) { font-family: inherit; }
 .shell :where(p, h1, h2, h3) { overflow-wrap: anywhere; }
-.skipLink { position: fixed; top: 10px; left: 10px; z-index: 100; padding: 12px 16px; border-radius: var(--tm-radius-field); background: var(--tm-ink); color: var(--tm-surface); transform: translateY(-150%); }
+.skipLink { position: fixed; top: 12px; left: 16px; z-index: 100; padding: 12px 16px; border-radius: var(--tm-radius-field); background: var(--tm-ink); color: var(--tm-surface); font-weight: 600; transform: translateY(calc(-100% - 24px)); }
 .skipLink:focus { transform: translateY(0); }
-.main { width: min(calc(100% - 96px), 1280px); margin: 0 auto; padding: 48px 0 80px; }
-@media (max-width: 1000px) { .main { width: calc(100% - 64px); padding-top: 34px; } }
-@media (max-width: 600px) { .main { width: calc(100% - 36px); padding: 28px 0 52px; } }
+.main { width: min(calc(100% - 96px), 1280px); margin: 0 auto; padding: 40px 0 72px; }
+@media (max-width: 1000px) { .main { width: calc(100% - 64px); padding-top: 32px; } }
+@media (max-width: 600px) { .main { width: calc(100% - 32px); padding: 24px 0 48px; } }
 @media (prefers-reduced-motion: reduce) { .shell *, .shell *::before, .shell *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }

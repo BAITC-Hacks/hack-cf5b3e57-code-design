@@ -30,6 +30,7 @@ export function ChatModeSwitcher({
           disabled={disabled}
           key={value}
           onClick={() => onChange(value)}
+          title={copy.modes[value].description}
           type="button"
         >
           {mode === value && (

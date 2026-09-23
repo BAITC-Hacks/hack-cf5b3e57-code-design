@@ -21,16 +21,6 @@ export function ChatHero({ copy }: { copy: ChatMessages }) {
         </h1>
         <p className={styles.description}>{copy.hero.description}</p>
       </motion.div>
-
-      <motion.div
-        animate={{ opacity: 1, scale: 1 }}
-        className={styles.engineBadge}
-        initial={reduceMotion ? false : { opacity: 0, scale: 0.94 }}
-        transition={{ delay: reduceMotion ? 0 : 0.14, duration: reduceMotion ? 0 : 0.4 }}
-      >
-        <span aria-hidden="true" />
-        {copy.hero.badge}
-      </motion.div>
     </section>
   );
 }

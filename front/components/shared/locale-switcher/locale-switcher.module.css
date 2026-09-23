@@ -1,5 +1,6 @@
-.switcher { display: inline-flex; align-items: center; gap: 2px; padding: 3px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-field); background: var(--tm-surface); }
-.switcher button { min-width: 44px; min-height: 44px; padding-inline: 8px; border: 0; border-radius: 10px; background: transparent; color: var(--tm-muted); cursor: pointer; font-size: 12px; font-weight: 600; transition: background 180ms ease; }
+.switcher { display: inline-flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-field); background: var(--tm-surface); }
+.switcher button { min-width: 44px; min-height: 44px; padding-inline: 8px; border: 0; border-radius: 10px; background: transparent; color: var(--tm-muted); cursor: pointer; font-size: 14px; font-weight: 600; line-height: 1; transition: background 160ms ease, color 160ms ease; }
 .switcher button:hover { background: var(--tm-ember-soft); color: var(--tm-ink); }
-.switcher .active { background: var(--tm-ink); color: var(--tm-surface); }
+.switcher button:focus-visible { outline-offset: -2px; }
+.switcher .active, .switcher .active:hover { background: var(--tm-ink); color: var(--tm-surface); }
 @media (prefers-reduced-motion: reduce) { .switcher button { transition: none; } }

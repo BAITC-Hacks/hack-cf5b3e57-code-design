@@ -1,4 +1,24 @@
-.panel { margin-top: 20px; padding: 30px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }.heading { display: flex; align-items: center; justify-content: space-between; gap: 20px; }.heading div > span { color: var(--tm-ink); font-size: var(--font-12, 12px); font-weight: 760; letter-spacing: 0; }.heading h2 { margin: 3px 0 0; font-size: var(--font-24, 24px); letter-spacing: -.035em; }.heading p { margin: 6px 0 0; color: var(--tm-muted); font-size: var(--font-14, 14px); }.heading > strong { padding: 8px 12px; border-radius: 999px; font-size: var(--font-12, 12px); }.found { background: var(--tm-bg); color: var(--tm-ocean-ink); }.no_category_in_city { background: var(--tm-warn-soft); color: var(--tm-warn); }.all_filtered_out { background: var(--tm-stop-soft); color: var(--tm-stop); }.outcome { margin-top: 22px; padding: 16px 18px; border-left: 3px solid var(--tm-ink); border-radius: 4px 12px 12px 4px; background: var(--tm-ember-soft); }.outcome strong { font-size: var(--font-14, 14px); }.outcome p { margin: 5px 0 0; color: var(--tm-muted); font-size: var(--font-12, 12px); line-height: 1.5; }.outcome_found { border-color: var(--tm-ocean-ink); background: var(--tm-ocean); }.outcome_no_category_in_city { border-color: var(--tm-warn); background: var(--tm-warn-soft); }.outcome_all_filtered_out { border-color: var(--tm-stop); background: var(--tm-stop-soft); }.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }.empty { display: grid; min-height: 180px; place-content: center; justify-items: center; margin-top: 20px; border: 1px dashed var(--tm-line); border-radius: 16px; color: var(--tm-muted); text-align: center; }.empty svg { width: 32px; color: var(--tm-ink); }.empty p { max-width: 580px; margin: 12px 0 0; font-size: var(--font-14, 14px); line-height: 1.55; }
+.panel { margin-top: 20px; }
+.badge { display: inline-flex; align-items: center; min-height: 30px; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.found { background: #e2f3f0; color: var(--tm-ocean-ink); }
+.no_category_in_city { background: var(--tm-warn-soft); color: var(--tm-warn); }
+.all_filtered_out { background: var(--tm-stop-soft); color: var(--tm-stop); }
+.outcome { display: grid; grid-template-columns: 40px minmax(0, 1fr); align-items: start; gap: 14px; margin-top: 20px; padding: 16px 18px; border-radius: 16px; }
+.outcomeIcon { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: var(--tm-surface); }
+.outcomeIcon svg { width: 20px; height: 20px; }
+.outcome strong { display: block; color: var(--tm-ink); font-size: 16px; font-weight: 650; line-height: 1.35; }
+.outcome p { margin: 4px 0 0; color: var(--tm-ink); font-size: 14px; line-height: 1.55; }
+.outcome_found { background: var(--tm-ocean); }
+.outcome_found .outcomeIcon { color: var(--tm-ocean-ink); }
+.outcome_no_category_in_city { background: var(--tm-warn-soft); }
+.outcome_no_category_in_city .outcomeIcon { color: var(--tm-warn); }
+.outcome_all_filtered_out { background: var(--tm-stop-soft); }
+.outcome_all_filtered_out .outcomeIcon { color: var(--tm-stop); }
+.grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+.empty { display: grid; min-height: 160px; place-content: center; justify-items: center; margin-top: 16px; padding: 24px 16px; border: 1px dashed var(--tm-line); border-radius: 18px; color: var(--tm-muted); text-align: center; }
+.empty svg { width: 28px; height: 28px; color: var(--tm-ink); }
+.empty p { max-width: 520px; margin: 10px 0 0; font-size: 14px; line-height: 1.55; }
 @media (max-width: 1120px) { .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 700px) { .grid { grid-template-columns: 1fr; } }
-@media (max-width: 600px) { .panel { padding: 20px; border-radius: var(--tm-radius-card); } .heading { align-items: flex-start; flex-direction: column; } .heading h2 { font-size: var(--font-20, 20px); } }
+@media (max-width: 700px) { .grid { grid-template-columns: 1fr; gap: 16px; } }
+@media (max-width: 600px) { .outcome { grid-template-columns: 1fr; gap: 10px; padding: 16px; } }
+@media (max-width: 600px) { .panel { margin-top: 16px; } }

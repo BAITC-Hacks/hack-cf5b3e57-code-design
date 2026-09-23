@@ -49,6 +49,7 @@ export function ManagerWorkspace() {
   const compareCloseRef = useRef<null | (() => void)>(null);
   const generationRef = useRef(0);
   const eventIdRef = useRef(0);
+  const timelineRef = useRef<HTMLElement>(null);
 
   const stopConnections = useCallback(() => {
     streamCloseRef.current?.();
@@ -101,6 +102,11 @@ export function ManagerWorkspace() {
 
   function selectPreset(preset: DemoPreset) {
     runMatch({ ...preset.request, locale });
+    // On narrow screens the stream renders below the presets — bring it into view.
+    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1000px)").matches) {
+      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+      timelineRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
+    }
   }
 
   function cancelRun() {
@@ -136,15 +142,18 @@ export function ManagerWorkspace() {
   return (
     <ManagerShell>
       <ManagerHero status={status} />
-      <section className={styles.workspace}>
-        <div className={styles.requestColumn}>
-          <MatchRequestForm request={localizedRequest} busy={busy} onChange={setRequest} onRun={() => runMatch(localizedRequest)} onCancel={cancelRun} />
-          <DemoPresets busy={busy} onSelect={selectPreset} />
+      <div className={styles.request}>
+        <MatchRequestForm request={localizedRequest} busy={busy} onChange={setRequest} onRun={() => runMatch(localizedRequest)} onCancel={cancelRun} />
+        <DemoPresets busy={busy} onSelect={selectPreset} />
+      </div>
+      <div className={styles.live}>
+        <PipelineTimeline ref={timelineRef} timeline={timeline} streaming={streaming} error={error} onRetry={() => runMatch(localizedRequest)} />
+        <div className={styles.side}>
+          <FunnelView steps={funnel} pending={streaming} />
+          <CriteriaPanel criteria={criteria} rankedIds={rankedIds} cards={cards} finished={status === "done"} />
+          <CriticPanel critic={critic} cards={cards} finished={status === "done"} />
         </div>
-        <PipelineTimeline timeline={timeline} streaming={streaming} error={error} onRetry={() => runMatch(localizedRequest)} />
-        <FunnelView steps={funnel} />
-      </section>
-      <section className={styles.insights}><CriteriaPanel criteria={criteria} rankedIds={rankedIds} /><CriticPanel critic={critic} /></section>
+      </div>
       <ManagerResults cards={cards} result={result} />
       <ComparisonPanel comparing={isComparing} comparison={comparison} error={comparisonError} onCompare={compareDates} />
       <JsonPanel result={result} />

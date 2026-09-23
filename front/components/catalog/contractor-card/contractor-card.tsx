@@ -37,9 +37,15 @@ export function ContractorCard({
   priority?: boolean;
 }) {
   const reduceMotion = useReducedMotion();
-  const priceFormatter = new Intl.NumberFormat(
-    locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-KZ",
-  );
+  // Deterministic grouping: Node and browser ICU disagree on kk-KZ separators,
+  // which caused hydration mismatches.
+  const priceFormatter = {
+    format: (value: number) =>
+      String(Math.round(value)).replace(
+        /\B(?=(\d{3})+(?!\d))/g,
+        locale === "en" ? "," : "\u00a0",
+      ),
+  };
   const detailHref = `/contractor/${encodeURIComponent(contractor.id)}`;
   const rawCategory = contractor.categories[0];
   const category = rawCategory
@@ -91,12 +97,11 @@ export function ContractorCard({
         </div>
 
         <div className={styles.heading}>
-          <div>
+          <h4 className={styles.nameHeading}>
             <Link href={detailHref} className={styles.name}>
               {contractor.anonName}
             </Link>
-            <span className={styles.id}>{contractor.id}</span>
-          </div>
+          </h4>
           <p className={styles.price}>
             <span>{messages.card.priceFrom}</span>{" "}
             {priceFormatter.format(contractor.priceFromKzt)} ₸

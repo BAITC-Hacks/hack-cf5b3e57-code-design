@@ -1,2 +1,14 @@
-.panel { margin-top: 20px; overflow: hidden; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }.panel summary { display: flex; min-height: 64px; align-items: center; justify-content: space-between; padding: 0 24px; cursor: pointer; list-style: none; }.panel summary::-webkit-details-marker { display: none; }.panel summary > span { display: flex; align-items: center; gap: 10px; font-size: var(--font-14, 14px); font-weight: 680; }.panel summary svg { width: 20px; color: var(--tm-ink); }.panel summary .schema { color: var(--tm-muted); font-size: var(--font-12, 12px); }.panel pre { max-height: 520px; margin: 0; padding: 22px 24px; overflow: auto; border-top: 1px solid var(--tm-line); background: var(--tm-bg); color: var(--tm-ink); font-size: 12px; line-height: 1.6; }
-@media (max-width: 600px) { .panel summary { padding: 0 18px; } .panel summary .schema { display: none; } }
+.panel { margin-top: 20px; overflow: hidden; border: 1px dashed var(--tm-line); border-radius: 18px; background: transparent; }
+.panel summary { display: flex; min-height: 56px; align-items: center; gap: 12px; padding: 8px 20px; cursor: pointer; color: var(--tm-muted); list-style: none; }
+.panel summary::-webkit-details-marker { display: none; }
+.panel summary:hover { color: var(--tm-ink); }
+.panel summary > svg { width: 18px; height: 18px; flex: 0 0 auto; }
+.label { display: grid; flex: 1; min-width: 0; gap: 1px; }
+.label strong { font-size: 14px; font-weight: 600; }
+.label small { font-size: 13px; }
+.chevron { width: 18px; height: 18px; flex: 0 0 auto; transition: transform 160ms ease; }
+.chevron svg { display: block; width: 100%; height: 100%; }
+.panel[open] .chevron { transform: rotate(180deg); }
+.panel pre { max-height: 480px; margin: 0; padding: 18px 20px; overflow: auto; border-top: 1px dashed var(--tm-line); background: var(--tm-surface); color: var(--tm-ink); font-family: ui-monospace, "SFMono-Regular", Consolas, monospace; font-size: 12px; line-height: 1.6; white-space: pre; }
+@media (max-width: 600px) { .panel summary { padding: 8px 16px; } .panel pre { padding: 14px 16px; } }
+@media (max-width: 600px) { .panel { margin-top: 16px; } }

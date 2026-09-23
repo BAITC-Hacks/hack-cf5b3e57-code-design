@@ -4,8 +4,8 @@ import type { Locale, MatchResponse } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CriteriaList } from "../criteria-list/criteria-list";
 import { FunnelSummary } from "../funnel-summary/funnel-summary";
+import { SparkIcon } from "../icons/icons";
 import { MatchCard } from "../match-card/match-card";
-import { MascotGuide } from "../mascot-guide/mascot-guide";
 import { OutcomeBanner } from "../outcome-banner/outcome-banner";
 import styles from "./match-results.module.css";
 
@@ -17,35 +17,36 @@ interface MatchResultsProps {
 }
 
 export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsProps) {
+  const hasCards = result.cards.length > 0;
+
   return (
     <section
+      aria-label={copy.resultKicker}
       className={styles.results}
       ref={sectionRef}
       tabIndex={-1}
     >
-      <OutcomeBanner copy={copy} result={result} />
-      <div className={styles.mascot}>
-        <MascotGuide
-          copy={copy.mascot}
-          message={
-            result.outcome === "found"
-              ? (result.criteria[0] ?? result.summary)
-              : result.summary
-          }
-          variant={result.outcome === "found" ? "found" : "sorry"}
-        />
-      </div>
-      <CriteriaList copy={copy} criteria={result.criteria} />
+      <OutcomeBanner copy={copy} locale={locale} result={result} showSummary={hasCards} />
 
-      {result.cards.length > 0 ? (
+      <CriteriaList
+        copy={copy}
+        criteria={result.criteria}
+        editLabel={hasCards ? undefined : copy.editRequest}
+        hint={hasCards || !result.summary ? undefined : copy.emptyAction}
+        locale={locale}
+        message={hasCards ? undefined : result.summary || copy.emptyAction}
+        variant={hasCards ? "found" : "sorry"}
+      />
+
+      {hasCards && (
         <div className={styles.cardsSection}>
           <div className={styles.heading}>
             <h2>{copy.cardsTitle}</h2>
             <span>{result.cards.length} / 3</span>
           </div>
-          <div className={styles.grid}>
+          <div className={styles.grid} data-count={result.cards.length}>
             {result.cards.map((card, index) => (
-              <div key={card.id}>
+              <div className={styles.cell} key={card.id}>
                 <MatchCard
                   card={card}
                   categories={copy.categories}
@@ -56,13 +57,18 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
                 />
               </div>
             ))}
+            {result.cards.length < 3 && (
+              <div className={styles.emptySlot} data-span={3 - result.cards.length}>
+                <SparkIcon aria-hidden="true" />
+                <strong>{copy.emptySlot.title}</strong>
+                <span>{copy.emptySlot.text}</span>
+              </div>
+            )}
           </div>
         </div>
-      ) : (
-        <p className={styles.empty}>{copy.emptyAction}</p>
       )}
 
-      <FunnelSummary copy={copy} funnel={result.funnel} />
+      <FunnelSummary copy={copy} funnel={result.funnel} locale={locale} />
     </section>
   );
 }

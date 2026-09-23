@@ -1,2 +1,11 @@
-.panel { min-height: 190px; padding: 22px; border: 1px solid rgb(29 29 31 / 10%); border-radius: 24px; background: rgb(255 255 255 / 94%); box-shadow: 0 12px 32px rgb(29 29 31 / 4%); }.heading { display: flex; align-items: center; justify-content: space-between; padding-bottom: 14px; border-bottom: 1px solid rgb(29 29 31 / 10%); }.heading > span { font-size: var(--font-14, 14px); font-weight: 680; }.heading > strong { color: var(--color-accent, #0066cc); font-size: var(--font-18, 18px); }.heading .ok { color: #198754; }.verified { display: flex; gap: 9px; margin: 17px 0 0; color: #17663f; font-size: var(--font-12, 12px); line-height: 1.5; }.verified span { display: grid; width: 23px; height: 23px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: rgb(25 135 84 / 10%); font-weight: 800; }.verified svg { width: 14px; height: 14px; }.empty { margin: 17px 0 0; color: rgb(59 59 61 / 72%); font-size: var(--font-12, 12px); line-height: 1.55; }.panel ul { display: grid; gap: 10px; margin: 15px 0 0; padding: 0; list-style: none; }.panel li { color: #7f3131; font-size: var(--font-12, 12px); line-height: 1.45; }
-@media (max-width: 840px) { .panel { min-height: 0; } }
+.status { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 5px 12px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.status svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.ok { background: #e2f3f0; color: var(--tm-ocean-ink); }
+.issues { background: var(--tm-stop-soft); color: var(--tm-stop); }
+.verified { display: flex; align-items: flex-start; gap: 10px; margin: 16px 0 0; color: var(--tm-ink); font-size: 14px; line-height: 1.5; }
+.verified span { display: grid; width: 24px; height: 24px; flex: 0 0 auto; place-items: center; border-radius: 50%; background: #e2f3f0; color: var(--tm-ocean-ink); }
+.verified svg { width: 14px; height: 14px; }
+.empty { margin: 16px 0 0; color: var(--tm-muted); font-size: 14px; line-height: 1.55; }
+.problems { display: grid; gap: 8px; margin: 16px 0 0; padding: 0; list-style: none; }
+.problems li { padding: 10px 12px; border-radius: var(--tm-radius-field); background: var(--tm-stop-soft); color: var(--tm-ink); font-size: 14px; line-height: 1.45; }
+.problems strong { display: block; margin-bottom: 2px; color: var(--tm-stop); font-size: 13px; font-weight: 600; }

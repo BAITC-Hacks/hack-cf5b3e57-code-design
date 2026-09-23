@@ -6,6 +6,7 @@ import type { Ref } from "react";
 import type { BundleItem, EventBundle, Locale } from "../../../../shared/contract";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
 import { ChatResultCard } from "../chat-result-card/chat-result-card";
+import { humanizeDates } from "../format-dates";
 import styles from "./chat-bundle-results.module.css";
 
 interface ChatBundleResultsProps {
@@ -49,7 +50,7 @@ function BundleGroup({
                   {copy.bundle.budget}: {currency.format(item.allocatedBudgetKzt)} ₸
                 </span>
               </header>
-              <p className={styles.summary}>{item.match.summary}</p>
+              <p className={styles.summary}>{humanizeDates(item.match.summary, locale)}</p>
               {item.match.cards.length > 0 ? (
                 <div className={styles.cards}>
                   {item.match.cards.map((card, index) => (
@@ -97,7 +98,7 @@ export function ChatBundleResults({
           <h2>{copy.bundle.title}</h2>
         </div>
         <span>{currency.format(bundle.totalBudgetKzt)} ₸</span>
-        <p>{bundle.summary}</p>
+        <p>{humanizeDates(bundle.summary, locale)}</p>
       </header>
 
       <BundleGroup

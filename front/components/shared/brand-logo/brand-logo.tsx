@@ -8,6 +8,7 @@ interface BrandLogoProps {
   className?: string;
   href?: string;
   light?: boolean;
+  priority?: boolean;
   tagline?: string;
 }
 
@@ -16,6 +17,7 @@ export function BrandLogo({
   className,
   href = "/",
   light = false,
+  priority = !light,
   tagline,
 }: BrandLogoProps) {
   return (
@@ -28,7 +30,7 @@ export function BrandLogo({
         alt=""
         className={styles.logo}
         height={295}
-        priority
+        priority={priority}
         src={light ? "/brand/toimatch-logo-light.svg" : "/brand/toimatch-logo.svg"}
         width={1844}
       />

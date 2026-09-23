@@ -1,19 +1,19 @@
 .guide {
   display: grid;
   min-width: 0;
-  grid-template-columns: minmax(150px, 0.72fr) minmax(0, 1fr);
+  grid-template-columns: minmax(160px, 0.9fr) minmax(0, 1fr);
   align-items: center;
-  gap: clamp(16px, 3vw, 34px);
+  gap: 24px;
   margin: 0;
 }
 
 .portrait {
   position: relative;
-  min-height: 270px;
+  min-height: 300px;
   overflow: hidden;
-  border: 1px solid rgb(37 104 94 / 18%);
-  border-radius: 28px;
+  border-radius: 24px;
   background: #fdf6ec;
+  box-shadow: inset 0 0 0 1px rgb(31 26 23 / 8%);
 }
 
 .portrait img,
@@ -26,43 +26,44 @@
 .portrait video {
   position: absolute;
   inset: 0;
+  object-fit: cover;
 }
 
 .message {
   position: relative;
   display: grid;
-  gap: 7px;
-  padding: 20px 22px;
-  border: 1px solid var(--color-line, #dce2d9);
+  gap: 8px;
+  padding: 20px;
+  border: 1px solid var(--tm-line);
   border-radius: 20px;
-  background: var(--color-surface, #fff);
-  color: var(--color-dark, #253d35);
-  box-shadow: 0 18px 48px rgb(37 61 53 / 8%);
+  background: var(--tm-surface);
+  color: var(--tm-ink);
+  box-shadow: 0 14px 36px rgb(31 26 23 / 8%);
 }
 
 .message::before {
   position: absolute;
-  top: 34px;
+  top: calc(50% - 8px);
   left: -9px;
   width: 16px;
   height: 16px;
-  border-bottom: 1px solid var(--color-line, #dce2d9);
-  border-left: 1px solid var(--color-line, #dce2d9);
-  background: var(--color-surface, #fff);
+  border-bottom: 1px solid var(--tm-line);
+  border-left: 1px solid var(--tm-line);
+  background: var(--tm-surface);
   content: "";
   transform: rotate(45deg);
 }
 
 .message strong {
-  color: var(--color-teal, #25685e);
-  font-size: var(--font-12, 12px);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  color: var(--tm-ocean-ink);
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1.4;
 }
 
 .message span {
-  font-size: var(--font-16, 16px);
-  font-weight: 620;
+  font-size: 16px;
+  font-weight: 500;
   line-height: 1.55;
 }
 
@@ -71,20 +72,26 @@
 }
 
 .compact .portrait {
-  width: 104px;
-  min-height: 104px;
-  border-radius: 24px;
+  width: 96px;
+  min-height: 96px;
+  height: 96px;
+  border-radius: 20px;
 }
 
 @media (max-width: 680px) {
-  .guide {
-    grid-template-columns: 1fr;
-  }
+  .guide { grid-template-columns: 1fr; }
 
   .portrait {
-    width: min(210px, 72vw);
-    min-height: 210px;
+    width: min(200px, 60vw);
+    min-height: 200px;
     justify-self: center;
+  }
+
+  .compact .portrait {
+    width: 64px;
+    min-height: 64px;
+    height: 64px;
+    border-radius: 16px;
   }
 
   .message::before {

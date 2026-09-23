@@ -1,6 +1,7 @@
 import type { MatchRequest } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
-import { ArrowIcon } from "../icons/icons";
+import { ArrowIcon, CategoryIcon } from "../icons/icons";
+import type { MatchFormState } from "../match-form/match-form";
 import styles from "./demo-presets.module.css";
 
 export type DemoId = "dense" | "florist" | "missing" | "busy";
@@ -19,30 +20,42 @@ export const DEMO_PRESETS: readonly DemoPreset[] = [
 
 interface DemoPresetsProps {
   copy: MatchMessages;
+  form?: Pick<MatchFormState, "budgetKzt" | "category" | "city" | "date" | "eventType">;
   onSelect: (preset: DemoPreset) => void;
 }
 
-export function DemoPresets({ copy, onSelect }: DemoPresetsProps) {
+function isActive(preset: DemoPreset, form: DemoPresetsProps["form"]) {
+  if (!form) return false;
+  const { request } = preset;
+  return (
+    form.category === request.category &&
+    form.city === request.city &&
+    form.date === request.date &&
+    form.eventType === request.eventType &&
+    Number(form.budgetKzt) === request.budgetKzt
+  );
+}
+
+export function DemoPresets({ copy, form, onSelect }: DemoPresetsProps) {
   return (
     <div className={styles.demos}>
       <div className={styles.intro}>
-        <span>{copy.demoLabel}</span>
-        <div>
-          <strong>{copy.demosTitle}</strong>
-          <small>{copy.demosHint}</small>
-        </div>
+        <strong>{copy.demosTitle}</strong>
+        <small>{copy.demosHint}</small>
       </div>
       <div className={styles.grid}>
-        {DEMO_PRESETS.map((preset, index) => {
+        {DEMO_PRESETS.map((preset) => {
           const item = copy.demos[preset.id];
           return (
-            <button key={preset.id} onClick={() => onSelect(preset)} type="button">
-              <span>{String(index + 1).padStart(2, "0")}</span>
-              <span>
+            <button aria-pressed={isActive(preset, form)} key={preset.id} onClick={() => onSelect(preset)} type="button">
+              <span className={styles.icon} aria-hidden="true">
+                <CategoryIcon category={preset.request.category} />
+              </span>
+              <span className={styles.text}>
                 <strong>{item.title}</strong>
                 <small>{item.hint}</small>
               </span>
-              <ArrowIcon />
+              <ArrowIcon className={styles.arrow} />
             </button>
           );
         })}

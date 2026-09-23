@@ -5,6 +5,7 @@ import {
   useId,
   useRef,
   useState,
+  type FocusEvent,
   type KeyboardEvent,
 } from "react";
 
@@ -65,6 +66,7 @@ export function CustomSelect({
   const triggerRef = useRef<HTMLButtonElement>(null);
   const [internalValue, setInternalValue] = useState(defaultValue);
   const [open, setOpen] = useState(false);
+  const [placement, setPlacement] = useState<"down" | "up">("down");
   const [activeIndex, setActiveIndex] = useState(-1);
   const selectedValue = value === undefined ? internalValue : value;
   const selectedIndex = options.findIndex(
@@ -101,8 +103,32 @@ export function CustomSelect({
 
   function openMenu(preferredIndex = initialActiveIndex()) {
     if (disabled || options.length === 0) return;
+    const rect = triggerRef.current?.getBoundingClientRect();
+    if (rect) {
+      const spaceBelow = window.innerHeight - rect.bottom;
+      const spaceAbove = rect.top;
+      setPlacement(spaceBelow < 260 && spaceAbove > spaceBelow ? "up" : "down");
+    }
     setActiveIndex(preferredIndex);
     setOpen(true);
+  }
+
+  function findByPrefix(query: string) {
+    const from = open && activeIndex >= 0 ? activeIndex : selectedIndex;
+    for (let step = 1; step <= options.length; step += 1) {
+      const index = (from + step + options.length) % options.length;
+      const option = options[index];
+      if (!option.disabled && option.label.toLocaleLowerCase().startsWith(query)) {
+        return index;
+      }
+    }
+    return -1;
+  }
+
+  function handleBlur(event: FocusEvent<HTMLDivElement>) {
+    if (!open) return;
+    const next = event.relatedTarget as Node | null;
+    if (!next || !rootRef.current?.contains(next)) setOpen(false);
   }
 
   function closeMenu(restoreFocus = false) {
@@ -157,6 +183,22 @@ export function CustomSelect({
         if (!open) openMenu(lastEnabledIndex(options));
         else setActiveIndex(lastEnabledIndex(options));
         break;
+      case "PageDown":
+        if (open) {
+          event.preventDefault();
+          setActiveIndex(
+            Math.min(lastEnabledIndex(options), Math.max(activeIndex, 0) + 5),
+          );
+        }
+        break;
+      case "PageUp":
+        if (open) {
+          event.preventDefault();
+          setActiveIndex(
+            Math.max(firstEnabledIndex(options), Math.max(activeIndex, 0) - 5),
+          );
+        }
+        break;
       case "Enter":
       case " ":
         event.preventDefault();
@@ -175,11 +217,7 @@ export function CustomSelect({
       default:
         if (event.key.length === 1 && !event.ctrlKey && !event.metaKey) {
           const query = event.key.toLocaleLowerCase();
-          const match = options.findIndex(
-            (option) =>
-              !option.disabled &&
-              option.label.toLocaleLowerCase().startsWith(query),
-          );
+          const match = findByPrefix(query);
           if (match >= 0) {
             event.preventDefault();
             if (!open) openMenu(match);
@@ -192,6 +230,8 @@ export function CustomSelect({
   return (
     <div
       className={`${styles.root}${className ? ` ${className}` : ""}`}
+      data-open={open || undefined}
+      onBlur={handleBlur}
       ref={rootRef}
     >
       {name ? (
@@ -237,7 +277,9 @@ export function CustomSelect({
         <ul
           aria-labelledby={ariaLabel ? undefined : selectId}
           className={styles.menu}
+          data-placement={placement}
           id={listboxId}
+          onMouseDown={(event) => event.preventDefault()}
           role="listbox"
         >
           {options.map((option, index) => {

@@ -1,11 +1,22 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
+import Image from "next/image";
 import { useEffect, useRef } from "react";
 
 import type { ChatMessage } from "../../../../shared/contract";
+import { useLocale } from "@/lib/i18n/locale-provider";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
+import { humanizeDates } from "../format-dates";
 import styles from "./chat-thread.module.css";
+
+function AssistantAvatar() {
+  return (
+    <span className={styles.avatar} aria-hidden="true">
+      <Image alt="" height={160} src="/mascot/nurlan-hello.webp" width={160} />
+    </span>
+  );
+}
 
 interface ChatThreadProps {
   copy: ChatMessages;
@@ -15,6 +26,7 @@ interface ChatThreadProps {
 
 export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
   const reduceMotion = useReducedMotion();
+  const { locale } = useLocale();
   const bottomRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -41,14 +53,16 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
             key={message.id}
             transition={{ duration: reduceMotion ? 0 : 0.24, ease: [0.22, 1, 0.36, 1] }}
           >
-            {message.role === "assistant" && (
-              <span className={styles.avatar} aria-hidden="true">T</span>
-            )}
+            {message.role === "assistant" && <AssistantAvatar />}
             <div className={styles.message}>
               <span className={styles.role}>
                 {message.role === "assistant" ? copy.assistant.label : copy.composer.label}
               </span>
-              <p>{message.content}</p>
+              <p>
+                {message.role === "assistant"
+                  ? humanizeDates(message.content, locale)
+                  : message.content}
+              </p>
             </div>
           </motion.div>
         ))}
@@ -60,7 +74,7 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
             initial={reduceMotion ? false : { opacity: 0 }}
             key="pending"
           >
-            <span className={styles.avatar} aria-hidden="true">T</span>
+            <AssistantAvatar />
             <div className={`${styles.message} ${styles.typing}`}>
               <span className="visually-hidden">{copy.assistant.searching}</span>
               <i />

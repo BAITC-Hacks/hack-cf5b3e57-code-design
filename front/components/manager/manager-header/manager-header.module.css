@@ -2,128 +2,106 @@
   position: sticky;
   top: 0;
   z-index: 30;
+  border-bottom: 1px solid var(--tm-line);
+  background: rgb(255 248 240 / 92%);
+  backdrop-filter: blur(16px);
+}
+
+.inner {
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
+  gap: 16px;
+  width: min(calc(100% - 96px), 1280px);
   min-height: 76px;
-  padding: 12px max(24px, calc((100vw - var(--max-width, 1440px)) / 2));
-  border-bottom: 1px solid rgb(29 29 31 / 10%);
-  background: rgb(255 255 255 / 86%);
-  backdrop-filter: blur(18px);
+  margin: 0 auto;
 }
 
 .brand {
   display: inline-grid;
   width: max-content;
   align-items: center;
-  gap: 3px;
-  color: var(--color-dark, #1d1d1f);
-  font-size: var(--font-18, 18px);
-  font-weight: 760;
-  letter-spacing: -0.035em;
-}
-
-.brand > span:last-child {
-  display: grid;
+  gap: 2px;
+  color: var(--tm-ink);
 }
 
 .brand small {
-  margin-top: 2px;
-  color: rgb(59 59 61 / 72%);
-  font-size: var(--font-12, 12px);
-  font-weight: 520;
-  letter-spacing: 0;
+  color: var(--tm-muted);
+  font-size: 12px;
+  font-weight: 500;
 }
-
-.brandMark {
-  position: relative;
-  display: inline-flex;
-  width: 42px;
-  height: 42px;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 3px;
-  padding: 10px;
-  overflow: hidden;
-  border-radius: 13px;
-  background: var(--color-dark, #1d1d1f);
-}
-
-.brandMark::after {
-  position: absolute;
-  inset: 0;
-  background: linear-gradient(135deg, transparent 25%, rgb(0 102 204 / 58%));
-  content: "";
-}
-
-.brandMark span {
-  z-index: 1;
-  display: block;
-  width: 5px;
-  border-radius: 5px 5px 1px 1px;
-  background: white;
-}
-
-.brandMark span:nth-child(1) { height: 10px; }
-.brandMark span:nth-child(2) { height: 21px; }
-.brandMark span:nth-child(3) { height: 15px; }
 
 .nav {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding: 5px;
-  border: 1px solid rgb(29 29 31 / 10%);
-  border-radius: 999px;
-  background: var(--color-body, #f5f5f7);
+  gap: 4px;
 }
 
 .nav a {
-  min-height: 38px;
-  padding: 9px 16px;
-  border-radius: 999px;
-  color: rgb(59 59 61 / 72%);
-  font-size: var(--font-14, 14px);
-  font-weight: 640;
+  display: inline-flex;
+  min-height: 44px;
+  align-items: center;
+  padding: 10px 14px;
+  border-radius: var(--tm-radius-field);
+  color: var(--tm-muted);
+  font-size: 14px;
+  font-weight: 600;
+  white-space: nowrap;
+  transition: background 160ms ease, color 160ms ease;
 }
 
-.nav a:hover { color: var(--color-dark, #1d1d1f); }
+.nav a:hover { background: var(--tm-ember-soft); color: var(--tm-ink); }
 
 .nav .active {
-  background: white;
-  box-shadow: 0 3px 12px rgb(29 29 31 / 8%);
-  color: var(--color-dark, #1d1d1f);
+  background: var(--tm-ember-soft);
+  color: var(--tm-ink);
 }
+
+.actions { display: flex; justify-self: end; align-items: center; gap: 12px; }
 
 .publicBadge {
   display: inline-flex;
-  justify-self: end;
   align-items: center;
   gap: 8px;
-  padding: 8px 12px;
-  border: 1px solid rgb(25 135 84 / 18%);
+  min-height: 32px;
+  padding: 6px 12px;
   border-radius: 999px;
-  background: rgb(25 135 84 / 7%);
-  color: #17663f;
-  font-size: var(--font-12, 12px);
-  font-weight: 680;
+  background: #e2f3f0;
+  color: var(--tm-ocean-ink);
+  font-size: 13px;
+  font-weight: 600;
+  white-space: nowrap;
 }
-.actions { display: flex; justify-self: end; align-items: center; gap: 10px; }
 
 .publicBadge > span {
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  background: #1d9b5f;
-  box-shadow: 0 0 0 4px rgb(29 155 95 / 12%);
+  background: var(--tm-ocean-ink);
 }
 
-@media (max-width: 1120px) {
-  .header { grid-template-columns: 1fr auto; }
-  .nav { display: none; }
+@media (max-width: 1240px) {
+  .publicBadge { display: none; }
+}
+
+@media (max-width: 1000px) {
+  .header { position: static; }
+  .inner {
+    grid-template-columns: 1fr auto;
+    grid-template-areas: "brand actions" "nav nav";
+    row-gap: 4px;
+    width: calc(100% - 64px);
+    min-height: 0;
+    padding: 12px 0 8px;
+  }
+  .brand { grid-area: brand; }
+  .actions { grid-area: actions; }
+  .nav { grid-area: nav; overflow-x: auto; margin-inline: -4px; scrollbar-width: none; }
+  .nav::-webkit-scrollbar { display: none; }
 }
 
 @media (max-width: 600px) {
-  .header { min-height: 66px; padding: 10px 16px; }
-  .publicBadge { display: none; }
+  .inner { width: calc(100% - 32px); }
+  .brand small { display: none; }
+  .nav a { padding: 10px 12px; font-size: 13px; }
 }

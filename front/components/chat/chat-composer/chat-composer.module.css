@@ -1,72 +1,76 @@
 .composer {
   display: grid;
   gap: 12px;
-  padding: 16px 18px 17px;
+  padding: 16px;
   border-top: 1px solid var(--tm-line);
-  background: var(--tm-bg);
+  background: var(--tm-surface);
 }
 
 .composer form {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 9px;
+  gap: 8px;
 }
 
 .composer input {
   width: 100%;
-  min-height: 50px;
+  min-width: 0;
+  min-height: 52px;
   padding: 0 16px;
-  border: 1px solid var(--tm-line);
+  border: 1px solid var(--tm-field-border);
   border-radius: var(--tm-radius-field);
   background: var(--tm-surface);
-  font-size: 14px;
   color: var(--tm-ink);
+  font-size: 16px;
 }
 
-.composer input:focus {
-  border-color: var(--tm-ocean-ink);
-  box-shadow: var(--tm-shadow-card);
+.composer input::placeholder {
+  color: var(--tm-muted);
+  opacity: 1;
+}
+
+.composer input:hover:not(:disabled) {
+  border-color: var(--tm-ink);
 }
 
 .composer input:disabled {
   background: var(--tm-bg);
-  cursor: not-allowed;
 }
 
 .composer form button {
   display: inline-flex;
-  min-width: 118px;
-  min-height: 50px;
+  min-width: 120px;
+  min-height: 52px;
   align-items: center;
   justify-content: center;
-  gap: 9px;
-  padding: 0 16px;
+  gap: 8px;
+  padding: 0 18px;
   border: 0;
   border-radius: var(--tm-radius-field);
   background: var(--tm-ember);
   color: var(--tm-ink);
   cursor: pointer;
-  font-size: 14px;
-  font-weight: 750;
+  font-size: 16px;
+  font-weight: 600;
+  transition: background 160ms ease;
 }
 
 .composer form button:hover:not(:disabled) {
-  background: var(--tm-gold);
+  background: #ff9a3a;
 }
 
 .composer form button:disabled {
-  cursor: not-allowed;
-  opacity: 0.48;
+  opacity: 0.5;
 }
 
 .composer svg {
-  width: 17px;
-  height: 17px;
+  width: 18px;
+  height: 18px;
   fill: none;
   stroke: currentColor;
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-width: 1.6;
+  stroke-width: 1.7;
 }
 
 .composer > p {
@@ -77,12 +81,12 @@
 
 @media (max-width: 560px) {
   .composer {
-    padding-inline: 12px;
+    padding: 12px;
   }
 
   .composer form button {
-    min-width: 50px;
-    width: 50px;
+    width: 52px;
+    min-width: 52px;
     padding: 0;
   }
 
@@ -92,5 +96,12 @@
     height: 1px;
     overflow: hidden;
     clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .composer form button {
+    transition: none;
   }
 }

@@ -1,17 +1,124 @@
-.root { position: relative; z-index: 1; min-height: 100vh; background: var(--tm-bg); color: var(--tm-ink); }
-.root *, .root *::before, .root *::after { box-sizing: border-box; }
-.root :is(button, a, input, select, summary):focus-visible { outline: 3px solid var(--tm-ocean-ink); outline-offset: 3px; }
-.skipLink { position: fixed; top: 12px; left: 12px; z-index: 100; padding: 12px 16px; border-radius: var(--tm-radius-field); background: var(--tm-ink); color: var(--tm-surface); font-size: 14px; font-weight: 650; transform: translateY(-160%); }
+.root {
+  position: relative;
+  z-index: 1;
+  min-height: 100vh;
+  overflow-x: clip;
+  background: var(--tm-bg);
+  color: var(--tm-ink);
+}
+
+.root *,
+.root *::before,
+.root *::after { box-sizing: border-box; }
+
+.root :is(button, a, input, select, summary, [role="button"]):focus-visible {
+  outline: 2px solid var(--tm-focus, #1f1a17);
+  outline-offset: 2px;
+}
+
+.skipLink {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 100;
+  padding: 12px 16px;
+  border-radius: var(--tm-radius-field);
+  background: #1f1a17;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  transform: translateY(-200%);
+}
+
 .skipLink:focus { transform: translateY(0); }
-.shell { width: min(calc(100% - 64px), 1280px); margin: 0 auto; padding-bottom: 72px; }
-.liveRegion { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; border: 0; }
-.how { margin-top: 56px; padding-top: 32px; border-top: 1px solid var(--tm-line); }
-.how h2 { margin: 0; font-size: 30px; letter-spacing: -.03em; }
-.how ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 24px; margin: 28px 0 0; padding: 0; list-style: none; }
-.how li { min-width: 0; }
-.how li > span { display: grid; width: 40px; height: 40px; place-items: center; border-radius: 50%; background: var(--tm-ember-soft); font-weight: 650; }
-.how h3 { margin: 16px 0 8px; font-size: 18px; line-height: 1.4; }
-.how p { margin: 0; color: var(--tm-muted); font-size: 14px; line-height: 1.65; }
-@media (max-width: 900px) { .how ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
-@media (max-width: 680px) { .shell { width: calc(100% - 32px); } }
-@media (max-width: 480px) { .how ol { grid-template-columns: 1fr; } }
+
+.shell {
+  width: min(calc(100% - 64px), 1280px);
+  margin: 0 auto;
+  padding-bottom: 80px;
+}
+
+.liveRegion {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+  border: 0;
+}
+
+.how {
+  margin-top: 64px;
+  padding-top: 40px;
+  border-top: 1px solid var(--tm-line);
+}
+
+.how h2 {
+  margin: 0;
+  color: var(--tm-ink);
+  font-size: 28px;
+  font-weight: 700;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+}
+
+.how ol {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 24px;
+  margin: 24px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.how li {
+  min-width: 0;
+  padding: 20px;
+  border: 1px solid var(--tm-line);
+  border-radius: 20px;
+  background: var(--tm-surface);
+}
+
+.how li > span {
+  display: grid;
+  width: 36px;
+  height: 36px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--tm-ember);
+  color: #1f1a17;
+  font-size: 15px;
+  font-weight: 700;
+}
+
+.how h3 {
+  margin: 16px 0 6px;
+  color: var(--tm-ink);
+  font-size: 17px;
+  font-weight: 650;
+  line-height: 1.35;
+}
+
+.how p {
+  margin: 0;
+  color: var(--tm-muted);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+@media (max-width: 1000px) {
+  .how ol { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
+}
+
+@media (max-width: 680px) {
+  .shell { width: calc(100% - 32px); padding-bottom: 56px; }
+  .how { margin-top: 48px; padding-top: 32px; }
+  .how h2 { font-size: 24px; }
+  .how ol { grid-template-columns: 1fr; gap: 12px; }
+  .how li { display: grid; grid-template-columns: 36px minmax(0, 1fr); column-gap: 14px; padding: 16px; }
+  .how li > span { grid-row: span 2; }
+  .how h3 { margin: 6px 0 4px; font-size: 16px; }
+}

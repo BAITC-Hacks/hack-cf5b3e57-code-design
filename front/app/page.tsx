@@ -1,10 +1,12 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import Link from "next/link";
 
 import { CatalogFilters } from "@/components/catalog/catalog-filters/catalog-filters";
-import { CatalogHeader } from "@/components/catalog/catalog-header/catalog-header";
 import { ContractorCard } from "@/components/catalog/contractor-card/contractor-card";
-import { BrandLogo } from "@/components/shared/brand-logo/brand-logo";
+import { ContractorPhoto } from "@/components/catalog/contractor-photo/contractor-photo";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
 import {
   CATEGORIES,
   CITIES,
@@ -23,17 +25,35 @@ import {
   catalogMessages,
   type CatalogMessages,
 } from "@/lib/i18n/messages/catalog";
+import siteStyles from "@/components/site/site.module.css";
 import styles from "./page.module.css";
 
 const OTHER_CATEGORY = "__other__";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
-  const messages = catalogMessages[locale];
+  const seo = {
+    ru: {
+      title: "ToiMatch — подрядчики для мероприятий в Алматы и Астане",
+      description:
+        "Ведущие, фотографы, декораторы, музыканты и залы в Алматы и Астане. Выберите сами или получите три варианта под дату и бюджет — с объяснением выбора.",
+    },
+    kk: {
+      title: "ToiMatch — Алматы мен Астанадағы іс-шара мердігерлері",
+      description:
+        "Алматы мен Астанадағы жүргізушілер, фотографтар, декораторлар, музыканттар және залдар. Өзіңіз таңдаңыз немесе күн мен бюджетке сай үш нұсқаны түсіндірмесімен алыңыз.",
+    },
+    en: {
+      title: "ToiMatch — event contractors in Almaty and Astana",
+      description:
+        "Hosts, photographers, decorators, musicians and venues in Almaty and Astana. Browse yourself or get three options for your date and budget — with the reasons why.",
+    },
+  }[locale];
 
   return {
-    title: messages.metadata.catalogTitle,
-    description: messages.metadata.catalogDescription,
+    title: { absolute: seo.title },
+    description: seo.description,
+    alternates: { canonical: "/" },
   };
 }
 
@@ -95,7 +115,7 @@ function ServiceUnavailable({
   messages: CatalogMessages;
 }) {
   return (
-    <main className={styles.unavailable}>
+    <main className={styles.unavailable} id="main-content">
       <span className={styles.unavailableIcon} aria-hidden="true">
         <svg viewBox="0 0 24 24">
           <path d="M12 8v5m0 3.5v.1M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z" />
@@ -110,6 +130,18 @@ function ServiceUnavailable({
       </div>
     </main>
   );
+}
+
+const HERO_PHOTO_IDS = ["HK-19103", "HK-39372", "HK-88430"] as const;
+
+function pickHeroContractors(items: ContractorListItem[]) {
+  const preferred = HERO_PHOTO_IDS.map((id) =>
+    items.find((contractor) => contractor.id === id),
+  ).filter((contractor): contractor is ContractorListItem => Boolean(contractor));
+  const rest = items.filter(
+    (contractor) => !preferred.some((picked) => picked.id === contractor.id),
+  );
+  return [...preferred, ...rest].slice(0, 3);
 }
 
 function groupContractorsByCategory(items: ContractorListItem[]) {
@@ -157,9 +189,10 @@ export default async function CatalogPage({
         : messages.errors.genericUnavailable;
 
     return (
-      <div className={styles.page}>
-        <CatalogHeader messages={messages.header} />
+      <div className={siteStyles.shell}>
+        <SiteHeader />
         <ServiceUnavailable message={message} messages={messages} />
+        <SiteFooter />
       </div>
     );
   }
@@ -176,97 +209,115 @@ export default async function CatalogPage({
     (value) => value !== undefined && value !== "",
   );
 
+  const heroContractors = pickHeroContractors(facets.items);
+  const [heroMain, ...heroSide] = heroContractors;
+  const activeFilterCount = [
+    filters.city,
+    filters.category,
+    filters.eventFormat,
+    filters.language,
+    filters.priceMin,
+    filters.priceMax,
+  ].filter((value) => value !== undefined && value !== "").length;
+
   return (
-    <div className={styles.page}>
-      <CatalogHeader messages={messages.header} />
+    <div className={siteStyles.shell}>
+      <SiteHeader />
 
-      <main>
+      <main className={styles.page} id="main-content">
         <section className={styles.hero}>
-          <div className={styles.heroGlow} aria-hidden="true" />
-          <div className={styles.heroInner}>
-            <div className={styles.heroCopy}>
-              <p className={styles.eyebrow}>{messages.catalog.heroEyebrow}</p>
-              <h1>
-                {messages.catalog.heroTitleFirst}
-                <br />
-                <span>{messages.catalog.heroTitleSecond}</span>
-              </h1>
-              <p className={styles.heroLead}>{messages.catalog.heroLead}</p>
-              <div className={styles.heroActions}>
-                <Link className={styles.primaryAction} href="/match">
-                  {messages.catalog.chooseWithAi}
-                  <svg viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="m7 4 6 6-6 6" />
-                  </svg>
-                </Link>
-                <Link className={styles.secondaryAction} href="#catalog-results">
-                  {messages.catalog.browseCatalog}
-                </Link>
-              </div>
+          <div className={styles.heroCopy}>
+            <p className={styles.heroEyebrow}>{messages.catalog.heroEyebrow}</p>
+            <h1>
+              {messages.catalog.heroTitleFirst}{" "}
+              <span>{messages.catalog.heroTitleSecond}</span>
+            </h1>
+            <p className={styles.heroLead}>{messages.catalog.heroLead}</p>
+            <div className={styles.heroActions}>
+              <Link className={styles.primaryAction} href="/match">
+                {messages.catalog.chooseWithAi}
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="m7 4 6 6-6 6" />
+                </svg>
+              </Link>
+              <Link className={styles.secondaryAction} href="#catalog-results">
+                {messages.catalog.browseCatalog}
+              </Link>
             </div>
-
-            <div
-              className={styles.heroProof}
-              aria-label={messages.catalog.proofAria}
-            >
+            <dl className={styles.heroProof} aria-label={messages.catalog.proofAria}>
               <div>
-                <strong>{catalog.total}</strong>
-                <span>
+                <dt>
                   {hasFilters
                     ? messages.catalog.matchesFilters
                     : messages.catalog.profilesInCatalog}
-                </span>
+                </dt>
+                <dd>{catalog.total}</dd>
               </div>
               <div>
-                <strong>{CATEGORIES.length}</strong>
-                <span>{messages.catalog.serviceCategories}</span>
+                <dt>{messages.catalog.serviceCategories}</dt>
+                <dd>{CATEGORIES.length}</dd>
               </div>
               <div>
-                <strong>{CITIES.length}</strong>
-                <span>{messages.catalog.searchGeographies}</span>
+                <dt>{messages.catalog.searchGeographies}</dt>
+                <dd>{CITIES.length}</dd>
               </div>
-            </div>
+            </dl>
           </div>
+
+          {heroMain ? (
+            <div className={styles.heroMosaic} aria-hidden="true">
+              <div className={styles.mosaicMain}>
+                <ContractorPhoto contractor={heroMain} messages={messages} priority />
+              </div>
+              {heroSide.map((contractor) => (
+                <div className={styles.mosaicSide} key={contractor.id}>
+                  <ContractorPhoto contractor={contractor} messages={messages} priority />
+                </div>
+              ))}
+            </div>
+          ) : null}
         </section>
 
-        <section
+        <nav
           className={styles.categoryStrip}
           aria-label={messages.catalog.categoriesAria}
         >
-          <div className={styles.categoryStripInner}>
-            <Link
-              className={!filters.category ? styles.categoryActive : undefined}
-              href="/#catalog-results"
-            >
-              {messages.catalog.all} <span>{facets.total}</span>
-            </Link>
-            {categoryCounts.map(({ category, count, label }) => (
+          <ul className={styles.categoryStripInner}>
+            <li>
               <Link
-                key={category}
-                className={
-                  filters.category === category ? styles.categoryActive : undefined
-                }
-                href={getCategoryHref(category, filters)}
+                aria-current={!filters.category ? "page" : undefined}
+                className={!filters.category ? styles.categoryActive : undefined}
+                href="/#catalog-results"
               >
-                {label} <span>{count}</span>
+                {messages.catalog.all} <span>{facets.total}</span>
               </Link>
+            </li>
+            {categoryCounts.map(({ category, count, label }) => (
+              <li key={category}>
+                <Link
+                  aria-current={filters.category === category ? "page" : undefined}
+                  className={
+                    filters.category === category ? styles.categoryActive : undefined
+                  }
+                  href={getCategoryHref(category, filters)}
+                >
+                  {label} <span>{count}</span>
+                </Link>
+              </li>
             ))}
-          </div>
-        </section>
+          </ul>
+        </nav>
 
         <section className={styles.catalog} id="catalog-results">
           <div className={styles.catalogHeading}>
-            <div>
-              <p className={styles.eyebrow}>{messages.catalog.sectionEyebrow}</p>
-              <h2>
-                {filters.category
-                  ? (messages.values.categories[
-                      filters.category as Category
-                    ] ?? filters.category)
-                  : messages.catalog.allContractors}
-                <span>{catalog.total}</span>
-              </h2>
-            </div>
+            <h2>
+              {filters.category
+                ? (messages.values.categories[
+                    filters.category as Category
+                  ] ?? filters.category)
+                : messages.catalog.allContractors}
+              <span>{catalog.total}</span>
+            </h2>
             <p>{messages.catalog.sortNote}</p>
           </div>
 
@@ -275,7 +326,11 @@ export default async function CatalogPage({
               className={styles.sidebar}
               aria-label={messages.catalog.filtersAria}
             >
-              <CatalogFilters filters={filters} messages={messages} />
+              <CatalogFilters
+                activeCount={activeFilterCount}
+                filters={filters}
+                messages={messages}
+              />
             </aside>
 
             <div className={styles.results} aria-live="polite">
@@ -326,29 +381,29 @@ export default async function CatalogPage({
         </section>
 
         <section className={styles.aiBanner}>
-          <div>
-            <p className={styles.eyebrow}>{messages.catalog.bannerEyebrow}</p>
+          <div className={styles.aiBannerCopy}>
+            <p className={styles.bannerEyebrow}>{messages.catalog.bannerEyebrow}</p>
             <h2>{messages.catalog.bannerTitle}</h2>
             <p>{messages.catalog.bannerText}</p>
+            <Link href="/match">
+              {messages.catalog.startMatch}
+              <svg viewBox="0 0 20 20" aria-hidden="true">
+                <path d="m7 4 6 6-6 6" />
+              </svg>
+            </Link>
           </div>
-          <Link href="/match">
-            {messages.catalog.startMatch}
-            <svg viewBox="0 0 20 20" aria-hidden="true">
-              <path d="m7 4 6 6-6 6" />
-            </svg>
-          </Link>
+          <div className={styles.aiBannerMascot} aria-hidden="true">
+            <Image
+              alt=""
+              fill
+              sizes="(max-width: 760px) 160px, 240px"
+              src="/mascot/nurlan-found.webp"
+            />
+          </div>
         </section>
-
       </main>
 
-      <footer className={styles.footer}>
-        <BrandLogo
-          ariaLabel={messages.header.homeAria}
-          className={styles.footerLogo}
-          light
-        />
-        <p>{messages.catalog.footerNote}</p>
-      </footer>
+      <SiteFooter />
     </div>
   );
 }

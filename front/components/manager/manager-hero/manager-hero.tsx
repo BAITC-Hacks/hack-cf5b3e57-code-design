@@ -11,7 +11,7 @@ export function ManagerHero({ status }: { status: RunStatus }) {
   const copy = messages.statuses[status];
   return (
     <section className={styles.hero}>
-      <div>
+      <div className={styles.copy}>
         <span className={styles.eyebrow}>{messages.eyebrow}</span>
         <h1>{messages.title}</h1>
         <p>{messages.description}</p>

@@ -1,6 +1,6 @@
-.workspace { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
-.requestColumn { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); align-items: start; gap: 20px; }
-.insights { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
-.workspace > *, .requestColumn > *, .insights > * { min-width: 0; }
-@media (max-width: 1000px) { .workspace, .requestColumn { grid-template-columns: 1fr; } }
-@media (max-width: 840px) { .insights { grid-template-columns: 1fr; } }
+.request { display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 20px; }
+.live { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; margin-top: 20px; }
+.side { display: grid; align-content: start; gap: 20px; min-width: 0; }
+.request > *, .live > * { min-width: 0; }
+@media (max-width: 1000px) { .request, .live { grid-template-columns: 1fr; } }
+@media (max-width: 600px) { .request, .live, .side { gap: 16px; } .live { margin-top: 16px; } }

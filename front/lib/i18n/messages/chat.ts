@@ -49,6 +49,8 @@ export interface ChatMessages {
   };
   tools: Record<"search_contractors" | "build_event_bundle", string>;
   starterPrompts: Record<"search" | "bundle", readonly string[]>;
+  /** Human-friendly labels for starterPrompts (same order). The prompt value is what is sent. */
+  starterLabels: Record<"search" | "bundle", readonly string[]>;
   fields: Record<ChatField, FieldCopy>;
   progress: {
     eyebrow: string;
@@ -96,6 +98,8 @@ export interface ChatMessages {
     verified: string;
     claimed: string;
     from: string;
+    profile: string;
+    rank: string;
     outcome: Record<"found" | "no_category_in_city" | "all_filtered_out", string>;
     emptyHint: string;
     flags: {
@@ -130,12 +134,12 @@ const messages = {
     localeLabel: "Язык интерфейса",
     skip: "Перейти к диалогу",
     hero: {
-      eyebrow: "Диалоговый подбор",
+      eyebrow: "AI-ассистент",
       title: "Опишите событие.",
       accent: "Остальное соберём вместе.",
       description:
-        "Помощник задаст короткие вопросы, проверит ваш запрос по каталогу и покажет до трёх вариантов с доказательствами.",
-      badge: "Работает на matching engine",
+        "Ассистент задаст пару вопросов и покажет до трёх подрядчиков — с фактами из каталога.",
+      badge: "Ответ с фактами из каталога",
     },
     modes: {
       label: "Режим ассистента",
@@ -149,24 +153,24 @@ const messages = {
       },
     },
     session: {
-      eyebrow: "Живая AI-сессия",
+      eyebrow: "Диалог",
       title: "Состояние диалога",
       id: "Сессия",
       status: {
         starting: "Подключаемся",
         ready: "Ассистент готов",
-        streaming: "Формирует ответ",
-        error: "Нужна повторная попытка",
+        streaming: "Печатает ответ",
+        error: "Не удалось ответить",
       },
       statusDescription: {
-        starting: "Создаём сессию на backend",
-        ready: "Сообщения обрабатывает реальный chat API",
-        streaming: "Ответ поступает потоком SSE",
-        error: "Соединение или обработка завершились ошибкой",
+        starting: "Готовим диалог",
+        ready: "Можно писать",
+        streaming: "Ответ появляется прямо сейчас",
+        error: "Попробуйте ещё раз",
       },
     },
     tools: {
-      search_contractors: "Проверяем каталог и запускаем matching engine",
+      search_contractors: "Проверяем каталог и подбираем подрядчиков",
       build_event_bundle: "Собираем пакет по нескольким категориям",
     },
     starterPrompts: {
@@ -177,6 +181,16 @@ const messages = {
       bundle: [
         "Соберите пакет на свадьбу в Алматы 2026-10-16, бюджет 5 000 000 ₸",
         "Нужен пакет на корпоратив в Алматы 2026-10-23, бюджет 4 000 000 ₸",
+      ],
+    },
+    starterLabels: {
+      search: [
+        "Ведущий · Алматы · корпоратив 16 октября · 1 млн ₸",
+        "Флорист · Алматы · свадьба 15 октября · 300 000 ₸",
+      ],
+      bundle: [
+        "Пакет на свадьбу · Алматы · 16 октября · 5 млн ₸",
+        "Пакет на корпоратив · Алматы · 23 октября · 4 млн ₸",
       ],
     },
     fields: {
@@ -225,16 +239,16 @@ const messages = {
       greeting:
         "Здравствуйте! Я помогу сформировать точный запрос и найти подходящих подрядчиков.",
       transparency:
-        "Я не импровизирую как свободный чат-бот: собираю факты и передаю их в детерминированный matching engine.",
+        "Я не фантазирую: собираю условия и подбираю только по фактам из каталога.",
       understood: "Принято. Зафиксировал параметры и двигаюсь дальше.",
       changed: "Параметр обновлён. Пересчитываю подбор по новым условиям.",
       searching: "Запрос готов. Проверяю город, дату, формат, бюджет и язык…",
-      resultReady: "Проверка завершена. Ниже — ответ matching engine и факты по кандидатам.",
+      resultReady: "Готово. Ниже — подходящие подрядчики и факты по каждому.",
       noRecognition: "Не смог распознать ответ. Используйте подсказку или один из готовых вариантов.",
       invalidDate: "Не удалось распознать дату. Напишите её как 16.10 или 2026-10-16.",
       invalidBudget: "Не удалось распознать бюджет. Например: 300 000 ₸ или 1 млн.",
       restarted: "Начнём заново. Сначала определим, какой подрядчик нужен.",
-      error: "Подбор сейчас не завершился. Проверьте, запущен ли backend, и повторите попытку.",
+      error: "Подбор не завершился. Попробуйте ещё раз через минуту.",
     },
     composer: {
       label: "Ваш ответ",
@@ -251,13 +265,15 @@ const messages = {
     },
     result: {
       photo: "Фото: ИИ-иллюстрация", photoMissing: "Фото недоступно",
-      eyebrow: "Ответ matching engine",
+      eyebrow: "Результат подбора",
       criteria: "На что смотреть",
       cards: "Подходящие подрядчики",
       facts: "Факты выбора",
       verified: "проверено",
       claimed: "со слов подрядчика",
       from: "от",
+      profile: "Открыть профиль",
+      rank: "Место",
       outcome: {
         found: "Варианты найдены",
         no_category_in_city: "Категории нет в городе",
@@ -307,12 +323,12 @@ const messages = {
     localeLabel: "Интерфейс тілі",
     skip: "Диалогқа өту",
     hero: {
-      eyebrow: "Диалог арқылы таңдау",
+      eyebrow: "AI-көмекші",
       title: "Іс-шараны сипаттаңыз.",
       accent: "Қалғанын бірге жинаймыз.",
       description:
-        "Көмекші қысқа сұрақтар қояды, сұранысты каталог бойынша тексереді және дәлелдері бар үш нұсқаға дейін көрсетеді.",
-      badge: "Matching engine арқылы жұмыс істейді",
+        "Көмекші бірнеше сұрақ қойып, үшке дейін мердігер көрсетеді — каталог деректерімен.",
+      badge: "Жауап каталог деректерімен",
     },
     modes: {
       label: "Көмекші режимі",
@@ -326,24 +342,24 @@ const messages = {
       },
     },
     session: {
-      eyebrow: "Белсенді AI-сессия",
+      eyebrow: "Диалог",
       title: "Диалог күйі",
       id: "Сессия",
       status: {
         starting: "Қосылуда",
         ready: "Көмекші дайын",
-        streaming: "Жауап дайындауда",
-        error: "Қайталап көру қажет",
+        streaming: "Жауап жазып жатыр",
+        error: "Жауап беру мүмкін болмады",
       },
       statusDescription: {
-        starting: "Backend жүйесінде сессия жасалуда",
-        ready: "Хабарламаларды нақты chat API өңдейді",
-        streaming: "Жауап SSE ағынымен келіп жатыр",
-        error: "Қосылу немесе өңдеу қатемен аяқталды",
+        starting: "Диалогты дайындап жатырмыз",
+        ready: "Жаза беріңіз",
+        streaming: "Жауап дәл қазір пайда болуда",
+        error: "Қайта көріңіз",
       },
     },
     tools: {
-      search_contractors: "Каталог тексеріліп, matching engine іске қосылды",
+      search_contractors: "Каталогты тексеріп, мердігерлерді іріктеп жатырмыз",
       build_event_bundle: "Бірнеше санат бойынша пакет жиналуда",
     },
     starterPrompts: {
@@ -354,6 +370,16 @@ const messages = {
       bundle: [
         "Алматыда 2026-10-16 өтетін үйлену тойына 5 000 000 ₸ пакет жинаңыз",
         "Алматыда 2026-10-23 өтетін корпоративке 4 000 000 ₸ пакет керек",
+      ],
+    },
+    starterLabels: {
+      search: [
+        "Жүргізуші · Алматы · корпоратив 16 қазан · 1 млн ₸",
+        "Флорист · Алматы · үйлену тойы 15 қазан · 300 000 ₸",
+      ],
+      bundle: [
+        "Үйлену тойына пакет · Алматы · 16 қазан · 5 млн ₸",
+        "Корпоративке пакет · Алматы · 23 қазан · 4 млн ₸",
       ],
     },
     fields: {
@@ -402,16 +428,16 @@ const messages = {
       greeting:
         "Сәлеметсіз бе! Нақты сұраныс құрып, сәйкес мердігерлерді табуға көмектесемін.",
       transparency:
-        "Мен еркін чат-бот сияқты болжам жасамаймын: деректерді жинап, оларды детерминделген matching engine-ге жіберемін.",
+        "Мен ойдан шығармаймын: шарттарды жинап, тек каталог деректері бойынша іріктеймін.",
       understood: "Қабылданды. Параметрлерді белгілеп, келесі қадамға өтемін.",
       changed: "Параметр жаңартылды. Жаңа шарттар бойынша таңдауды қайта есептеймін.",
       searching: "Сұраныс дайын. Қаланы, күнді, форматты, бюджетті және тілді тексеремін…",
-      resultReady: "Тексеру аяқталды. Төменде matching engine жауабы мен үміткер деректері берілген.",
+      resultReady: "Дайын. Төменде сәйкес мердігерлер және әрқайсысы бойынша деректер.",
       noRecognition: "Жауапты тани алмадым. Кеңесті немесе дайын нұсқаны пайдаланыңыз.",
       invalidDate: "Күнді тани алмадым. 16.10 немесе 2026-10-16 түрінде жазыңыз.",
       invalidBudget: "Бюджетті тани алмадым. Мысалы: 300 000 ₸ немесе 1 млн.",
       restarted: "Қайта бастайық. Алдымен қандай мердігер қажет екенін анықтаймыз.",
-      error: "Таңдау аяқталмады. Backend іске қосылғанын тексеріп, қайта көріңіз.",
+      error: "Іріктеу аяқталмады. Бір минуттан кейін қайта көріңіз.",
     },
     composer: {
       label: "Сіздің жауабыңыз",
@@ -428,13 +454,15 @@ const messages = {
     },
     result: {
       photo: "Фото: ЖИ иллюстрациясы", photoMissing: "Фото қолжетімсіз",
-      eyebrow: "Matching engine жауабы",
+      eyebrow: "Іріктеу нәтижесі",
       criteria: "Неге назар аудару керек",
       cards: "Сәйкес мердігерлер",
       facts: "Таңдау деректері",
       verified: "тексерілді",
       claimed: "мердігердің айтуынша",
       from: "бастап",
+      profile: "Профильді ашу",
+      rank: "Орын",
       outcome: {
         found: "Нұсқалар табылды",
         no_category_in_city: "Қалада бұл санат жоқ",
@@ -484,12 +512,12 @@ const messages = {
     localeLabel: "Interface language",
     skip: "Skip to conversation",
     hero: {
-      eyebrow: "Conversational matching",
+      eyebrow: "AI assistant",
       title: "Describe your event.",
       accent: "We will shape the rest together.",
       description:
-        "The assistant asks short questions, checks your request against the catalog and shows up to three evidence-backed options.",
-      badge: "Powered by the matching engine",
+        "The assistant asks a couple of questions and shows up to three contractors — backed by catalog facts.",
+      badge: "Answers backed by catalog facts",
     },
     modes: {
       label: "Assistant mode",
@@ -503,24 +531,24 @@ const messages = {
       },
     },
     session: {
-      eyebrow: "Live AI session",
+      eyebrow: "Conversation",
       title: "Conversation status",
       id: "Session",
       status: {
         starting: "Connecting",
         ready: "Assistant ready",
-        streaming: "Building the response",
-        error: "Retry required",
+        streaming: "Typing a reply",
+        error: "Could not reply",
       },
       statusDescription: {
-        starting: "Creating a backend session",
-        ready: "Messages are handled by the real chat API",
-        streaming: "The response is arriving over SSE",
-        error: "The connection or processing ended with an error",
+        starting: "Preparing the conversation",
+        ready: "Go ahead and type",
+        streaming: "The reply is appearing now",
+        error: "Please try again",
       },
     },
     tools: {
-      search_contractors: "Checking the catalog with the matching engine",
+      search_contractors: "Checking the catalog and picking contractors",
       build_event_bundle: "Building a bundle across several categories",
     },
     starterPrompts: {
@@ -531,6 +559,16 @@ const messages = {
       bundle: [
         "Build a wedding bundle in Almaty for 2026-10-16 with a 5,000,000 ₸ budget",
         "I need a corporate bundle in Almaty for 2026-10-23 with a 4,000,000 ₸ budget",
+      ],
+    },
+    starterLabels: {
+      search: [
+        "Host · Almaty · corporate event on 16 October · ₸1M",
+        "Florist · Almaty · wedding on 15 October · ₸300,000",
+      ],
+      bundle: [
+        "Wedding bundle · Almaty · 16 October · ₸5M",
+        "Corporate bundle · Almaty · 23 October · ₸4M",
       ],
     },
     fields: {
@@ -579,16 +617,16 @@ const messages = {
       greeting:
         "Hello! I will help shape a precise request and find suitable contractors.",
       transparency:
-        "I do not improvise like an open-ended chatbot: I collect facts and pass them to a deterministic matching engine.",
+        "I do not make things up: I collect your conditions and match only on catalog facts.",
       understood: "Got it. I have saved those details and will move to the next step.",
       changed: "That detail is updated. I will recalculate the match using the new conditions.",
       searching: "The request is ready. Checking city, date, format, budget and language…",
-      resultReady: "The check is complete. Below is the matching engine response and candidate evidence.",
+      resultReady: "Done. Below are suitable contractors and the facts behind each one.",
       noRecognition: "I could not recognise that answer. Use the hint or choose one of the options.",
       invalidDate: "I could not recognise the date. Type it as 16.10 or 2026-10-16.",
       invalidBudget: "I could not recognise the budget. For example: 300,000 ₸ or 1 million.",
       restarted: "Let us start again. First, we will identify the contractor category.",
-      error: "Matching did not finish. Check that the backend is running and try again.",
+      error: "Matching did not finish. Please try again in a minute.",
     },
     composer: {
       label: "Your answer",
@@ -605,13 +643,15 @@ const messages = {
     },
     result: {
       photo: "Photo: AI illustration", photoMissing: "Photo unavailable",
-      eyebrow: "Matching engine response",
+      eyebrow: "Match result",
       criteria: "What to look for",
       cards: "Suitable contractors",
       facts: "Selection evidence",
       verified: "verified",
       claimed: "according to contractor",
       from: "from",
+      profile: "Open profile",
+      rank: "Rank",
       outcome: {
         found: "Options found",
         no_category_in_city: "Category unavailable in this city",

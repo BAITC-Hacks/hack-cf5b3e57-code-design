@@ -9,6 +9,7 @@ import { MATCH_MESSAGES } from "@/lib/i18n/messages/match";
 import { MatchApiError, requestMatch } from "@/lib/match-api";
 import { CompareDates } from "../compare-dates/compare-dates";
 import { DEMO_PRESETS } from "../demo-presets/demo-presets";
+import { humanizeDates } from "../format/format";
 import type { DemoPreset } from "../demo-presets/demo-presets";
 import { MatchForm } from "../match-form/match-form";
 import type { MatchFormState } from "../match-form/match-form";
@@ -119,6 +120,7 @@ export function MatchExperience() {
         <MatchForm
           copy={copy}
           form={form}
+          locale={locale}
           notice={notice}
           onChange={setField}
           onDemoSelect={applyDemo}
@@ -128,7 +130,7 @@ export function MatchExperience() {
         />
 
         <div className={styles.liveRegion} aria-live="polite" aria-atomic="true">
-          {pending ? copy.loadingSteps[loadingStep] : error ?? result?.summary ?? ""}
+          {pending ? copy.loadingSteps[loadingStep] : error ?? (result ? humanizeDates(result.summary, locale) : "")}
         </div>
 
         <MatchStatus

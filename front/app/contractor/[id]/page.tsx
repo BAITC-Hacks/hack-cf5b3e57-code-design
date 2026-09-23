@@ -4,6 +4,9 @@ import { notFound } from "next/navigation";
 
 import { AvailabilityCalendar } from "@/components/catalog/availability-calendar";
 import { ContractorPhoto } from "@/components/catalog/contractor-photo/contractor-photo";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
+import siteStyles from "@/components/site/site.module.css";
 import {
   CatalogApiError,
   getContractorById,
@@ -23,14 +26,79 @@ import type {
 } from "../../../../shared/contract";
 import styles from "@/components/catalog/profile-page.module.css";
 
-export async function generateMetadata(): Promise<Metadata> {
+export async function generateMetadata({
+  params,
+}: {
+  params: Promise<{ id: string }>;
+}): Promise<Metadata> {
   const locale = await getRequestLocale();
   const messages = catalogMessages[locale];
+  const { id } = await params;
+  const canonical = `/contractor/${encodeURIComponent(id)}`;
 
-  return {
-    title: messages.metadata.detailTitle,
-    description: messages.metadata.detailDescription,
-  };
+  try {
+    const contractor = await getContractorById(id);
+    const category = contractor.categories[0];
+    const categoryLabel = category
+      ? (messages.values.categories[category as Category] ?? category)
+      : undefined;
+    const cityLabel =
+      messages.values.cities[contractor.city as City] ?? contractor.city;
+    const subtitle = [categoryLabel, cityLabel].filter(Boolean).join(", ");
+    const price = new Intl.NumberFormat(getIntlLocale(locale)).format(
+      contractor.priceFromKzt,
+    );
+    const formats = contractor.eventFormats
+      .map(
+        (format) =>
+          messages.values.eventFormats[format as EventFormat] ?? format,
+      )
+      .join(", ");
+    const languages = contractor.languages
+      .map(
+        (language) =>
+          messages.values.languages[language as Language] ?? language,
+      )
+      .join(", ");
+    const parts = {
+      ru: [
+        subtitle && `${subtitle}.`,
+        `Цена от ${price} ₸.`,
+        formats && `Форматы: ${formats}.`,
+        languages && `Языки: ${languages}.`,
+        "Профиль и свободные даты на ToiMatch.",
+      ],
+      kk: [
+        subtitle && `${subtitle}.`,
+        `Бағасы ${price} ₸-ден.`,
+        formats && `Форматтар: ${formats}.`,
+        languages && `Тілдер: ${languages}.`,
+        "Профиль мен бос күндер — ToiMatch-те.",
+      ],
+      en: [
+        subtitle && `${subtitle}.`,
+        `From ${price} ₸.`,
+        formats && `Formats: ${formats}.`,
+        languages && `Languages: ${languages}.`,
+        "Profile and free dates on ToiMatch.",
+      ],
+    }[locale];
+    const description = parts.filter(Boolean).join(" ");
+
+    return {
+      title: subtitle
+        ? `${contractor.anonName} — ${subtitle}`
+        : contractor.anonName,
+      description,
+      alternates: { canonical },
+    };
+  } catch {
+    return {
+      title: messages.metadata.detailTitle,
+      description: messages.metadata.detailDescription,
+      alternates: { canonical },
+    };
+  }
 }
 
 function getIntlLocale(locale: Locale) {
@@ -55,7 +123,7 @@ function DetailUnavailable({
   messages: CatalogMessages;
 }) {
   return (
-    <main className={styles.errorState}>
+    <main className={styles.errorState} id="main-content">
       <span aria-hidden="true">
         <svg viewBox="0 0 24 24">
           <path d="M12 8v5m0 3.5v.1M10.3 3.9 2.6 17.2A2 2 0 0 0 4.3 20h15.4a2 2 0 0 0 1.7-2.8L13.7 3.9a2 2 0 0 0-3.4 0Z" />
@@ -94,8 +162,10 @@ export default async function ContractorPage({
         : messages.errors.genericUnavailable;
 
     return (
-      <div className={styles.page}>
+      <div className={siteStyles.shell}>
+        <SiteHeader />
         <DetailUnavailable message={message} messages={messages} />
+        <SiteFooter />
       </div>
     );
   }
@@ -118,15 +188,18 @@ export default async function ContractorPage({
   );
 
   return (
-    <div className={styles.page}>
+    <div className={siteStyles.shell}>
+      <SiteHeader />
 
-      <main className={styles.main}>
-        <Link className={styles.backLink} href="/">
-          <svg viewBox="0 0 20 20" aria-hidden="true">
-            <path d="m12.5 4-6 6 6 6" />
-          </svg>
-          {messages.detail.backToCatalog}
-        </Link>
+      <main className={styles.main} id="main-content">
+        <nav className={styles.breadcrumbs} aria-label={messages.detail.backToCatalog}>
+          <Link className={styles.backLink} href="/#catalog-results">
+            <svg viewBox="0 0 20 20" aria-hidden="true">
+              <path d="m12.5 4-6 6 6 6" />
+            </svg>
+            {messages.detail.backToCatalog}
+          </Link>
+        </nav>
 
         <section className={styles.profileHero}>
           <div className={styles.photo}>
@@ -147,44 +220,43 @@ export default async function ContractorPage({
                   </span>
                 ))}
               </div>
-              <span className={styles.profileId}>{contractor.id}</span>
+              <p className={styles.location}>
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M10 17s5-4.7 5-9a5 5 0 1 0-10 0c0 4.3 5 9 5 9Z" />
+                  <circle cx="10" cy="8" r="1.7" />
+                </svg>
+                {messages.values.cities[contractor.city as City] ??
+                  contractor.city}
+              </p>
             </div>
 
-            <p className={styles.location}>
-              <svg viewBox="0 0 20 20" aria-hidden="true">
-                <path d="M10 17s5-4.7 5-9a5 5 0 1 0-10 0c0 4.3 5 9 5 9Z" />
-                <circle cx="10" cy="8" r="1.7" />
-              </svg>
-              {messages.values.cities[contractor.city as City] ??
-                contractor.city}
-            </p>
             <h1>{contractor.anonName}</h1>
             <p className={styles.price}>
               <span>{messages.detail.costFrom}</span>
               {priceFormatter.format(contractor.priceFromKzt)} ₸
             </p>
 
-            <div className={styles.quickFacts}>
+            <dl className={styles.quickFacts}>
               <div>
-                <span>{messages.detail.formats}</span>
-                <strong>{contractor.eventFormats.map(value => messages.values.eventFormats[value as EventFormat] ?? value).join(", ")}</strong>
+                <dt>{messages.detail.formats}</dt>
+                <dd>{contractor.eventFormats.map(value => messages.values.eventFormats[value as EventFormat] ?? value).join(", ")}</dd>
               </div>
               <div>
-                <span>{messages.detail.languages}</span>
-                <strong>{contractor.languages.map(value => messages.values.languages[value as Language] ?? value).join(", ")}</strong>
+                <dt>{messages.detail.languages}</dt>
+                <dd>{contractor.languages.map(value => messages.values.languages[value as Language] ?? value).join(", ")}</dd>
               </div>
               <div>
-                <span>{messages.card.duration}</span>
-                <strong>
+                <dt>{messages.card.duration}</dt>
+                <dd>
                   {contractor.maxHours === null
                     ? messages.card.unlimited
                     : messages.detail.hoursShort.replace(
                         "{hours}",
                         String(contractor.maxHours),
                       )}
-                </strong>
+                </dd>
               </div>
-            </div>
+            </dl>
 
             <div className={styles.actions}>
               <Link className={styles.primaryAction} href={getMatchHref(contractor)}>
@@ -197,82 +269,52 @@ export default async function ContractorPage({
                 {messages.detail.askAi}
               </Link>
             </div>
+            <p className={styles.profileId}>ID {contractor.id}</p>
           </div>
         </section>
 
         <div className={styles.contentGrid}>
-          <div className={styles.primaryColumn}>
-            <section className={styles.panel}>
-              <p className={styles.eyebrow}>{messages.detail.aboutEyebrow}</p>
-              <h2>{messages.detail.descriptionTitle}</h2>
-              <p className={styles.description}>{contractor.description}</p>
-              <p className={styles.sourceNote}>{messages.detail.sourceNote}</p>
-            </section>
+          <section className={styles.panel} aria-labelledby="profile-description">
+            <h2 id="profile-description">{messages.detail.descriptionTitle}</h2>
+            <p className={styles.description}>{contractor.description}</p>
+            <p className={styles.sourceNote}>{messages.detail.sourceNote}</p>
+          </section>
 
-          </div>
-
-          <aside className={styles.secondaryColumn}>
-            <section className={styles.panel}>
-              <p className={styles.eyebrow}>{messages.detail.serviceEyebrow}</p>
-              <h2>{messages.detail.formats}</h2>
-              <div className={styles.tagList}>
-                {contractor.eventFormats.map((eventFormat) => (
-                  <span key={eventFormat}>
-                    {messages.values.eventFormats[
-                      eventFormat as EventFormat
-                    ] ?? eventFormat}
-                  </span>
-                ))}
-              </div>
-
-              <h2 className={styles.subheading}>{messages.detail.languages}</h2>
-              <div className={styles.languageList}>
-                {contractor.languages.map((language) => (
-                  <span key={language}>
+          <aside className={styles.panel} aria-labelledby="profile-data">
+            <h2 id="profile-data">{messages.detail.important}</h2>
+            {dataFlags.length > 0 ? (
+              <div className={styles.dataFlags}>
+                {dataFlags.map((flag) => (
+                  <div key={flag.title}>
                     <svg viewBox="0 0 20 20" aria-hidden="true">
-                      <path d="m4 10 4 4 8-8" />
+                      <path d="M10 3 3.5 6v4.6c0 3.5 2.7 5.8 6.5 7.4 3.8-1.6 6.5-3.9 6.5-7.4V6L10 3Z" />
+                      <path d="M10 7v4m0 2.6v.1" />
                     </svg>
-                    {messages.values.languages[language as Language] ?? language}
-                  </span>
+                    <span>
+                      <strong>{flag.title}</strong>
+                      <small>{flag.text}</small>
+                    </span>
+                  </div>
                 ))}
               </div>
-            </section>
-
-            <section className={styles.panel}>
-              <p className={styles.eyebrow}>{messages.detail.dataEyebrow}</p>
-              <h2>{messages.detail.important}</h2>
-              {dataFlags.length > 0 ? (
-                <div className={styles.dataFlags}>
-                  {dataFlags.map((flag) => (
-                    <div key={flag.title}>
-                      <svg viewBox="0 0 20 20" aria-hidden="true">
-                        <path d="M10 3 3.5 6v4.6c0 3.5 2.7 5.8 6.5 7.4 3.8-1.6 6.5-3.9 6.5-7.4V6L10 3Z" />
-                        <path d="m7.2 10.3 1.8 1.8 3.9-4" />
-                      </svg>
-                      <span>
-                        <strong>{flag.title}</strong>
-                        <small>{flag.text}</small>
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <div className={styles.cleanData}>
-                  <svg viewBox="0 0 20 20" aria-hidden="true">
-                    <path d="M10 3 3.5 6v4.6c0 3.5 2.7 5.8 6.5 7.4 3.8-1.6 6.5-3.9 6.5-7.4V6L10 3Z" />
-                    <path d="m7.2 10.3 1.8 1.8 3.9-4" />
-                  </svg>
-                  <span>
-                    <strong>{messages.detail.cleanDataTitle}</strong>
-                    <small>{messages.detail.cleanDataText}</small>
-                  </span>
-                </div>
-              )}
-            </section>
+            ) : (
+              <div className={styles.cleanData}>
+                <svg viewBox="0 0 20 20" aria-hidden="true">
+                  <path d="M10 3 3.5 6v4.6c0 3.5 2.7 5.8 6.5 7.4 3.8-1.6 6.5-3.9 6.5-7.4V6L10 3Z" />
+                  <path d="m7.2 10.3 1.8 1.8 3.9-4" />
+                </svg>
+                <span>
+                  <strong>{messages.detail.cleanDataTitle}</strong>
+                  <small>{messages.detail.cleanDataText}</small>
+                </span>
+              </div>
+            )}
           </aside>
         </div>
         <AvailabilityCalendar contractor={contractor} locale={locale} today={new Date().toISOString().slice(0, 10)} />
       </main>
+
+      <SiteFooter />
     </div>
   );
 }

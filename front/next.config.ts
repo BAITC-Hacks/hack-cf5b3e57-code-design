@@ -17,6 +17,7 @@ const contractorImageIds = existsSync(contractorImagesDirectory)
   : [];
 
 const nextConfig: NextConfig = {
+  devIndicators: false,
   env: {
     NEXT_PUBLIC_CONTRACTOR_IMAGE_IDS: contractorImageIds.join(","),
   },

@@ -16,21 +16,23 @@ export function ManagerHeader() {
   const managerHref = pathname.startsWith("/admin") ? "/admin" : "/manager";
   return (
     <header className={styles.header}>
-      <BrandLogo
-        ariaLabel={messages.navigation.brandAria}
-        className={styles.brand}
-        tagline={messages.navigation.tagline}
-      />
-      <nav className={styles.nav} aria-label={messages.navigation.aria}>
-        <Link href="/">{messages.navigation.catalog}</Link>
-        <Link href="/match">{messages.navigation.match}</Link>
-        <Link className={styles.active} href={managerHref} aria-current="page">
-          {messages.navigation.manager}
-        </Link>
-      </nav>
-      <div className={styles.actions}>
-        <LocaleSwitcher ariaLabel={messages.navigation.localeAria} />
-        <span className={styles.publicBadge}><span aria-hidden="true" /> {messages.navigation.publicMode}</span>
+      <div className={styles.inner}>
+        <BrandLogo
+          ariaLabel={messages.navigation.brandAria}
+          className={styles.brand}
+          tagline={messages.navigation.tagline}
+        />
+        <nav className={styles.nav} aria-label={messages.navigation.aria}>
+          <Link href="/">{messages.navigation.catalog}</Link>
+          <Link href="/match">{messages.navigation.match}</Link>
+          <Link className={styles.active} href={managerHref} aria-current="page">
+            {messages.navigation.manager}
+          </Link>
+        </nav>
+        <div className={styles.actions}>
+          <span className={styles.publicBadge}><span aria-hidden="true" />{messages.navigation.publicMode}</span>
+          <LocaleSwitcher ariaLabel={messages.navigation.localeAria} />
+        </div>
       </div>
     </header>
   );

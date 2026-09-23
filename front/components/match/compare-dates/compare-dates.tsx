@@ -5,6 +5,7 @@ import { useEffect, useRef, useState } from "react";
 import type { Locale, MatchRequest, MatchResponse } from "../../../../shared/contract";
 import { MatchApiError, requestMatch } from "@/lib/match-api";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
+import { formatKzt, formatMonthShort, formatWeekday } from "../format/format";
 import { CalendarIcon, SparkIcon } from "../icons/icons";
 import styles from "./compare-dates.module.css";
 
@@ -16,22 +17,6 @@ interface CompareState {
 }
 
 const EMPTY_STATE: CompareState = { error: null, left: null, pending: false, right: null };
-
-function localeTag(locale: Locale) {
-  return locale === "kk" ? "kk-KZ" : locale === "en" ? "en-GB" : "ru-RU";
-}
-
-function formatShortDate(date: string, locale: Locale) {
-  return new Intl.DateTimeFormat(localeTag(locale), { day: "numeric", month: "short" }).format(
-    new Date(`${date}T12:00:00`),
-  );
-}
-
-function monthLabel(date: string, locale: Locale) {
-  return new Intl.DateTimeFormat(localeTag(locale), { month: "short" })
-    .format(new Date(`${date}T12:00:00`))
-    .replace(".", "");
-}
 
 export function CompareDates({ copy, locale }: { copy: MatchMessages; locale: Locale }) {
   const [state, setState] = useState<CompareState>(EMPTY_STATE);
@@ -74,10 +59,10 @@ export function CompareDates({ copy, locale }: { copy: MatchMessages; locale: Lo
   }
 
   return (
-    <section className={styles.section}>
+    <section className={styles.section} aria-labelledby="compare-dates-title">
       <div className={styles.intro}>
         <p>{copy.compareKicker}</p>
-        <h2>{copy.compareTitle}</h2>
+        <h2 id="compare-dates-title">{copy.compareTitle}</h2>
         <span>{copy.compareText}</span>
         <button disabled={state.pending} onClick={() => void runComparison()} type="button">
           <CalendarIcon />
@@ -103,11 +88,11 @@ export function CompareDates({ copy, locale }: { copy: MatchMessages; locale: Lo
 
         {!state.pending && !state.error && !state.left && (
           <div className={styles.placeholder} aria-hidden="true">
-            <div><span>16</span><small>{monthLabel("2026-10-16", locale)}</small></div>
+            <div><span>16</span><small>{formatMonthShort("2026-10-16", locale)}</small></div>
             <span className={styles.line} />
             <SparkIcon />
             <span className={styles.line} />
-            <div><span>23</span><small>{monthLabel("2026-10-23", locale)}</small></div>
+            <div><span>23</span><small>{formatMonthShort("2026-10-23", locale)}</small></div>
           </div>
         )}
       </div>
@@ -139,15 +124,15 @@ function ComparisonDate({ changedLabel, date, label, locale, otherIds, response,
     <div className={styles.dateColumn}>
       <div className={styles.dateHeading}>
         <CalendarIcon />
-        <span><strong>{label}</strong><small>{formatShortDate(date, locale)}</small></span>
+        <span><strong>{label}</strong><small>{formatWeekday(date, locale)}</small></span>
       </div>
       <ol>
         {response.cards.map((card, index) => {
           const same = otherIds.has(card.id);
           return (
             <li key={card.id}>
-              <span className={styles.rank}>{index + 1}</span>
-              <span><strong>{card.anonName}</strong><small>{card.id}</small></span>
+              <span className={styles.rank} aria-hidden="true">{index + 1}</span>
+              <span><strong>{card.anonName}</strong><small>{formatKzt(card.priceFromKzt, locale)}</small></span>
               <em className={same ? styles.same : styles.changed}>{same ? sameLabel : changedLabel}</em>
             </li>
           );

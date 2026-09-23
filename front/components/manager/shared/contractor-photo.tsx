@@ -18,7 +18,7 @@ export function ContractorPhoto({ id, name }: { id: string; name: string }) {
         {failed ? (
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="3" /><circle cx="12" cy="12" r="4" /></svg>
         ) : (
-          <Image src={`/contractors/${encodeURIComponent(id)}.webp`} alt={name} fill sizes="72px" onError={() => setFailed(true)} />
+          <Image src={`/contractors/${encodeURIComponent(id)}.webp`} alt={name} fill sizes="88px" onError={() => setFailed(true)} />
         )}
       </div>
       <figcaption>{failed ? copy.photoMissing : copy.photo}</figcaption>

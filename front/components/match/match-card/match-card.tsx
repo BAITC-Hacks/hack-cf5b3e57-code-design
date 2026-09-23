@@ -5,6 +5,7 @@ import { useState } from "react";
 
 import type { Locale, MatchCard as MatchCardData } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
+import { formatKzt, humanizeDates } from "../format/format";
 import { highlightReason } from "./highlight-reason";
 import cardStyles from "./match-card.module.css";
 
@@ -31,24 +32,19 @@ interface MatchCardProps {
   rank: number;
 }
 
-const LOCALE_TAG: Record<Locale, string> = {
-  en: "en-US",
-  kk: "kk-KZ",
-  ru: "ru-RU",
-};
-
 export function MatchCard({ card, categories, cities, copy, locale, rank }: MatchCardProps) {
   const [imageFailed, setImageFailed] = useState(false);
-  const { parts, remainingFacts } = highlightReason(card.reason, card.factsUsed);
+  // Humanize ISO dates in both the reason and the fact labels so literal highlighting still lines up.
+  const facts = card.factsUsed.map((fact) => ({ ...fact, label: humanizeDates(fact.label, locale) }));
+  const { parts, remainingFacts } = highlightReason(humanizeDates(card.reason, locale), facts);
   const flags = [
     card.flags.synthetic ? copy.synthetic : null,
     card.flags.priceImputed ? copy.priceImputed : null,
     card.flags.cityImputed ? copy.cityImputed : null,
   ].filter((flag): flag is string => Boolean(flag));
 
-  const price = new Intl.NumberFormat(LOCALE_TAG[locale], {
-    maximumFractionDigits: 0,
-  }).format(card.priceFromKzt);
+  const categoryLabel = categories[card.category as keyof typeof categories] ?? card.category;
+  const cityLabel = cities[card.city as keyof typeof cities] ?? card.city;
 
   return (
     <article className={cardStyles.card}>
@@ -56,7 +52,7 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
         {!imageFailed ? (
           <Image
             src={`/contractors/${card.id}.webp`}
-            alt={`${card.anonName}, ${categories[card.category as keyof typeof categories] ?? card.category}`}
+            alt={`${card.anonName}, ${categoryLabel}`}
             fill
             sizes="(max-width: 680px) 100vw, (max-width: 1100px) 50vw, 33vw"
             className={cardStyles.image}
@@ -65,7 +61,7 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
         ) : (
           <div className={cardStyles.placeholder} aria-hidden="true">
             <CategoryIcon category={card.category} />
-            <span>{categories[card.category as keyof typeof categories] ?? card.category}</span>
+            <span>{categoryLabel}</span>
           </div>
         )}
 
@@ -77,27 +73,28 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
 
       <div className={cardStyles.body}>
         <div className={cardStyles.identity}>
-          <div>
-            <p className={cardStyles.category}>{categories[card.category as keyof typeof categories] ?? card.category}</p>
-            <h3>{card.anonName}</h3>
-          </div>
-          <p className={cardStyles.location}>
-            <PinIcon />
-            {cities[card.city as keyof typeof cities] ?? card.city}
+          <p className={cardStyles.meta}>
+            <span>{categoryLabel}</span>
+            <span className={cardStyles.location}>
+              <PinIcon />
+              {cityLabel}
+            </span>
           </p>
+          <h3>{card.anonName}</h3>
         </div>
 
-        {flags.length > 0 && (
-          <ul className={cardStyles.flags} aria-label={copy.provenance}>
-            {flags.map((flag) => (
-              <li key={flag}>{flag}</li>
-            ))}
-          </ul>
-        )}
-
-        <div className={cardStyles.price}>
-          <span>{copy.from}</span>
-          <strong>{price} ₸</strong>
+        <div className={cardStyles.priceRow}>
+          <p className={cardStyles.price}>
+            <span>{copy.from}</span>
+            <strong>{formatKzt(card.priceFromKzt, locale)}</strong>
+          </p>
+          {flags.length > 0 && (
+            <ul className={cardStyles.flags} aria-label={copy.provenance}>
+              {flags.map((flag) => (
+                <li key={flag}>{flag}</li>
+              ))}
+            </ul>
+          )}
         </div>
 
         <div className={cardStyles.reason}>
@@ -115,7 +112,7 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
               <span className={cardStyles.factIcon} aria-hidden="true">
                 {fact.verified ? <CheckIcon /> : <QuoteIcon />}
               </span>
-              <span>
+              <span className={cardStyles.factText}>
                 <strong>{fact.label}</strong>
                 <small>{fact.verified ? copy.verified : copy.claimed}</small>
               </span>

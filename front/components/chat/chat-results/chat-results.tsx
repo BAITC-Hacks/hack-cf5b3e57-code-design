@@ -6,6 +6,7 @@ import type { Ref } from "react";
 import type { Locale, MatchResponse } from "../../../../shared/contract";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
 import { ChatResultCard } from "../chat-result-card/chat-result-card";
+import { humanizeDates } from "../format-dates";
 import styles from "./chat-results.module.css";
 
 interface ChatResultsProps {
@@ -34,7 +35,7 @@ export function ChatResults({ copy, locale, result, sectionRef }: ChatResultsPro
           <h2>{copy.result.outcome[result.outcome]}</h2>
         </div>
         <span>{result.cards.length} / 3</span>
-        <p>{result.summary}</p>
+        <p>{humanizeDates(result.summary, locale)}</p>
       </div>
 
       {result.criteria.length > 0 && (
@@ -43,8 +44,8 @@ export function ChatResults({ copy, locale, result, sectionRef }: ChatResultsPro
           <ul>
             {result.criteria.map((criterion, index) => (
               <li key={`${criterion}-${index}`}>
-                <span>{String(index + 1).padStart(2, "0")}</span>
-                {criterion}
+                <span aria-hidden="true">{index + 1}</span>
+                {humanizeDates(criterion, locale)}
               </li>
             ))}
           </ul>

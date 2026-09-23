@@ -1,16 +1,38 @@
-.panel { min-width: 0; margin-top: 20px; padding: 28px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }
-.heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.heading h2 { font-size: 24px; letter-spacing: -.035em; }
-.heading > span { padding: 7px 12px; border-radius: 999px; background: var(--tm-bg); color: var(--tm-ocean-ink); font-size: 12px; font-weight: 600; }
-.description { margin: 12px 0 18px; color: var(--tm-muted); font-size: 14px; line-height: 1.6; }
-.scroll { max-width: 100%; overflow-x: auto; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-field); }
-.scroll table { width: 100%; min-width: 680px; border-collapse: collapse; font-size: 14px; text-align: left; }
-.scroll th, .scroll td { padding: 15px 16px; border-bottom: 1px solid var(--tm-line); vertical-align: top; }
-.scroll thead { background: var(--tm-bg); color: var(--tm-muted); }
-.scroll th { font-weight: 600; }
-.scroll tbody tr:last-child > * { border-bottom: 0; }
-.scroll a { text-decoration: underline; text-underline-offset: 4px; }
-.verified, .claimed { display: flex; align-items: baseline; gap: 7px; }
-.verified { color: var(--tm-ocean-ink); }
-.claimed { color: var(--tm-muted); }
-@media (max-width: 600px) { .panel { padding: 20px; } .heading h2 { font-size: 20px; } }
+.panel { margin-top: 20px; }
+.summary { display: inline-flex; align-items: center; gap: 6px; min-height: 30px; padding: 5px 12px; border-radius: 999px; background: #e2f3f0; color: var(--tm-ocean-ink); font-size: 13px; font-weight: 600; white-space: nowrap; }
+.summary svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.scroll { max-width: 100%; margin-top: 20px; overflow-x: auto; border: 1px solid var(--tm-line); border-radius: 16px; overscroll-behavior-x: contain; }
+.scroll table { width: 100%; min-width: 640px; border-collapse: collapse; font-size: 14px; line-height: 1.45; text-align: left; }
+.scroll th, .scroll td { padding: 13px 16px; vertical-align: top; }
+.scroll thead th { background: var(--tm-bg); color: var(--tm-muted); font-size: 13px; font-weight: 600; border-bottom: 1px solid var(--tm-line); }
+.scroll tbody + tbody { border-top: 1px solid var(--tm-line); }
+.scroll tbody tr + tr > * { border-top: 1px dashed var(--tm-line); }
+.nameCell { width: 22%; font-weight: 600; }
+.scroll a { color: var(--tm-ink); text-decoration: underline; text-decoration-color: var(--tm-line); text-decoration-thickness: 2px; text-underline-offset: 4px; }
+.scroll a:hover { text-decoration-color: var(--tm-ember); }
+.field { color: var(--tm-muted); }
+.statusCell { width: 1%; white-space: nowrap; }
+.status { display: inline-flex; align-items: center; gap: 6px; padding: 3px 10px 3px 6px; border-radius: 999px; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.status svg { width: 16px; height: 16px; flex: 0 0 16px; }
+.verified { background: #e2f3f0; color: var(--tm-ocean-ink); }
+.claimed { background: var(--tm-bg); color: var(--tm-muted); box-shadow: inset 0 0 0 1px var(--tm-line); }
+.empty { margin: 16px 0 0; color: var(--tm-muted); font-size: 14px; }
+
+@media (max-width: 640px) {
+  .scroll { overflow: visible; border: 0; border-radius: 0; }
+  .scroll table { display: grid; gap: 12px; min-width: 0; }
+  .scroll thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .scroll tbody { display: grid; padding: 4px 14px; border: 1px solid var(--tm-line); border-radius: 14px; background: var(--tm-surface); }
+  .scroll tbody + tbody { border-top: 1px solid var(--tm-line); }
+  .scroll tr { display: grid; grid-template-columns: minmax(0, 1fr) auto; grid-template-areas: "claim status" "field field"; gap: 4px 12px; padding: 12px 0; }
+  .scroll tr.groupStart { grid-template-areas: "name name" "claim status" "field field"; }
+  .scroll tbody tr + tr { border-top: 1px dashed var(--tm-line); }
+  .scroll tbody tr + tr > * { border-top: 0; }
+  .scroll th, .scroll td { width: auto; padding: 0; }
+  .nameCell { grid-area: name; margin-bottom: 6px; font-size: 16px; }
+  .claimCell { grid-area: claim; color: var(--tm-ink); }
+  .statusCell { grid-area: status; align-self: start; }
+  .fieldCell { grid-area: field; font-size: 13px; }
+  .fieldCell::before { content: attr(data-label) ": "; }
+}
+@media (max-width: 600px) { .panel { margin-top: 16px; } }

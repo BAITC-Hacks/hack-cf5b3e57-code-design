@@ -15,18 +15,24 @@ export function MatchStatus({ copy, error, loadingStep, onRetry, pending }: Matc
   if (pending) {
     return (
       <section className={styles.loading} aria-busy="true" aria-label={copy.loadingTitle}>
-        <MascotGuide compact copy={copy.mascot} variant="thinking" />
-        <div>
+        <div className={styles.avatar}>
+          <MascotGuide compact copy={copy.mascot} variant="thinking" />
+        </div>
+        <div className={styles.head}>
+          <strong>{copy.mascot.name}</strong>
           <p>{copy.loadingTitle}</p>
-          <ol>
-            {copy.loadingSteps.map((step, index) => (
-              <li className={index <= loadingStep ? styles.active : undefined} key={step}>
-                <span>{index < loadingStep ? <CheckIcon /> : index + 1}</span>
+        </div>
+        <ol className={styles.steps}>
+          {copy.loadingSteps.map((step, index) => {
+            const state = index < loadingStep ? styles.done : index === loadingStep ? styles.active : undefined;
+            return (
+              <li className={state} key={step}>
+                <span aria-hidden="true">{index < loadingStep ? <CheckIcon /> : index + 1}</span>
                 {step}
               </li>
-            ))}
-          </ol>
-        </div>
+            );
+          })}
+        </ol>
       </section>
     );
   }
@@ -34,7 +40,7 @@ export function MatchStatus({ copy, error, loadingStep, onRetry, pending }: Matc
   if (error) {
     return (
       <section className={styles.error} role="alert">
-        <span className={styles.errorIcon}>!</span>
+        <span className={styles.errorIcon} aria-hidden="true">!</span>
         <div><h2>{copy.errorTitle}</h2><p>{error}</p></div>
         <button onClick={onRetry} type="button">{copy.retry}</button>
       </section>

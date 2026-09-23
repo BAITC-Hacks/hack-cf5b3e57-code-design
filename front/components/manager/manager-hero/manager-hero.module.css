@@ -1,21 +1,21 @@
-.hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 32px; }
-.hero > div:first-child { max-width: 760px; }
-.eyebrow { color: var(--tm-ink); font-size: var(--font-12, 12px); font-weight: 760; letter-spacing: 0; text-transform: none; }
-.hero h1 { max-width: 700px; margin: 10px 0 14px; font-size: clamp(var(--font-40, 40px), 5vw, var(--font-64, 64px)); font-weight: 690; letter-spacing: -.06em; line-height: .98; }
-.hero > div:first-child > p { max-width: 680px; margin: 0; color: var(--tm-muted); font-size: var(--font-18, 18px); line-height: 1.55; }
-.status { display: flex; min-width: 285px; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }
-.status > span:last-child { display: grid; gap: 3px; }
-.status strong { font-size: var(--font-14, 14px); }
-.status small { max-width: 230px; color: var(--tm-muted); font-size: var(--font-12, 12px); line-height: 1.4; }
-.signal { width: 11px; height: 11px; flex: 0 0 auto; border-radius: 50%; background: var(--tm-muted); box-shadow: var(--tm-shadow-card); }
-.connecting .signal, .running .signal { background: var(--tm-ink); box-shadow: var(--tm-shadow-card); animation: pulse 1.4s ease-in-out infinite; }
-.done .signal { background: var(--tm-ocean-ink); box-shadow: var(--tm-shadow-card); }
-.error .signal { background: var(--tm-stop); box-shadow: var(--tm-shadow-card); }
-.cancelled .signal { background: var(--tm-warn); box-shadow: var(--tm-shadow-card); }
-@keyframes pulse { 50% { opacity: .5; transform: scale(.82); } }
-@media (max-width: 840px) { .hero { align-items: stretch; flex-direction: column; gap: 22px; } .status { min-width: 0; } }
-@media (max-width: 600px) { .hero h1 { font-size: var(--font-40, 40px); } .hero > div:first-child > p { font-size: var(--font-16, 16px); } }
+.hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 32px; margin-bottom: 28px; }
+.copy { max-width: 720px; }
+.eyebrow { display: inline-flex; align-items: center; gap: 8px; color: var(--tm-ocean-ink); font-size: 14px; font-weight: 600; }
+.eyebrow::before { width: 8px; height: 8px; border-radius: 50%; background: var(--tm-ember); content: ""; }
+.hero h1 { margin: 10px 0 12px; color: var(--tm-ink); font-size: clamp(32px, 3.8vw, 48px); font-weight: 700; line-height: 1.08; letter-spacing: -.035em; text-wrap: balance; }
+.copy > p { max-width: 620px; margin: 0; color: var(--tm-muted); font-size: 17px; line-height: 1.55; }
+.status { display: flex; width: 320px; flex: 0 0 auto; align-items: center; gap: 14px; padding: 16px 18px; border: 1px solid var(--tm-line); border-radius: 20px; background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }
+.status > span:last-child { display: grid; min-width: 0; gap: 3px; }
+.status strong { font-size: 15px; font-weight: 650; }
+.status small { color: var(--tm-muted); font-size: 13px; line-height: 1.4; }
+.signal { position: relative; width: 12px; height: 12px; flex: 0 0 auto; border-radius: 50%; background: var(--tm-muted); }
+.signal::after { position: absolute; inset: -5px; border-radius: 50%; background: currentColor; content: ""; opacity: .16; }
+.idle .signal { background: var(--tm-muted); color: var(--tm-muted); }
+.connecting .signal, .running .signal { background: var(--tm-ember); color: var(--tm-ember); animation: pulse 1.4s ease-in-out infinite; }
+.done .signal { background: var(--tm-ocean-ink); color: var(--tm-ocean-ink); }
+.error .signal { background: var(--tm-stop); color: var(--tm-stop); }
+.cancelled .signal { background: var(--tm-warn); color: var(--tm-warn); }
+@keyframes pulse { 50% { opacity: .55; transform: scale(.82); } }
+@media (max-width: 840px) { .hero { align-items: stretch; flex-direction: column; gap: 20px; } .status { width: auto; } }
+@media (max-width: 600px) { .hero { margin-bottom: 20px; } .copy > p { font-size: 16px; } }
 @media (prefers-reduced-motion: reduce) { .signal { animation: none !important; } }
-
-.hero h1 { font-size: clamp(32px, 3.8vw, 48px); line-height: 1.08; }
-.hero > div:first-child > p { font-size: 16px; }

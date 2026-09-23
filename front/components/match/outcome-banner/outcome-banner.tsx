@@ -1,5 +1,6 @@
-import type { MatchOutcome, MatchResponse } from "../../../../shared/contract";
+import type { Locale, MatchOutcome, MatchResponse } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
+import { humanizeDates } from "../format/format";
 import { CheckIcon, SlidersIcon, UsersIcon } from "../icons/icons";
 import styles from "./outcome-banner.module.css";
 
@@ -14,19 +15,26 @@ function OutcomeIcon({ outcome }: { outcome: MatchOutcome }) {
   return <SlidersIcon />;
 }
 
-export function OutcomeBanner({ copy, result }: { copy: MatchMessages; result: MatchResponse }) {
+interface OutcomeBannerProps {
+  copy: MatchMessages;
+  locale: Locale;
+  result: MatchResponse;
+  /** The summary can be voiced by Nurlan instead, to avoid saying it twice. */
+  showSummary?: boolean;
+}
+
+export function OutcomeBanner({ copy, locale, result, showSummary = true }: OutcomeBannerProps) {
   const partial = result.outcome === "found" && result.cards.length > 0 && result.cards.length < 3;
   const outcomeCopy = partial ? copy.partialOutcome : copy.outcomes[result.outcome];
   return (
     <div className={`${styles.banner} ${variant(result)}`}>
-      <span className={styles.icon}>{partial ? <UsersIcon /> : <OutcomeIcon outcome={result.outcome} />}</span>
-      <div>
+      <span className={styles.icon} aria-hidden="true">{partial ? <UsersIcon /> : <OutcomeIcon outcome={result.outcome} />}</span>
+      <div className={styles.text}>
         <p>{copy.resultKicker}</p>
         <h2>{outcomeCopy.title}</h2>
-        <span>{result.summary}</span>
+        {showSummary && result.summary && <span>{humanizeDates(result.summary, locale)}</span>}
       </div>
-      <strong>{outcomeCopy.label}</strong>
+      <strong className={styles.label}>{outcomeCopy.label}</strong>
     </div>
   );
 }
-

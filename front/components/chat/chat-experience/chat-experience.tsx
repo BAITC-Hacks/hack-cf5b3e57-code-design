@@ -14,12 +14,12 @@ import { useLocale } from "@/lib/i18n/locale-provider";
 import { CHAT_MESSAGES } from "@/lib/i18n/messages/chat";
 import { ChatAttachmentResults } from "../chat-attachment-results/chat-attachment-results";
 import { ChatComposer } from "../chat-composer/chat-composer";
-import { ChatHeader } from "../chat-header/chat-header";
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
+import siteStyles from "@/components/site/site.module.css";
 import { ChatHero } from "../chat-hero/chat-hero";
-import {
-  ChatSessionPanel,
-  type ChatConnectionPhase,
-} from "../chat-session-panel/chat-session-panel";
+import { ChatModeSwitcher } from "../chat-mode-switcher/chat-mode-switcher";
+import type { ChatConnectionPhase } from "../chat-session-panel/chat-session-panel";
 import { ChatThread } from "../chat-thread/chat-thread";
 import type { QuickReply } from "../quick-replies/quick-replies";
 import styles from "./chat-experience.module.css";
@@ -95,7 +95,11 @@ export function ChatExperience() {
   );
 
   const quickReplies = useMemo<readonly QuickReply[]>(
-    () => copy.starterPrompts[mode].map((value) => ({ label: value, value })),
+    () =>
+      copy.starterPrompts[mode].map((value, index) => ({
+        label: copy.starterLabels[mode][index] ?? value,
+        value,
+      })),
     [copy, mode],
   );
 
@@ -116,7 +120,6 @@ export function ChatExperience() {
     messageController.current = controller;
     const streamId = `stream-${crypto.randomUUID()}`;
     let streamedText = "";
-    let streamMessageAdded = false;
     let terminalError = false;
 
     setLastMessage(content);
@@ -140,8 +143,8 @@ export function ChatExperience() {
                 content: streamedText,
                 createdAt: new Date().toISOString(),
               };
-              if (!streamMessageAdded) {
-                streamMessageAdded = true;
+              // Pure updater: React StrictMode may call it twice in development.
+              if (!current.some((message) => message.id === streamId)) {
                 return [...current, streamMessage];
               }
               return current.map((message) =>
@@ -161,7 +164,7 @@ export function ChatExperience() {
           }
           if (event.type === "done") {
             setMessages((current) => {
-              if (streamMessageAdded) {
+              if (current.some((message) => message.id === streamId)) {
                 return current.map((message) =>
                   message.id === streamId ? event.data.message : message,
                 );
@@ -209,28 +212,37 @@ export function ChatExperience() {
         : "";
 
   return (
-    <>
-      <a className={styles.skipLink} href="#chat-conversation">
-        {copy.skip}
-      </a>
-      <ChatHeader copy={copy} />
+    <div className={siteStyles.shell}>
+      <SiteHeader contentId="chat-conversation" />
       <ChatHero copy={copy} />
 
       <main className={styles.main} id="chat-conversation">
         <motion.section
           animate={{ opacity: 1, y: 0 }}
+          aria-label={copy.assistant.name}
           className={styles.conversation}
           initial={reduceMotion ? false : { opacity: 0, y: 18 }}
           transition={{ duration: reduceMotion ? 0 : 0.45, ease: [0.22, 1, 0.36, 1] }}
         >
           <div className={styles.conversationHeader}>
-            <div>
-              <span aria-hidden="true" />
-              <strong>{copy.modes[mode].label}</strong>
+            <ChatModeSwitcher
+              copy={copy}
+              disabled={pending}
+              mode={mode}
+              onChange={setMode}
+            />
+            <div className={styles.conversationMeta}>
+              <p className={styles.status} data-phase={phase}>
+                <span aria-hidden="true" />
+                {tool ? copy.tools[tool] : copy.session.status[phase]}
+              </p>
+              <button disabled={pending} onClick={restart} type="button">
+                <svg aria-hidden="true" viewBox="0 0 20 20">
+                  <path d="M4 10a6 6 0 1 0 1.8-4.3M4 4v3.5h3.5" />
+                </svg>
+                {copy.actions.restart}
+              </button>
             </div>
-            <button disabled={pending} onClick={restart} type="button">
-              {copy.actions.restart}
-            </button>
           </div>
           <ChatThread copy={copy} messages={messages} pending={pending} />
           <ChatComposer
@@ -243,49 +255,37 @@ export function ChatExperience() {
           />
         </motion.section>
 
-        <ChatSessionPanel
-          copy={copy}
-          mode={mode}
-          onModeChange={setMode}
-          phase={phase}
-          sessionId={sessionId}
-          tool={tool}
-        />
+        <div className="visually-hidden" aria-live="polite" aria-atomic="true">
+          {pending ? copy.assistant.searching : error ?? summary}
+        </div>
+
+        {error && (
+          <section className={styles.error} role="alert">
+            <p>{error}</p>
+            <div>
+              {lastMessage && sessionId && (
+                <button onClick={() => void handleSend(lastMessage)} type="button">
+                  {copy.actions.retry}
+                </button>
+              )}
+              <button onClick={restart} type="button">
+                {copy.actions.restart}
+              </button>
+            </div>
+          </section>
+        )}
+
+        {attachment && (
+          <ChatAttachmentResults
+            attachment={attachment}
+            copy={copy}
+            locale={locale}
+            sectionRef={resultRef}
+          />
+        )}
       </main>
 
-      <div className="visually-hidden" aria-live="polite" aria-atomic="true">
-        {pending ? copy.assistant.searching : error ?? summary}
-      </div>
-
-      {error && (
-        <section className={styles.error} role="alert">
-          <p>{error}</p>
-          <div>
-            {lastMessage && sessionId && (
-              <button onClick={() => void handleSend(lastMessage)} type="button">
-                {copy.actions.retry}
-              </button>
-            )}
-            <button onClick={restart} type="button">
-              {copy.actions.restart}
-            </button>
-          </div>
-        </section>
-      )}
-
-      {attachment && (
-        <ChatAttachmentResults
-          attachment={attachment}
-          copy={copy}
-          locale={locale}
-          sectionRef={resultRef}
-        />
-      )}
-
-      <footer className={styles.footer}>
-        <strong>{copy.brand}</strong>
-        <span>{copy.hero.badge}</span>
-      </footer>
-    </>
+      <SiteFooter />
+    </div>
   );
 }

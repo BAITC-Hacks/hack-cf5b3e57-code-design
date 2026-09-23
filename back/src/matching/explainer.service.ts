@@ -2,7 +2,8 @@ import { Inject, Injectable, Logger } from '@nestjs/common';
 import { createHash } from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { MatchRequestDto } from './dto/match-request.dto';
-import { LLM_CLIENT, LlmClient } from './llm/llm-client';
+import type { LlmClient } from './llm/llm-client';
+import { LLM_CLIENT } from './llm/llm-client';
 import { CardFact, FactKey, MatchCard } from './types';
 
 @Injectable()

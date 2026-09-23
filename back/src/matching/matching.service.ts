@@ -55,6 +55,7 @@ export class MatchingService {
         budgetKzt: req.budgetKzt,
         durationHours: req.durationHours,
         language: req.language,
+        locale: req.locale,
       },
       poolSize: 0,
     });

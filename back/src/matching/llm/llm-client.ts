@@ -8,6 +8,7 @@ export interface ExplainInput {
     budgetKzt: number;
     durationHours?: number;
     language?: string;
+    locale?: 'ru' | 'kk' | 'en';
   };
   candidate: {
     id: string;

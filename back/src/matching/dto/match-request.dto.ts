@@ -1,4 +1,5 @@
 import {
+  IsIn,
   IsInt,
   IsOptional,
   IsPositive,
@@ -43,4 +44,8 @@ export class MatchRequestDto {
   @MinLength(1)
   @MaxLength(32)
   language?: string;
+
+  @IsOptional()
+  @IsIn(['ru', 'kk', 'en'])
+  locale?: 'ru' | 'kk' | 'en';
 }

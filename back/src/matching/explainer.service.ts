@@ -36,8 +36,9 @@ export class ExplainerService {
     rows.sort((a, b) => top.indexOf(a.id) - top.indexOf(b.id));
 
     const requestHash = this.hashRequest(req);
+    const locale = req.locale ?? 'ru';
     const cached = await this.prisma.explanationCache.findMany({
-      where: { requestHash, contractorId: { in: top } },
+      where: { requestHash, contractorId: { in: top }, locale },
     });
     const cacheById = new Map(cached.map((c) => [c.contractorId, c]));
 
@@ -77,12 +78,15 @@ export class ExplainerService {
             data: {
               requestHash,
               contractorId: c.id,
+              locale,
               reason,
               factsUsed,
             },
           });
         } catch (e) {
-          this.logger.warn(`cache write failed for ${c.id}: ${(e as Error).message}`);
+          this.logger.warn(
+            `cache write failed for ${c.id}: ${(e as Error).message}`,
+          );
         }
       }
 
@@ -115,6 +119,7 @@ export class ExplainerService {
       budgetKzt: req.budgetKzt,
       durationHours: req.durationHours ?? null,
       language: req.language ?? null,
+      locale: req.locale ?? 'ru',
     });
     return createHash('sha256').update(norm).digest('hex').slice(0, 32);
   }
@@ -139,7 +144,10 @@ export class ExplainerService {
   ): string[] {
     const out: string[] = [];
 
-    if (others.length > 0 && others.every((o) => me.priceFromKzt < o.priceFromKzt)) {
+    if (
+      others.length > 0 &&
+      others.every((o) => me.priceFromKzt < o.priceFromKzt)
+    ) {
       out.push('самая низкая цена в подборке');
     }
 
@@ -161,7 +169,12 @@ export class ExplainerService {
       }
     }
 
-    if (me.enrichment?.specialization && others.every((o) => o.enrichment?.specialization !== me.enrichment?.specialization)) {
+    if (
+      me.enrichment?.specialization &&
+      others.every(
+        (o) => o.enrichment?.specialization !== me.enrichment?.specialization,
+      )
+    ) {
       out.push(`специализация: ${me.enrichment.specialization}`);
     }
 
@@ -179,9 +192,18 @@ export class ExplainerService {
     req: MatchRequestDto,
   ): CardFact[] {
     const facts: CardFact[] = [];
-    const uniq = new Set(keys.filter((k): k is FactKey =>
-      ['budget', 'format', 'language', 'hours', 'signal', 'description'].includes(k),
-    ) as FactKey[]);
+    const uniq = new Set(
+      keys.filter((k): k is FactKey =>
+        [
+          'budget',
+          'format',
+          'language',
+          'hours',
+          'signal',
+          'description',
+        ].includes(k),
+      ) as FactKey[],
+    );
 
     for (const k of uniq) {
       switch (k) {
@@ -213,9 +235,10 @@ export class ExplainerService {
             const ok = c.maxHours === null || c.maxHours >= req.durationHours;
             facts.push({
               key: 'hours',
-              label: c.maxHours === null
-                ? 'длительность не ограничена'
-                : `берёт до ${c.maxHours} ч ≥ ${req.durationHours} ч`,
+              label:
+                c.maxHours === null
+                  ? 'длительность не ограничена'
+                  : `берёт до ${c.maxHours} ч ≥ ${req.durationHours} ч`,
               verified: ok,
             });
           }
@@ -224,7 +247,11 @@ export class ExplainerService {
         case 'description':
           // Эти факты приходят из enrichment/описания и по построению
           // не могут быть проверены таблично — помечаем как «со слов».
-          facts.push({ key: k, label: 'из описания подрядчика', verified: false });
+          facts.push({
+            key: k,
+            label: 'из описания подрядчика',
+            verified: false,
+          });
           break;
       }
     }

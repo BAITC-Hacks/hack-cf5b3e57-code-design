@@ -198,26 +198,20 @@ export class MatchingService {
       return `В ${cityLoc(req.city).replace(/^\u0432\s+/u, '')} нет ${categoryGenPl(req.category)} в каталоге. ${elsewhere}`;
     }
 
-    const candidates = await this.prisma.contractor.findMany({
-      where: { city: req.city, categories: { has: req.category } },
-      select: {
-        busyDates: true,
-        eventFormats: true,
-        priceFromKzt: true,
-        languages: true,
-        maxHours: true,
-      },
-    });
-    const independentFunnel = this.independentCauseFunnel(candidates, req);
+    const inCategory =
+      funnel.find((step) => step.step === 'category')?.after ?? 0;
     if (req.locale === 'en') {
-      return `${candidates.length} ${req.category} profiles in ${req.city}, but none meets all requirements: ${this.localizedCauses(independentFunnel, req)}.`;
+      return `${inCategory} ${req.category} profiles in ${req.city}, but none meets all requirements: ${this.localizedCauses(funnel, req)}.`;
     }
     if (req.locale === 'kk') {
-      return `${req.city} қаласында ${candidates.length} ${req.category} бар, бірақ ешқайсысы барлық шартқа сай емес: ${this.localizedCauses(independentFunnel, req)}.`;
+      return `${req.city} қаласында ${inCategory} ${req.category} бар, бірақ ешқайсысы барлық шартқа сай емес: ${this.localizedCauses(funnel, req)}.`;
     }
-    const causes = summarizeCauses(independentFunnel, req);
+    // The same sequential funnel drives the outcome and the explanation.
+    // Counting each condition independently double-counts a busy contractor
+    // as both unavailable and over budget, making the totals misleading.
+    const causes = summarizeCauses(funnel, req);
     const hint = await this.relaxationHint(req);
-    return `В ${cityLoc(req.city).replace(/^\u0432\s+/u, '')} ${candidates.length} ${categoryPlural(req.category, candidates.length)}, но никто не подходит: ${causes}.${hint ? ` ${hint}` : ''}`;
+    return `В ${cityLoc(req.city).replace(/^\u0432\s+/u, '')} ${inCategory} ${categoryPlural(req.category, inCategory)}, но никто не подходит: ${causes}.${hint ? ` ${hint}` : ''}`;
   }
 
   private localizedCauses(funnel: FunnelStep[], req: MatchRequestDto): string {
@@ -259,52 +253,6 @@ export class MatchingService {
     }
     return phrases.join(', ')
       || (english ? 'no profile passes the combined filters' : 'бірде-бір профиль барлық сүзгіден өтпейді');
-  }
-
-  /** Для пустого исхода каждое условие считаем независимо, а не каскадом. */
-  private independentCauseFunnel(
-    candidates: {
-      busyDates: string[];
-      eventFormats: string[];
-      priceFromKzt: number;
-      languages: string[];
-      maxHours: number | null;
-    }[],
-    req: MatchRequestDto,
-  ): FunnelStep[] {
-    const total = candidates.length;
-    const step = (
-      name: FunnelStep['step'],
-      rejected: (candidate: (typeof candidates)[number]) => boolean,
-    ): FunnelStep => {
-      const removed = candidates.filter(rejected).length;
-      return {
-        step: name,
-        before: total,
-        after: total - removed,
-        removedReason: '',
-      };
-    };
-
-    const result = [
-      step('date', (c) => c.busyDates.includes(req.date)),
-      step('format', (c) => !c.eventFormats.includes(req.eventType)),
-      step('budget', (c) => c.priceFromKzt > req.budgetKzt),
-    ];
-    if (req.language) {
-      result.push(
-        step('language', (c) => !c.languages.includes(req.language!)),
-      );
-    }
-    if (req.durationHours) {
-      result.push(
-        step(
-          'hours',
-          (c) => c.maxHours !== null && c.maxHours < req.durationHours!,
-        ),
-      );
-    }
-    return result;
   }
 
   private filtersExcept(

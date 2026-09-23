@@ -5,6 +5,14 @@ import { MatchRequestDto } from './dto/match-request.dto';
 import type { LlmClient } from './llm/llm-client';
 import { LLM_CLIENT } from './llm/llm-client';
 import { CardFact, FactKey, MatchCard } from './types';
+import { humanDate, languageLoc, money } from './copy/nouns';
+
+export interface Differentiator {
+  text: string;
+  factKey: FactKey;
+  priority: number;
+  toString(): string;
+}
 
 @Injectable()
 export class ExplainerService {
@@ -45,7 +53,7 @@ export class ExplainerService {
 
     for (const c of rows) {
       const others = rows.filter((r) => r.id !== c.id);
-      const differentiators = this.diff(c, others);
+      const differentiators = this.diff(c, others, req);
 
       let reason: string;
       let factsUsed: string[];
@@ -68,7 +76,9 @@ export class ExplainerService {
             signals: c.enrichment?.signals ?? [],
             specialization: c.enrichment?.specialization ?? null,
           },
-          differentiators,
+          // llm-client.ts остаётся общим контрактом. Объекты имеют toString(),
+          // поэтому OpenAI-адаптер тоже получает читаемый текст через join().
+          differentiators: differentiators as unknown as string[],
         });
         reason = out.reason;
         factsUsed = out.factsUsed;
@@ -82,15 +92,16 @@ export class ExplainerService {
             },
           });
         } catch (e) {
-          this.logger.warn(`cache write failed for ${c.id}: ${(e as Error).message}`);
+          this.logger.warn(
+            `cache write failed for ${c.id}: ${(e as Error).message}`,
+          );
         }
       }
 
       cards.push({
         id: c.id,
         anonName: c.anonName,
-        // Отдаём первую подходящую категорию (обычно у подрядчика одна ключевая).
-        category: c.categories[0],
+        category: req.category,
         city: c.city,
         priceFromKzt: c.priceFromKzt,
         reason,
@@ -125,47 +136,159 @@ export class ExplainerService {
    */
   private diff(
     me: {
+      anonName: string;
       priceFromKzt: number;
       languages: string[];
+      eventFormats: string[];
       maxHours: number | null;
       enrichment: { signals: string[]; specialization: string | null } | null;
     },
     others: {
+      anonName: string;
       priceFromKzt: number;
       languages: string[];
+      eventFormats: string[];
       maxHours: number | null;
       enrichment: { signals: string[]; specialization: string | null } | null;
     }[],
-  ): string[] {
-    const out: string[] = [];
+    req: MatchRequestDto,
+  ): Differentiator[] {
+    const out: Differentiator[] = [];
+    const add = (text: string, factKey: FactKey, priority: number) => {
+      out.push({ text, factKey, priority, toString: () => text });
+    };
 
-    if (others.length > 0 && others.every((o) => me.priceFromKzt < o.priceFromKzt)) {
-      out.push('самая низкая цена в подборке');
-    }
-
-    const myLangs = new Set(me.languages);
-    for (const l of ['казахский', 'английский']) {
-      if (myLangs.has(l) && others.every((o) => !o.languages.includes(l))) {
-        out.push(`единственный, кто работает на «${l}»`);
+    // 1. Уникальный язык в топе.
+    for (const language of ['казахский', 'английский']) {
+      if (
+        me.languages.includes(language) &&
+        others.every((o) => !o.languages.includes(language))
+      ) {
+        add(
+          `Единственный из свободных ${humanDate(req.date)}, кто ведёт на ${languageLoc(language)}`,
+          'language',
+          1,
+        );
       }
     }
 
-    if (me.maxHours === null && others.some((o) => o.maxHours !== null)) {
-      out.push('нет ограничения по часам');
+    // 2. Не берёт свадьбы/тои, в отличие от остальных.
+    const businessRequest = ['корпоратив', 'конференция'].includes(
+      req.eventType,
+    );
+    const takesWeddingOrToi = (formats: string[]) =>
+      formats.includes('свадьба') || formats.includes('той');
+    if (
+      businessRequest &&
+      !takesWeddingOrToi(me.eventFormats) &&
+      others.every((o) => takesWeddingOrToi(o.eventFormats))
+    ) {
+      add(
+        `Ведёт только ${me.eventFormats.join(', ')}, без свадеб`,
+        'format',
+        2,
+      );
     }
 
-    const mySignals = new Set(me.enrichment?.signals ?? []);
-    for (const s of mySignals) {
-      if (others.every((o) => !(o.enrichment?.signals ?? []).includes(s))) {
-        out.push(s);
+    // 3. Самый узкий набор форматов.
+    if (
+      me.eventFormats.length <= 2 &&
+      me.eventFormats.includes(req.eventType) &&
+      others.every((o) => me.eventFormats.length < o.eventFormats.length)
+    ) {
+      add(
+        `${req.eventType} — основной профиль: берёт только ${me.eventFormats.join(', ')}`,
+        'format',
+        3,
+      );
+    }
+
+    // 4–5. Отличия по часам.
+    const limitedOthers = others
+      .map((o) => o.maxHours)
+      .filter((hours): hours is number => hours !== null);
+    if (
+      me.maxHours !== null &&
+      limitedOthers.length === others.length &&
+      limitedOthers.length > 0 &&
+      limitedOthers.every((hours) => me.maxHours! > hours)
+    ) {
+      const nearestLimit = Math.max(...limitedOthers);
+      add(
+        `Может быть на площадке до ${me.maxHours} ч — на ${me.maxHours - nearestLimit} ч дольше остальных`,
+        'hours',
+        4,
+      );
+    }
+    if (
+      me.maxHours === null &&
+      others.length > 0 &&
+      others.every((o) => o.maxHours !== null)
+    ) {
+      add('Работа не привязана к часам на площадке', 'hours', 5);
+    }
+
+    // 6–7. Отличия от бюджета.
+    const uniquelyCheapest =
+      others.length > 0 &&
+      others.every((o) => me.priceFromKzt < o.priceFromKzt);
+    if (uniquelyCheapest && me.priceFromKzt <= req.budgetKzt * 0.6) {
+      const remaining = req.budgetKzt - me.priceFromKzt;
+      if (me.priceFromKzt <= req.budgetKzt * 0.5) {
+        add(
+          `Вдвое дешевле бюджета — остаётся ${money(remaining)}`,
+          'budget',
+          6,
+        );
+      } else {
+        const percent = Math.round((1 - me.priceFromKzt / req.budgetKzt) * 100);
+        add(
+          `На ${percent}% дешевле бюджета — остаётся ${money(remaining)}`,
+          'budget',
+          6,
+        );
+      }
+    }
+    if (me.priceFromKzt === req.budgetKzt) {
+      add('Цена ровно в ваш бюджет', 'budget', 7);
+    }
+
+    // 8. Уникальные сигналы из обогащения.
+    for (const signal of me.enrichment?.signals ?? []) {
+      if (
+        others.every((o) => !(o.enrichment?.signals ?? []).includes(signal))
+      ) {
+        add(`${signal} — со слов подрядчика`, 'signal', 8);
       }
     }
 
-    if (me.enrichment?.specialization && others.every((o) => o.enrichment?.specialization !== me.enrichment?.specialization)) {
-      out.push(`специализация: ${me.enrichment.specialization}`);
+    // 9. Позиция по цене в топе есть всегда.
+    const byPrice = [me, ...others].sort(
+      (a, b) =>
+        a.priceFromKzt - b.priceFromKzt || a.anonName.localeCompare(b.anonName),
+    );
+    const pricePosition = byPrice.indexOf(me);
+    if (pricePosition === 0) {
+      add('Самый доступный из троих', 'budget', 9);
+    } else if (pricePosition === byPrice.length - 1) {
+      add('Самый дорогой из троих, но в бюджете', 'budget', 9);
+    } else {
+      const pricier = byPrice[pricePosition + 1];
+      add(
+        `Средний по цене: на ${money(pricier.priceFromKzt - me.priceFromKzt)} дешевле ${pricier.anonName}`,
+        'budget',
+        9,
+      );
     }
 
-    return out.slice(0, 3);
+    // 10. Число языков — безусловный fallback.
+    add(
+      `Работает на ${me.languages.length} языках: ${me.languages.join(', ')}`,
+      'language',
+      10,
+    );
+
+    return out.sort((a, b) => a.priority - b.priority);
   }
 
   private materializeFacts(
@@ -179,9 +302,20 @@ export class ExplainerService {
     req: MatchRequestDto,
   ): CardFact[] {
     const facts: CardFact[] = [];
-    const uniq = new Set(keys.filter((k): k is FactKey =>
-      ['budget', 'format', 'language', 'hours', 'signal', 'description'].includes(k),
-    ) as FactKey[]);
+    const uniq = new Set(
+      keys.filter((k): k is FactKey =>
+        [
+          'budget',
+          'format',
+          'language',
+          'hours',
+          'date',
+          'signal',
+          'description',
+        ].includes(k),
+      ) as FactKey[],
+    );
+    uniq.add('date');
 
     for (const k of uniq) {
       switch (k) {
@@ -200,31 +334,42 @@ export class ExplainerService {
           });
           break;
         case 'language':
-          if (req.language) {
-            facts.push({
-              key: 'language',
-              label: `работает на «${req.language}»`,
-              verified: c.languages.includes(req.language),
-            });
-          }
+          facts.push({
+            key: 'language',
+            label: req.language
+              ? `работает на «${req.language}»`
+              : `работает на ${c.languages.length} языках: ${c.languages.join(', ')}`,
+            verified: req.language ? c.languages.includes(req.language) : true,
+          });
           break;
         case 'hours':
-          if (req.durationHours) {
-            const ok = c.maxHours === null || c.maxHours >= req.durationHours;
-            facts.push({
-              key: 'hours',
-              label: c.maxHours === null
-                ? 'длительность не ограничена'
-                : `берёт до ${c.maxHours} ч ≥ ${req.durationHours} ч`,
-              verified: ok,
-            });
-          }
+          facts.push({
+            key: 'hours',
+            label:
+              c.maxHours === null
+                ? 'работа не привязана к часам на площадке'
+                : `берёт до ${c.maxHours} ч${req.durationHours ? ` ≥ ${req.durationHours} ч` : ''}`,
+            verified: req.durationHours
+              ? c.maxHours === null || c.maxHours >= req.durationHours
+              : true,
+          });
+          break;
+        case 'date':
+          facts.push({
+            key: 'date',
+            label: `Свободен ${humanDate(req.date)}`,
+            verified: true,
+          });
           break;
         case 'signal':
         case 'description':
           // Эти факты приходят из enrichment/описания и по построению
           // не могут быть проверены таблично — помечаем как «со слов».
-          facts.push({ key: k, label: 'из описания подрядчика', verified: false });
+          facts.push({
+            key: k,
+            label: 'из описания подрядчика',
+            verified: false,
+          });
           break;
       }
     }

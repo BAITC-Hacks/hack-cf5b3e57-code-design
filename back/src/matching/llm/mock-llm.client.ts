@@ -5,6 +5,8 @@ import {
   ExplainOutput,
   LlmClient,
 } from './llm-client';
+import type { Differentiator } from '../explainer.service';
+import { money } from '../copy/nouns';
 
 /**
  * MOCK-провайдер: работает без сети и ключа, детерминирован по построению.
@@ -19,57 +21,42 @@ export class MockLlmClient implements LlmClient {
     c.push(`формат «${request.eventType}» в перечне подрядчика`);
     c.push(`свободен на ${request.date} и цена в бюджете`);
     if (request.language) c.push(`работает на «${request.language}»`);
-    if (request.durationHours) c.push(`тянет минимум ${request.durationHours} ч`);
+    if (request.durationHours)
+      c.push(`тянет минимум ${request.durationHours} ч`);
     return c.slice(0, 3);
   }
 
   async explain(input: ExplainInput): Promise<ExplainOutput> {
     const { candidate, request, differentiators } = input;
-    const facts: string[] = [];
-    const parts: string[] = [];
+    const diffs = differentiators as unknown as Differentiator[];
+    const first = diffs[0];
+    const second = diffs[1];
 
-    if (candidate.priceFromKzt <= request.budgetKzt) {
-      const headroomPct = Math.round(
-        ((request.budgetKzt - candidate.priceFromKzt) / request.budgetKzt) * 100,
-      );
-      parts.push(
-        `цена от ${candidate.priceFromKzt.toLocaleString('ru-RU')} ₸ — в бюджете (запас ${headroomPct}%)`,
-      );
-      facts.push('budget');
-    }
+    const sentence = (value: string): string => {
+      const clean = value
+        .trim()
+        .replace(/;/g, ',')
+        .replace(/[.!?]+$/g, '');
+      return `${clean.charAt(0).toUpperCase()}${clean.slice(1)}.`;
+    };
 
-    if (request.language && candidate.languages.includes(request.language)) {
-      parts.push(`ведёт на «${request.language}»`);
-      facts.push('language');
-    }
+    const fallback = `${money(candidate.priceFromKzt)} — в бюджете, остаётся ${money(request.budgetKzt - candidate.priceFromKzt)}`;
+    const reason = [
+      sentence(first.text),
+      sentence(second?.text ?? fallback),
+    ].join(' ');
+    const factsUsed = [first.factKey, second?.factKey ?? 'budget'];
 
-    if (candidate.eventFormats.includes(request.eventType)) {
-      parts.push(`явно берёт формат «${request.eventType}»`);
-      facts.push('format');
-    }
-
-    if (
-      request.durationHours &&
-      (candidate.maxHours === null || candidate.maxHours >= request.durationHours)
-    ) {
-      parts.push(
-        candidate.maxHours === null
-          ? 'длительность не ограничена'
-          : `берёт до ${candidate.maxHours} ч`,
-      );
-      facts.push('hours');
-    }
-
-    if (differentiators.length > 0) {
-      parts.push(`отличается от других в подборке: ${differentiators.slice(0, 2).join(', ')}`);
-      facts.push('signal');
-    }
-
-    const reason = parts.slice(0, 3).join('; ') + '.';
-    return { reason, factsUsed: facts };
+    return {
+      reason,
+      factsUsed: [...new Set(factsUsed)],
+    };
   }
 
-  async critic(): Promise<{ ok: boolean; problems: { id: string; problem: string }[] }> {
+  async critic(): Promise<{
+    ok: boolean;
+    problems: { id: string; problem: string }[];
+  }> {
     return { ok: true, problems: [] };
   }
 }

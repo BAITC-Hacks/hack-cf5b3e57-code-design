@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { eventAcc, humanDate, languageLoc } from './copy/nouns';
 import { MatchRequestDto } from './dto/match-request.dto';
 import { FilterResult, FunnelStep } from './types';
 
@@ -38,36 +39,41 @@ export class FilterService {
     ) => {
       const before = pool.length;
       pool = pool.filter(keep);
-      funnel.push({ step: name, before, after: pool.length, removedReason: reason });
+      funnel.push({
+        step: name,
+        before,
+        after: pool.length,
+        removedReason: reason,
+      });
     };
 
-    step('city', (id) => byId.get(id)!.city === req.city, `город ≠ ${req.city}`);
+    step('city', (id) => byId.get(id)!.city === req.city, 'в другом городе');
     step(
       'category',
       (id) => byId.get(id)!.categories.includes(req.category),
-      `не работает как «${req.category}»`,
+      'другая категория',
     );
     step(
       'date',
       (id) => !byId.get(id)!.busyDates.includes(req.date),
-      `занят ${req.date}`,
+      `занят ${humanDate(req.date)}`,
     );
     step(
       'format',
       (id) => byId.get(id)!.eventFormats.includes(req.eventType),
-      `не берёт формат «${req.eventType}»`,
+      `не берёт ${eventAcc(req.eventType)}`,
     );
     step(
       'budget',
       (id) => byId.get(id)!.priceFromKzt <= req.budgetKzt,
-      `цена «от» выше бюджета ${req.budgetKzt.toLocaleString('ru-RU')} ₸`,
+      'дороже бюджета',
     );
 
     if (req.language) {
       step(
         'language',
         (id) => byId.get(id)!.languages.includes(req.language!),
-        `не работает на «${req.language}»`,
+        `не работает на ${languageLoc(req.language)}`,
       );
     }
 
@@ -78,7 +84,7 @@ export class FilterService {
           const h = byId.get(id)!.maxHours;
           return h === null || h >= req.durationHours!;
         },
-        `максимум ${req.durationHours} ч не тянут`,
+        `меньше ${req.durationHours} ч на площадке`,
       );
     }
 

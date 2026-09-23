@@ -1,21 +1,9 @@
-import { Prisma, PrismaClient, Role } from '@prisma/client';
+import { Prisma, PrismaClient } from '@prisma/client';
 import { parse } from 'csv-parse/sync';
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
-import { hashPassword } from '../src/auth/password';
 
 const prisma = new PrismaClient();
-
-function seedCredential(name: string, developmentDefault: string): string {
-  const value = process.env[name]?.trim();
-  if (value) return value;
-
-  if (process.env.NODE_ENV === 'production') {
-    throw new Error(`${name} is required to seed the production database`);
-  }
-
-  return developmentDefault;
-}
 
 interface ContractorCsvRow {
   id: string;
@@ -80,12 +68,12 @@ function toContractor(
 async function main(): Promise<void> {
   const csvPath = resolve(__dirname, 'seed-data', 'contractors.csv');
   const csv = readFileSync(csvPath, 'utf8');
-  const rows = parse<ContractorCsvRow>(csv, {
+  const rows = parse(csv, {
     bom: true,
     columns: true,
     skip_empty_lines: true,
     trim: true,
-  });
+  }) as ContractorCsvRow[];
 
   if (rows.length !== 66) {
     throw new Error(`Expected 66 contractors in CSV, found ${rows.length}`);
@@ -97,45 +85,20 @@ async function main(): Promise<void> {
   }
 
   const contractors = rows.map(toContractor);
-  const adminEmail = seedCredential(
-    'ADMIN_EMAIL',
-    'admin@hackalem.local',
-  ).toLowerCase();
-  const adminPassword = seedCredential('ADMIN_PASSWORD', 'HackAlem2026!');
 
-  if (adminPassword.length < 12) {
-    throw new Error('ADMIN_PASSWORD must contain at least 12 characters');
-  }
+  await prisma.$transaction(
+    contractors.map((contractor) => {
+      const { id, ...data } = contractor;
 
-  const passwordHash = await hashPassword(adminPassword);
-  const contractorOperations = contractors.map((contractor) => {
-    const { id, ...data } = contractor;
-
-    return prisma.contractor.upsert({
-      where: { id },
-      create: contractor,
-      update: data,
-    });
-  });
-
-  await prisma.$transaction([
-    ...contractorOperations,
-    prisma.user.upsert({
-      where: { email: adminEmail },
-      create: {
-        email: adminEmail,
-        name: 'Administrator',
-        passwordHash,
-        role: Role.ADMIN,
-      },
-      update: {
-        passwordHash,
-        role: Role.ADMIN,
-      },
+      return prisma.contractor.upsert({
+        where: { id },
+        create: contractor,
+        update: data,
+      });
     }),
-  ]);
+  );
 
-  console.log(`Seeded ${contractors.length} contractors and one admin user.`);
+  console.log(`Seeded ${contractors.length} contractors.`);
 }
 
 main()

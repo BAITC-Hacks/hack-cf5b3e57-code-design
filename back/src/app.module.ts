@@ -6,15 +6,11 @@ import { ContractorsModule } from './contractors/contractors.module';
 import { HealthModule } from './health/health.module';
 import { MatchingModule } from './matching/matching.module';
 import { PrismaModule } from './prisma/prisma.module';
-import { AuthModule } from './auth/auth.module';
-import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
-    AuthModule,
-    AdminModule,
     HealthModule,
     ContractorsModule,
     MatchingModule,

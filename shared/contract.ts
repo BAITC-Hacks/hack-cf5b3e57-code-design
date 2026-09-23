@@ -12,6 +12,8 @@ export const API_PREFIX = '/api/v1' as const;
 // Запрос
 // ---------------------------------------------------------------------------
 
+export type Locale = 'ru' | 'kk' | 'en';
+
 export interface MatchRequest {
   city: string;
   /** ISO date `YYYY-MM-DD`. */
@@ -21,7 +23,10 @@ export interface MatchRequest {
   category: string;
   budgetKzt: number;
   durationHours?: number;
+  /** Требуемый язык подрядчика. */
   language?: string;
+  /** Язык генерируемого текста (объяснения, criteria, summary). Default: 'ru'. */
+  locale?: Locale;
 }
 
 // ---------------------------------------------------------------------------
@@ -106,6 +111,46 @@ export interface MatchResponse {
 }
 
 // ---------------------------------------------------------------------------
+// Каталог (`GET /api/v1/contractors`)
+// ---------------------------------------------------------------------------
+
+export interface ContractorListQuery {
+  city?: string;
+  category?: string;
+  eventFormat?: string;
+  language?: string;
+  priceMin?: number;
+  priceMax?: number;
+  limit?: number;
+  offset?: number;
+}
+
+export interface ContractorListItem {
+  id: string;
+  anonName: string;
+  categories: string[];
+  city: string;
+  priceFromKzt: number;
+  eventFormats: string[];
+  languages: string[];
+  maxHours: number | null;
+  flags: CardFlags;
+}
+
+export interface ContractorListResponse {
+  items: ContractorListItem[];
+  total: number;
+  limit: number;
+  offset: number;
+}
+
+/** Полный профиль подрядчика, включая описание и календарь. */
+export interface ContractorDetail extends ContractorListItem {
+  description: string;
+  busyDates: string[];
+}
+
+// ---------------------------------------------------------------------------
 // SSE-события для `/api/v1/match/stream`
 // ---------------------------------------------------------------------------
 
@@ -129,6 +174,88 @@ export interface SseEventMap {
   };
   done: MatchResponse;
   error: { code: string; message: string };
+}
+
+// ---------------------------------------------------------------------------
+// Чат: AI-ассистент по подбору
+// ---------------------------------------------------------------------------
+
+/**
+ * `search` — свободный текст → одна категория, до 3 карточек с объяснениями.
+ * `bundle` — свободный текст → полный пакет мероприятия по нескольким категориям.
+ */
+export type ChatMode = 'search' | 'bundle';
+
+export type ChatRole = 'user' | 'assistant';
+
+export interface ChatCreateSessionRequest {
+  mode: ChatMode;
+  locale?: Locale;
+}
+
+export interface ChatCreateSessionResponse {
+  sessionId: string;
+  mode: ChatMode;
+  locale: Locale;
+  greeting: string;
+}
+
+export interface ChatMessage {
+  id: string;
+  role: ChatRole;
+  content: string;
+  createdAt: string;
+  /** Прикреплённые результаты tool-вызовов (карточки, пакет). */
+  attachments?: ChatAttachment[];
+}
+
+export type ChatAttachment =
+  | { type: 'match'; match: MatchResponse }
+  | { type: 'bundle'; bundle: EventBundle };
+
+export interface ChatSendRequest {
+  content: string;
+}
+
+/**
+ * SSE-события `POST /api/v1/chat/:sessionId/message` (стрим ответа ассистента).
+ * Клиент видит текст токенами, а по мере готовности — прикреплённые карточки.
+ */
+export interface ChatSseEventMap {
+  /** Кусок текста ответа ассистента. */
+  token: { text: string };
+  /** Ассистент запустил tool — можно показать статус «ищу подрядчиков…». */
+  tool_start: { name: 'search_contractors' | 'build_event_bundle'; args: Record<string, unknown> };
+  /** Tool завершился — прикрепление к сообщению. */
+  attachment: ChatAttachment;
+  /** Ответ ассистента полностью готов. */
+  done: { message: ChatMessage };
+  /** Ошибка (промт-инъекция, rate limit, LLM upstream). */
+  error: { code: 'injection' | 'rate_limit' | 'upstream' | 'internal'; message: string };
+}
+
+/**
+ * Пакет мероприятия — что вернёт `build_event_bundle`. По каждой категории
+ * либо матч (до 3 карточек с объяснениями), либо честное «нет вариантов».
+ */
+export interface EventBundle {
+  city: string;
+  date: string;
+  eventType: string;
+  totalBudgetKzt: number;
+  /** Обязательные категории для этого типа события (свадьба и т.д.). */
+  required: BundleItem[];
+  /** Рекомендуемые: попадают в подборку, только если бюджет ещё есть. */
+  recommended: BundleItem[];
+  /** Итог по бюджету и покрытию. */
+  summary: string;
+}
+
+export interface BundleItem {
+  category: string;
+  /** Аллоцированная доля общего бюджета под эту категорию. */
+  allocatedBudgetKzt: number;
+  match: MatchResponse;
 }
 
 // ---------------------------------------------------------------------------

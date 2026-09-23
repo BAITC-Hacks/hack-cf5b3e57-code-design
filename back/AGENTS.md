@@ -73,10 +73,11 @@ back/src/
 
 Согласно контракту:
 
-- `POST   /api/v1/match`         — синхронный, `MatchRequest` → `MatchResponse`.
-- `GET    /api/v1/match/stream`  — SSE, query = `MatchRequest`. События: `criteria` → `filter_step*` → `ranked` → `card*` → `critic` → `done`.
-- `GET    /api/v1/contractors/:id` — полный профиль (опционально, для деталей).
 - `GET    /api/v1/health`        — `{ ok: true, mock: boolean }`.
+- `GET    /api/v1/contractors`   — листинг для каталога. Query: `city, category, eventFormat, language, priceMin, priceMax, limit=24, offset=0`. Ответ: `{ items: ContractorListItem[], total, limit, offset }`. Сортировка `priceFromKzt asc`, tie-break `id`.
+- `GET    /api/v1/contractors/:id` — полный профиль подрядчика.
+- `POST   /api/v1/match`         — синхронный, `MatchRequest` → `MatchResponse`. Оркестрация: filter → rank → explain → critic.
+- `GET    /api/v1/match/stream`  — SSE, query = `MatchRequest`. События: `criteria` → `filter_step*` → `ranked` → `card*` → `critic` → `done`.
 
 Валидация — `class-validator` через глобальный `ValidationPipe` (`whitelist: true`, `forbidNonWhitelisted: true`, `transform: true`).
 

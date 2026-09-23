@@ -3,6 +3,7 @@ import Image from "next/image";
 import Link from "next/link";
 
 import { CatalogFilters } from "@/components/catalog/catalog-filters/catalog-filters";
+import { CategoryStrip } from "@/components/catalog/category-strip/category-strip";
 import { ContractorCard } from "@/components/catalog/contractor-card/contractor-card";
 import { ContractorPhoto } from "@/components/catalog/contractor-photo/contractor-photo";
 import { SiteFooter } from "@/components/site/site-footer";
@@ -278,35 +279,36 @@ export default async function CatalogPage({
           ) : null}
         </section>
 
-        <nav
+        <CategoryStrip
           className={styles.categoryStrip}
-          aria-label={messages.catalog.categoriesAria}
+          ariaLabel={messages.catalog.categoriesAria}
+          listClassName={styles.categoryStripInner}
+          nextLabel={messages.catalog.nextCategories}
+          previousLabel={messages.catalog.previousCategories}
         >
-          <ul className={styles.categoryStripInner}>
-            <li>
+          <li>
+            <Link
+              aria-current={!filters.category ? "page" : undefined}
+              className={!filters.category ? styles.categoryActive : undefined}
+              href="/#catalog-results"
+            >
+              {messages.catalog.all} <span>{facets.total}</span>
+            </Link>
+          </li>
+          {categoryCounts.map(({ category, count, label }) => (
+            <li key={category}>
               <Link
-                aria-current={!filters.category ? "page" : undefined}
-                className={!filters.category ? styles.categoryActive : undefined}
-                href="/#catalog-results"
+                aria-current={filters.category === category ? "page" : undefined}
+                className={
+                  filters.category === category ? styles.categoryActive : undefined
+                }
+                href={getCategoryHref(category, filters)}
               >
-                {messages.catalog.all} <span>{facets.total}</span>
+                {label} <span>{count}</span>
               </Link>
             </li>
-            {categoryCounts.map(({ category, count, label }) => (
-              <li key={category}>
-                <Link
-                  aria-current={filters.category === category ? "page" : undefined}
-                  className={
-                    filters.category === category ? styles.categoryActive : undefined
-                  }
-                  href={getCategoryHref(category, filters)}
-                >
-                  {label} <span>{count}</span>
-                </Link>
-              </li>
-            ))}
-          </ul>
-        </nav>
+          ))}
+        </CategoryStrip>
 
         <section className={styles.aiBanner}>
           <div className={styles.aiBannerCopy}>

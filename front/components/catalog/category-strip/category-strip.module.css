@@ -1,0 +1,77 @@
+.root > ul {
+  padding-inline: 54px;
+  scroll-padding-inline: 54px;
+}
+
+.arrow {
+  position: absolute;
+  top: 50%;
+  z-index: 2;
+  display: grid;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--tm-line);
+  border-radius: 50%;
+  background: var(--tm-surface);
+  color: var(--tm-ink);
+  cursor: pointer;
+  box-shadow: var(--tm-shadow-soft);
+  transform: translateY(-50%);
+  transition: border-color 160ms ease, opacity 160ms ease, transform 160ms ease;
+}
+
+.arrow:hover:not(:disabled) {
+  border-color: var(--tm-ink);
+  transform: translateY(-50%) scale(1.04);
+}
+
+.arrow:disabled {
+  opacity: 0;
+  pointer-events: none;
+}
+
+.arrow svg {
+  width: 20px;
+  height: 20px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.previous {
+  left: 14px;
+}
+
+.next {
+  right: 14px;
+}
+
+@media (max-width: 760px) {
+  .root > ul {
+    padding-inline: 44px;
+    scroll-padding-inline: 44px;
+  }
+
+  .arrow {
+    width: 34px;
+    height: 34px;
+  }
+
+  .previous {
+    left: 8px;
+  }
+
+  .next {
+    right: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .arrow {
+    transition: none;
+  }
+}

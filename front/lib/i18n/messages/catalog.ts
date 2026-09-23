@@ -83,6 +83,8 @@ export interface CatalogMessages {
     serviceCategories: string;
     searchGeographies: string;
     categoriesAria: string;
+    previousCategories: string;
+    nextCategories: string;
     all: string;
     sectionEyebrow: string;
     allContractors: string;
@@ -253,6 +255,8 @@ export const catalogMessages = {
       serviceCategories: "категорий услуг",
       searchGeographies: "локации",
       categoriesAria: "Категории каталога",
+      previousCategories: "Показать предыдущие категории",
+      nextCategories: "Показать следующие категории",
       all: "Все",
       sectionEyebrow: "Открытый каталог",
       allContractors: "Все подрядчики",
@@ -429,6 +433,8 @@ export const catalogMessages = {
       serviceCategories: "қызмет санаты",
       searchGeographies: "локация",
       categoriesAria: "Каталог санаттары",
+      previousCategories: "Алдыңғы санаттарды көрсету",
+      nextCategories: "Келесі санаттарды көрсету",
       all: "Барлығы",
       sectionEyebrow: "Ашық каталог",
       allContractors: "Барлық мердігер",
@@ -605,6 +611,8 @@ export const catalogMessages = {
       serviceCategories: "service categories",
       searchGeographies: "locations",
       categoriesAria: "Catalog categories",
+      previousCategories: "Show previous categories",
+      nextCategories: "Show next categories",
       all: "All",
       sectionEyebrow: "Open catalog",
       allContractors: "All contractors",

@@ -2,9 +2,9 @@
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import Image from "next/image";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 
-import type { ChatMessage } from "../../../../shared/contract";
+import type { ChatMessage, Locale } from "../../../../shared/contract";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
 import { humanizeDates } from "../format-dates";
@@ -18,6 +18,80 @@ function AssistantAvatar() {
   );
 }
 
+function inlineText(value: string): ReactNode[] {
+  const content: ReactNode[] = [];
+  const emphasis = /\*\*([^*]+)\*\*/g;
+  let cursor = 0;
+
+  for (const match of value.matchAll(emphasis)) {
+    const index = match.index ?? 0;
+    if (index > cursor) content.push(value.slice(cursor, index).replaceAll("**", ""));
+    content.push(<strong key={index}>{match[1]}</strong>);
+    cursor = index + match[0].length;
+  }
+  if (cursor < value.length) content.push(value.slice(cursor).replaceAll("**", ""));
+
+  return content;
+}
+
+function assistantContent(value: string, locale: Locale): ReactNode[] {
+  const lines = humanizeDates(value, locale).replaceAll("\r\n", "\n").split("\n");
+  const blocks: ReactNode[] = [];
+  let paragraph: string[] = [];
+  let list: string[] = [];
+  let ordered = false;
+
+  const flushParagraph = () => {
+    if (paragraph.length === 0) return;
+    const key = blocks.length;
+    blocks.push(
+      <p key={key}>
+        {paragraph.map((line, index) => (
+          <span key={index}>
+            {index > 0 && <br />}
+            {inlineText(line)}
+          </span>
+        ))}
+      </p>,
+    );
+    paragraph = [];
+  };
+
+  const flushList = () => {
+    if (list.length === 0) return;
+    const key = blocks.length;
+    const entries = list.map((line, index) => <li key={index}>{inlineText(line)}</li>);
+    blocks.push(ordered ? <ol key={key}>{entries}</ol> : <ul key={key}>{entries}</ul>);
+    list = [];
+  };
+
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line) {
+      flushParagraph();
+      flushList();
+      continue;
+    }
+
+    const bullet = line.match(/^(?:[-*•]\s+|\d+[.)]\s+)(.+)$/);
+    if (bullet) {
+      flushParagraph();
+      const nextOrdered = /^\d/.test(line);
+      if (list.length > 0 && nextOrdered !== ordered) flushList();
+      ordered = nextOrdered;
+      list.push(bullet[1]);
+      continue;
+    }
+
+    flushList();
+    paragraph.push(line.replace(/^#{1,6}\s+/, "").replace(/^>\s+/, ""));
+  }
+  flushParagraph();
+  flushList();
+
+  return blocks;
+}
+
 interface ChatThreadProps {
   copy: ChatMessages;
   messages: readonly ChatMessage[];
@@ -27,12 +101,13 @@ interface ChatThreadProps {
 export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
   const reduceMotion = useReducedMotion();
   const { locale } = useLocale();
-  const bottomRef = useRef<HTMLDivElement>(null);
+  const threadRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({
+    const thread = threadRef.current;
+    thread?.scrollTo({
+      top: thread.scrollHeight,
       behavior: reduceMotion ? "auto" : "smooth",
-      block: "nearest",
     });
   }, [messages, pending, reduceMotion]);
 
@@ -42,11 +117,15 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
       aria-live="polite"
       aria-relevant="additions"
       className={styles.thread}
+      ref={threadRef}
       role="log"
     >
       <AnimatePresence initial={false}>
-        {messages.map((message) => (
-          <motion.div
+        {messages.map((message) => {
+          const content = message.role === "assistant" && message.attachments?.length
+            ? copy.assistant.attachmentReady
+            : message.content;
+          return <motion.div
             animate={{ opacity: 1, y: 0 }}
             className={message.role === "assistant" ? styles.assistantRow : styles.userRow}
             initial={reduceMotion ? false : { opacity: 0, y: 10 }}
@@ -58,14 +137,16 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
               <span className={styles.role}>
                 {message.role === "assistant" ? copy.assistant.label : copy.composer.label}
               </span>
-              <p>
-                {message.role === "assistant"
-                  ? humanizeDates(message.content, locale)
-                  : message.content}
-              </p>
+              <div className={styles.content}>
+                {message.role === "assistant" ? (
+                  assistantContent(content, locale)
+                ) : (
+                  <p>{content}</p>
+                )}
+              </div>
             </div>
-          </motion.div>
-        ))}
+          </motion.div>;
+        })}
 
         {pending && (
           <motion.div
@@ -84,7 +165,6 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
           </motion.div>
         )}
       </AnimatePresence>
-      <div ref={bottomRef} />
     </div>
   );
 }

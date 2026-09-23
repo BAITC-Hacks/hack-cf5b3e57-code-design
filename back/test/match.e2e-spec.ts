@@ -418,6 +418,9 @@ describe('POST /api/v1/match — Word/SCOPE acceptance cases (MOCK + 66 CSV rows
     );
     expect(allBusy.funnel.find((step) => step.step === 'date')?.after).toBe(0);
     expect(allBusy.summary).toMatch(/занят|дата|свобод/i);
+    // Once every candidate is unavailable, the explanation must not also
+    // count those same profiles as rejected for price or format.
+    expect(allBusy.summary).not.toMatch(/дороже|бюджет/i);
   });
 
   it('repeats the same card order and explanations for an identical request', async () => {

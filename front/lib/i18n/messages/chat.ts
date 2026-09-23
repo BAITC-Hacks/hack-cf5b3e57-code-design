@@ -69,6 +69,7 @@ export interface ChatMessages {
     changed: string;
     searching: string;
     resultReady: string;
+    attachmentReady: string;
     noRecognition: string;
     invalidDate: string;
     invalidBudget: string;
@@ -113,7 +114,11 @@ export interface ChatMessages {
     title: string;
     required: string;
     recommended: string;
-    category: string;
+    found: string;
+    coverage: string;
+    missing: string;
+    alternatives: string;
+    totalBudget: string;
     budget: string;
     empty: string;
   };
@@ -244,6 +249,7 @@ const messages = {
       changed: "Параметр обновлён. Пересчитываю подбор по новым условиям.",
       searching: "Запрос готов. Проверяю город, дату, формат, бюджет и язык…",
       resultReady: "Готово. Ниже — подходящие подрядчики и факты по каждому.",
+      attachmentReady: "Проверил запрос. Результат и причины — ниже.",
       noRecognition: "Не смог распознать ответ. Используйте подсказку или один из готовых вариантов.",
       invalidDate: "Не удалось распознать дату. Напишите её как 16.10 или 2026-10-16.",
       invalidBudget: "Не удалось распознать бюджет. Например: 300 000 ₸ или 1 млн.",
@@ -291,8 +297,12 @@ const messages = {
       title: "Подрядчики по категориям",
       required: "Обязательные категории",
       recommended: "Рекомендуемые категории",
-      category: "Категория",
-      budget: "Бюджет",
+      found: "Есть варианты",
+      coverage: "категорий с вариантами",
+      missing: "Не удалось подобрать:",
+      alternatives: "Другие варианты",
+      totalBudget: "Ваш бюджет",
+      budget: "Лимит категории",
       empty: "В этой категории подходящих вариантов нет",
     },
     labels: {
@@ -433,6 +443,7 @@ const messages = {
       changed: "Параметр жаңартылды. Жаңа шарттар бойынша таңдауды қайта есептеймін.",
       searching: "Сұраныс дайын. Қаланы, күнді, форматты, бюджетті және тілді тексеремін…",
       resultReady: "Дайын. Төменде сәйкес мердігерлер және әрқайсысы бойынша деректер.",
+      attachmentReady: "Сұранысты тексердім. Нәтиже мен себептері төменде.",
       noRecognition: "Жауапты тани алмадым. Кеңесті немесе дайын нұсқаны пайдаланыңыз.",
       invalidDate: "Күнді тани алмадым. 16.10 немесе 2026-10-16 түрінде жазыңыз.",
       invalidBudget: "Бюджетті тани алмадым. Мысалы: 300 000 ₸ немесе 1 млн.",
@@ -480,8 +491,12 @@ const messages = {
       title: "Санаттар бойынша мердігерлер",
       required: "Міндетті санаттар",
       recommended: "Ұсынылатын санаттар",
-      category: "Санат",
-      budget: "Бюджет",
+      found: "Нұсқалар бар",
+      coverage: "санатта нұсқалар бар",
+      missing: "Іріктелмеді:",
+      alternatives: "Басқа нұсқалар",
+      totalBudget: "Жалпы бюджет",
+      budget: "Санат лимиті",
       empty: "Бұл санатта сәйкес нұсқа жоқ",
     },
     labels: {
@@ -622,6 +637,7 @@ const messages = {
       changed: "That detail is updated. I will recalculate the match using the new conditions.",
       searching: "The request is ready. Checking city, date, format, budget and language…",
       resultReady: "Done. Below are suitable contractors and the facts behind each one.",
+      attachmentReady: "I checked your request. The result and reasons are below.",
       noRecognition: "I could not recognise that answer. Use the hint or choose one of the options.",
       invalidDate: "I could not recognise the date. Type it as 16.10 or 2026-10-16.",
       invalidBudget: "I could not recognise the budget. For example: 300,000 ₸ or 1 million.",
@@ -669,8 +685,12 @@ const messages = {
       title: "Contractors by category",
       required: "Required categories",
       recommended: "Recommended categories",
-      category: "Category",
-      budget: "Budget",
+      found: "Options found",
+      coverage: "categories with options",
+      missing: "No match for:",
+      alternatives: "Other options",
+      totalBudget: "Total budget",
+      budget: "Category limit",
       empty: "No suitable option in this category",
     },
     labels: {

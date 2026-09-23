@@ -67,11 +67,31 @@
   font-weight: 600;
 }
 
-.message p {
+.content {
+  display: grid;
+  gap: 8px;
+}
+
+.content p,
+.content li {
   color: var(--tm-ink);
   font-size: 16px;
   line-height: 1.55;
+}
+
+.content p {
   white-space: pre-wrap;
+}
+
+.content ul,
+.content ol {
+  display: grid;
+  gap: 4px;
+  padding-left: 22px;
+}
+
+.content strong {
+  font-weight: 700;
 }
 
 .typing {

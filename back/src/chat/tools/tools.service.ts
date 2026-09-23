@@ -67,6 +67,7 @@ interface SearchContractorsArgs {
   budgetKzt: number;
   durationHours?: number;
   language?: string;
+  locale?: 'ru' | 'kk' | 'en';
 }
 
 interface BuildEventBundleArgs {
@@ -77,12 +78,15 @@ interface BuildEventBundleArgs {
   requiredCategories: string[];
   recommendedCategories?: string[];
   language?: string;
+  locale?: 'ru' | 'kk' | 'en';
 }
 
 interface EstimateBundleMinimumArgs {
   city: string;
+  date?: string;
   eventType: string;
   requiredCategories: string[];
+  language?: string;
 }
 
 export interface BundleMinimumEstimate {
@@ -149,7 +153,15 @@ export class ToolsService {
     const breakdown = await Promise.all(
       categories.map(async (category) => {
         const prices = await this.prisma.contractor.findMany({
-          where: { city: args.city, categories: { has: category } },
+          where: {
+            city: args.city,
+            categories: { has: category },
+            eventFormats: { has: args.eventType },
+            ...(args.date ? { NOT: { busyDates: { has: args.date } } } : {}),
+            ...(args.language
+              ? { languages: { has: args.language.trim().toLowerCase() } }
+              : {}),
+          },
           select: { priceFromKzt: true },
           orderBy: { priceFromKzt: 'asc' },
         });
@@ -184,8 +196,10 @@ export class ToolsService {
     ).filter((category) => !requiredSet.has(category));
     const estimate = await this.estimateBundleMinimum({
       city: args.city,
+      date: args.date,
       eventType: args.eventType,
       requiredCategories,
+      language: args.language,
     });
     const totalBudgetKzt = Math.floor(args.totalBudgetKzt);
 
@@ -265,6 +279,7 @@ export class ToolsService {
           category,
           budgetKzt: allocatedBudgetKzt,
           language: args.language,
+          locale: args.locale,
         }),
       ),
     });
@@ -276,18 +291,23 @@ export class ToolsService {
         ),
       ),
       Promise.all(
-        recommendedCategories.flatMap((category, index) =>
+        recommendedCategories.map((category, index) =>
           recommendedAllocations[index] > 0
-            ? [makeItem(category, recommendedAllocations[index])]
-            : [],
+            ? makeItem(category, recommendedAllocations[index])
+            : Promise.resolve({
+                category,
+                allocatedBudgetKzt: 0,
+                match: {
+                  outcome: 'all_filtered_out' as const,
+                  criteria: [],
+                  cards: [],
+                  funnel: [],
+                  summary: 'На дополнительную категорию не осталось бюджета.',
+                },
+              }),
         ),
       ),
     ]);
-    const found = [...required, ...recommended].filter(
-      (item) => item.match.cards.length > 0,
-    ).length;
-    const total = required.length + recommended.length;
-
     return {
       city: args.city,
       date: args.date,
@@ -295,8 +315,55 @@ export class ToolsService {
       totalBudgetKzt,
       required,
       recommended,
-      summary: `Найдены варианты для ${found} из ${total} категорий. На обязательные категории выделено ${money(requiredBudget)}, на рекомендуемые — ${money(recommendedBudget)}.`,
+      summary: this.bundleSummary(args.city, required, recommended),
     };
+  }
+
+  private bundleSummary(
+    city: string,
+    required: BundleItem[],
+    recommended: BundleItem[],
+  ): string {
+    const foundRequired = required.filter(
+      (item) => item.match.cards.length > 0,
+    );
+    const foundRecommended = recommended.filter(
+      (item) => item.match.cards.length > 0,
+    );
+    const missing = [...required, ...recommended].filter(
+      (item) => item.match.cards.length === 0,
+    );
+    const coverage = `Найдены варианты для ${foundRequired.length} из ${required.length} обязательных и ${foundRecommended.length} из ${recommended.length} дополнительных категорий.`;
+    if (missing.length === 0) return `${coverage} Детали — в карточках ниже.`;
+
+    const reasons = missing.map((item) => {
+      const category = item.category;
+      if (item.allocatedBudgetKzt === 0) {
+        return `${category} — на категорию не осталось бюджета`;
+      }
+      if (item.match.outcome === 'no_category_in_city') {
+        return `${category} — нет в каталоге города`;
+      }
+      const steps = item.match.funnel;
+      const firstEmpty = steps.find(
+        (step) => step.before > 0 && step.after === 0,
+      );
+      const reason: Record<string, string> = {
+        date: 'заняты на эту дату',
+        format: 'не берут этот формат',
+        budget: 'дороже выделенного бюджета',
+        language: 'не работают на нужном языке',
+        hours: 'не подходят по длительности',
+      };
+      return `${category} — ${reason[firstEmpty?.step ?? ''] ?? 'не подошли по условиям'}`;
+    });
+    const missingRequired = required.some(
+      (item) => item.match.cards.length === 0,
+    );
+    const next = missingRequired
+      ? `Чтобы закрыть обязательные категории, рассмотрите другой город или измените дату и состав пакета.`
+      : `Для дополнительных категорий можно изменить дату или условия.`;
+    return `${coverage} Не найдены ${cityLoc(city)}: ${reasons.join('; ')}. ${next}`;
   }
 
   private categoryWeights(
@@ -403,6 +470,7 @@ export class ToolsService {
       budgetKzt: Math.max(1, Math.floor(args.budgetKzt)),
       durationHours: args.durationHours,
       language: args.language?.trim().toLowerCase(),
+      locale: args.locale,
     };
   }
 
@@ -416,6 +484,7 @@ export class ToolsService {
       durationHours:
         typeof args.durationHours === 'number' ? args.durationHours : undefined,
       language: typeof args.language === 'string' ? args.language : undefined,
+      locale: this.localeArg(args),
     };
   }
 
@@ -432,6 +501,7 @@ export class ToolsService {
           )
         : [],
       language: typeof args.language === 'string' ? args.language : undefined,
+      locale: this.localeArg(args),
     };
   }
 
@@ -440,8 +510,10 @@ export class ToolsService {
   ): EstimateBundleMinimumArgs {
     return {
       city: this.stringArg(args, 'city'),
+      date: typeof args.date === 'string' ? args.date : undefined,
       eventType: this.stringArg(args, 'eventType'),
       requiredCategories: this.stringArrayArg(args, 'requiredCategories'),
+      language: typeof args.language === 'string' ? args.language : undefined,
     };
   }
 
@@ -476,5 +548,13 @@ export class ToolsService {
       );
     }
     return value as string[];
+  }
+
+  private localeArg(
+    args: Record<string, unknown>,
+  ): 'ru' | 'kk' | 'en' | undefined {
+    return args.locale === 'ru' || args.locale === 'kk' || args.locale === 'en'
+      ? args.locale
+      : undefined;
   }
 }

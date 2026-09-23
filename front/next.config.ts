@@ -2,6 +2,8 @@ import type { NextConfig } from "next";
 import { existsSync, readdirSync } from "node:fs";
 import path from "node:path";
 
+const sharedDirectory = path.resolve(__dirname, "..", "shared");
+
 const contractorImagesDirectory = path.resolve(
   __dirname,
   "public",
@@ -18,10 +20,20 @@ const nextConfig: NextConfig = {
   env: {
     NEXT_PUBLIC_CONTRACTOR_IMAGE_IDS: contractorImageIds.join(","),
   },
+  outputFileTracingRoot: path.resolve(__dirname, ".."),
   turbopack: {
-    // The shared API contract lives next to front/, so it must be inside the
-    // resolver root for both development and production builds.
     root: path.resolve(__dirname, ".."),
+    resolveAlias: {
+      "@shared": sharedDirectory,
+    },
+  },
+  webpack: (config) => {
+    config.resolve = config.resolve ?? {};
+    config.resolve.alias = {
+      ...(config.resolve.alias ?? {}),
+      "@shared": sharedDirectory,
+    };
+    return config;
   },
 };
 

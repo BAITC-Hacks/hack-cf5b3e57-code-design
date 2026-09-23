@@ -47,19 +47,53 @@ model Enrichment {
   @@map("enrichments")
 }
 
-/// Кэш объяснений LLM. Ключ — хэш нормализованного запроса + id подрядчика.
+/// Кэш объяснений LLM. Ключ — хэш нормализованного запроса + id подрядчика + locale.
 /// Обеспечивает детерминизм: тот же запрос → тот же текст.
 model ExplanationCache {
   id           String   @id @default(cuid())
   requestHash  String
   contractorId String
+  locale       String   @default("ru")
   reason       String
   factsUsed    Json
   version      Int      @default(1)
 
   createdAt    DateTime @default(now())
 
-  @@unique([requestHash, contractorId])
+  @@unique([requestHash, contractorId, locale])
   @@index([requestHash])
   @@map("explanation_cache")
+}
+
+/// Диалоговая сессия ассистента. Хранит режим (search/bundle), язык
+/// и всю историю сообщений — чтобы клиент мог перезайти и продолжить.
+model ChatSession {
+  id        String   @id @default(cuid())
+  mode      String
+  locale    String   @default("ru")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  messages  ChatMessage[]
+
+  @@map("chat_sessions")
+}
+
+/// Одно сообщение. `role`: 'user' | 'assistant'. `attachments` хранит
+/// прикреплённые результаты tool-вызовов (MatchResponse / EventBundle) как JSON.
+model ChatMessage {
+  id          String   @id @default(cuid())
+  sessionId   String
+  session     ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role        String
+  content     String
+  attachments Json?
+  /// Токены OpenAI, потраченные на это сообщение (для метрик и оптимизации).
+  tokensIn    Int?
+  tokensOut  Int?
+
+  createdAt   DateTime @default(now())
+
+  @@index([sessionId, createdAt])
+  @@map("chat_messages")
 }

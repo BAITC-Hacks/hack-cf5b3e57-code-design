@@ -1,21 +1,12 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 
 import { LocaleSwitcher } from "@/components/shared/locale-switcher/locale-switcher";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import { MANAGER_MESSAGES } from "@/lib/i18n/messages/manager";
 import styles from "./manager-header.module.css";
-
-function BrandMark() {
-  return (
-    <span className={styles.brandMark} aria-hidden="true">
-      <span />
-      <span />
-      <span />
-    </span>
-  );
-}
 
 export function ManagerHeader() {
   const { locale } = useLocale();
@@ -23,9 +14,9 @@ export function ManagerHeader() {
   return (
     <header className={styles.header}>
       <Link className={styles.brand} href="/" aria-label={messages.navigation.brandAria}>
-        <BrandMark />
+        <Image src="/brand/toimatch-mark.svg" width={38} height={38} alt="" />
         <span>
-          Тройка
+          ToiMatch
           <small>{messages.navigation.tagline}</small>
         </span>
       </Link>

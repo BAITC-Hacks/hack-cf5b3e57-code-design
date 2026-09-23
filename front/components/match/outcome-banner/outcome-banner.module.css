@@ -1,21 +1,13 @@
-.banner { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 20px; padding: 26px 28px; border: 1px solid; border-radius: 24px; }
-.icon { display: grid; width: 54px; height: 54px; place-items: center; border-radius: 17px; }
-.icon svg { width: 28px; height: 28px; }
-.banner p { margin: 0; color: currentColor; font-size: var(--font-12, 12px); font-weight: 800; letter-spacing: .1em; text-transform: uppercase; }
-.banner h2 { margin: 6px 0 0; font-size: var(--font-24, 24px); letter-spacing: -.035em; }
-.banner > div > span { display: block; margin-top: 6px; font-size: var(--font-14, 14px); line-height: 1.5; }
-.banner > strong { padding: 7px 10px; border-radius: 999px; font-size: 10px; text-transform: uppercase; white-space: nowrap; }
-.found { border-color: #bcdfc7; background: #eff9f2; color: #185c32; }
-.found .icon, .found > strong { background: #d8f0df; }
-.missing { border-color: #cad9eb; background: #f0f6fc; color: #21537f; }
-.missing .icon, .missing > strong { background: #dae9f7; }
-.filtered { border-color: #ead6a9; background: #fff9e9; color: #745419; }
-.filtered .icon, .filtered > strong { background: #f7e9c5; }
-
-@media (max-width: 680px) {
-  .banner { grid-template-columns: auto 1fr; align-items: start; padding: 21px; }
-  .banner > strong { grid-column: 2; justify-self: start; }
-  .icon { width: 46px; height: 46px; }
-}
-@media (max-width: 390px) { .banner { grid-template-columns: 1fr; } .banner > strong { grid-column: 1; } }
-
+.banner { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: start; gap: 18px; padding: 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); color: var(--tm-ink); }
+.icon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 50%; background: var(--tm-surface); }
+.icon svg { width: 24px; height: 24px; }
+.banner p { margin: 0; font-size: 13px; }
+.banner h2 { margin: 6px 0 0; font-size: 24px; line-height: 1.25; letter-spacing: -.03em; }
+.banner > div > span { display: block; margin-top: 8px; font-size: 14px; line-height: 1.65; }
+.banner > strong { padding: 7px 10px; border-radius: 10px; background: var(--tm-surface); font-size: 12px; font-weight: 600; }
+.found { background: var(--tm-ocean); }
+.found .icon, .found > strong { color: var(--tm-ocean-ink); }
+.partial { background: var(--tm-warn-soft); color: var(--tm-warn); }
+.empty { background: var(--tm-stop-soft); color: var(--tm-stop); }
+@media (max-width: 900px) { .banner { grid-template-columns: auto minmax(0, 1fr); } .banner > strong { grid-column: 2; justify-self: start; } }
+@media (max-width: 480px) { .banner { padding: 20px 16px; gap: 12px; } .banner h2 { font-size: 21px; } }

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 
 import { LocaleSwitcher } from "@/components/shared/locale-switcher/locale-switcher";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
@@ -8,11 +9,7 @@ export function ChatHeader({ copy }: { copy: ChatMessages }) {
   return (
     <header className={styles.header}>
       <Link className={styles.brand} href="/" aria-label={copy.brandAria}>
-        <span className={styles.mark} aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
+        <Image src="/brand/toimatch-mark.svg" width={32} height={32} alt="" />
         <span>{copy.brand}</span>
       </Link>
 

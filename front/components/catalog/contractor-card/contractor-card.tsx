@@ -114,7 +114,7 @@ export function ContractorCard({
                     messages.values.eventFormats[eventFormat as EventFormat] ??
                     eventFormat,
                 )
-                .join(" · ")}
+                .join(", ")}
             </dd>
           </div>
           <div>
@@ -125,7 +125,7 @@ export function ContractorCard({
                   (language) =>
                     messages.values.languages[language as Language] ?? language,
                 )
-                .join(" · ")}
+                .join(", ")}
             </dd>
           </div>
           <div>

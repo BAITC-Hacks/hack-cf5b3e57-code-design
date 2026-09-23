@@ -74,6 +74,8 @@ export interface ChatMessages {
     retry: string;
   };
   result: {
+    photo: string;
+    photoMissing: string;
     eyebrow: string;
     criteria: string;
     cards: string;
@@ -96,11 +98,11 @@ export interface ChatMessages {
 
 const messages = {
   ru: {
-    pageTitle: "Тройка — ассистент подбора",
+    pageTitle: "ToiMatch — ассистент подбора",
     pageDescription:
       "Диалоговый помощник собирает параметры события и запускает проверяемый подбор подрядчиков.",
-    brand: "Тройка",
-    brandAria: "Тройка — каталог подрядчиков",
+    brand: "ToiMatch",
+    brandAria: "ToiMatch — каталог подрядчиков",
     navigationAria: "Основная навигация",
     nav: { catalog: "Каталог", match: "AI-подбор", chat: "AI-чат", manager: "Для жюри" },
     localeLabel: "Язык интерфейса",
@@ -154,7 +156,7 @@ const messages = {
       optional: "необязательно",
     },
     assistant: {
-      name: "Ассистент Тройки",
+      name: "Ассистент ToiMatch",
       label: "Помощник",
       greeting:
         "Здравствуйте! Я помогу сформировать точный запрос и найти подходящих подрядчиков.",
@@ -183,6 +185,7 @@ const messages = {
       retry: "Повторить подбор",
     },
     result: {
+      photo: "Фото: ИИ-иллюстрация", photoMissing: "Фото недоступно",
       eyebrow: "Ответ matching engine",
       criteria: "На что смотреть",
       cards: "Подходящие подрядчики",
@@ -220,11 +223,11 @@ const messages = {
     ],
   },
   kk: {
-    pageTitle: "Тройка — таңдау көмекшісі",
+    pageTitle: "ToiMatch — таңдау көмекшісі",
     pageDescription:
       "Диалог көмекшісі іс-шара параметрлерін жинап, мердігерлерді тексерілетін іріктеуді іске қосады.",
-    brand: "Тройка",
-    brandAria: "Тройка — мердігерлер каталогы",
+    brand: "ToiMatch",
+    brandAria: "ToiMatch — мердігерлер каталогы",
     navigationAria: "Негізгі навигация",
     nav: { catalog: "Каталог", match: "AI-таңдау", chat: "AI-чат", manager: "Қазыларға" },
     localeLabel: "Интерфейс тілі",
@@ -278,7 +281,7 @@ const messages = {
       optional: "міндетті емес",
     },
     assistant: {
-      name: "Тройка көмекшісі",
+      name: "ToiMatch көмекшісі",
       label: "Көмекші",
       greeting:
         "Сәлеметсіз бе! Нақты сұраныс құрып, сәйкес мердігерлерді табуға көмектесемін.",
@@ -307,6 +310,7 @@ const messages = {
       retry: "Қайта таңдау",
     },
     result: {
+      photo: "Фото: ЖИ иллюстрациясы", photoMissing: "Фото қолжетімсіз",
       eyebrow: "Matching engine жауабы",
       criteria: "Неге назар аудару керек",
       cards: "Сәйкес мердігерлер",
@@ -344,11 +348,11 @@ const messages = {
     ],
   },
   en: {
-    pageTitle: "Troika — matching assistant",
+    pageTitle: "ToiMatch — matching assistant",
     pageDescription:
       "A conversational assistant collects event details and runs a verifiable contractor match.",
-    brand: "Troika",
-    brandAria: "Troika — contractor catalog",
+    brand: "ToiMatch",
+    brandAria: "ToiMatch — contractor catalog",
     navigationAria: "Primary navigation",
     nav: { catalog: "Catalog", match: "AI match", chat: "AI chat", manager: "For judges" },
     localeLabel: "Interface language",
@@ -402,7 +406,7 @@ const messages = {
       optional: "optional",
     },
     assistant: {
-      name: "Troika assistant",
+      name: "ToiMatch assistant",
       label: "Assistant",
       greeting:
         "Hello! I will help shape a precise request and find suitable contractors.",
@@ -431,6 +435,7 @@ const messages = {
       retry: "Retry matching",
     },
     result: {
+      photo: "Photo: AI illustration", photoMissing: "Photo unavailable",
       eyebrow: "Matching engine response",
       criteria: "What to look for",
       cards: "Suitable contractors",

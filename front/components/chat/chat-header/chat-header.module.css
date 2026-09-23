@@ -2,13 +2,13 @@
   position: relative;
   z-index: 10;
   display: grid;
-  width: min(calc(100% - 40px), var(--max-width));
+  width: min(calc(100% - 64px), 1280px);
   min-height: var(--header-h);
-  grid-template-columns: 1fr auto 1fr;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
   align-items: center;
   gap: 24px;
   margin: 0 auto;
-  border-bottom: 1px solid rgb(29 29 31 / 9%);
+  border-bottom: 1px solid var(--tm-line);
 }
 
 .brand {
@@ -21,68 +21,40 @@
   letter-spacing: -0.035em;
 }
 
-.mark {
-  display: flex;
-  width: 28px;
-  height: 28px;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-  padding: 6px;
-  border-radius: 9px;
-  background: var(--color-dark);
-}
-
-.mark span {
-  width: 3px;
-  border-radius: 4px;
-  background: #fff;
-}
-
-.mark span:nth-child(1) {
-  height: 8px;
-}
-
-.mark span:nth-child(2) {
-  height: 15px;
-  background: #8bd5b7;
-}
-
-.mark span:nth-child(3) {
-  height: 11px;
-}
-
 .navigation {
   display: flex;
   align-items: center;
   gap: 4px;
   padding: 4px;
-  border: 1px solid rgb(29 29 31 / 8%);
+  border: 1px solid var(--tm-line);
   border-radius: 999px;
-  background: rgb(255 255 255 / 68%);
+  background: var(--tm-surface);
   backdrop-filter: blur(18px);
 }
 
 .navigation a {
+  min-height: 44px;
+  display: grid;
+  place-items: center;
   padding: 9px 14px;
   border-radius: 999px;
-  color: #686966;
-  font-size: 11px;
+  color: var(--tm-muted);
+  font-size: 12px;
   font-weight: 700;
   white-space: nowrap;
 }
 
 .navigation a:hover,
 .navigation .active {
-  background: var(--color-dark);
-  color: #fff;
+  background: var(--tm-ember-soft);
+  color: var(--tm-ink);
 }
 
 .locale {
   justify-self: end;
 }
 
-@media (max-width: 860px) {
+@media (max-width: 1100px) {
   .header {
     grid-template-columns: 1fr auto;
     padding-block: 14px;
@@ -93,6 +65,8 @@
     grid-row: 2;
     justify-self: stretch;
     overflow-x: auto;
+    min-width: 0;
+    max-width: 100%;
   }
 
   .navigation a {
@@ -103,11 +77,11 @@
 
 @media (max-width: 520px) {
   .header {
-    width: min(calc(100% - 24px), var(--max-width));
+    width: min(calc(100% - 36px), 1280px);
   }
 
   .navigation a {
     padding-inline: 11px;
-    font-size: 10px;
+    font-size: 12px;
   }
 }

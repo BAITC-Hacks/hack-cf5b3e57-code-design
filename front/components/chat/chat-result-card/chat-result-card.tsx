@@ -51,6 +51,7 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
           </div>
         )}
         <span className={styles.rank}>#{rank}</span>
+        <span className={styles.photoLabel}>{imageFailed ? copy.result.photoMissing : copy.result.photo}</span>
       </div>
 
       <div className={styles.body}>

@@ -193,7 +193,7 @@ export function ChatExperience() {
   const pending = phase === "loading";
 
   return (
-    <>
+    <div className={styles.page}>
       <a className={styles.skipLink} href="#chat-conversation">{copy.skip}</a>
       <ChatHeader copy={copy} />
       <ChatHero copy={copy} />
@@ -260,6 +260,6 @@ export function ChatExperience() {
         <strong>{copy.brand}</strong>
         <span>{copy.hero.badge}</span>
       </footer>
-    </>
+    </div>
   );
 }

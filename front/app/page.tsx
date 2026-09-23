@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 
 import { CatalogFilters } from "@/components/catalog/catalog-filters/catalog-filters";
-import { CatalogHeader } from "@/components/catalog/catalog-header/catalog-header";
 import { ContractorCard } from "@/components/catalog/contractor-card/contractor-card";
+import { ContractorPhoto } from "@/components/catalog/contractor-photo/contractor-photo";
 import {
   CATEGORIES,
   CITIES,
@@ -22,7 +22,7 @@ import {
   catalogMessages,
   type CatalogMessages,
 } from "@/lib/i18n/messages/catalog";
-import styles from "./page.module.css";
+import styles from "@/components/catalog/catalog-page.module.css";
 
 const OTHER_CATEGORY = "__other__";
 
@@ -73,7 +73,7 @@ function getCategoryHref(category: string, filters: ContractorListQuery) {
   const params = new URLSearchParams();
 
   if (filters.city) params.set("city", filters.city);
-  params.set("category", category);
+  if (category) params.set("category", category);
   if (filters.eventFormat) params.set("eventFormat", filters.eventFormat);
   if (filters.language) params.set("language", filters.language);
   if (filters.priceMin !== undefined) {
@@ -157,7 +157,6 @@ export default async function CatalogPage({
 
     return (
       <div className={styles.page}>
-        <CatalogHeader messages={messages.header} />
         <ServiceUnavailable message={message} messages={messages} />
       </div>
     );
@@ -171,17 +170,12 @@ export default async function CatalogPage({
       contractor.categories.includes(category),
     ).length,
   })).filter(({ count }) => count > 0);
-  const hasFilters = Object.values(filters).some(
-    (value) => value !== undefined && value !== "",
-  );
 
   return (
     <div className={styles.page}>
-      <CatalogHeader messages={messages.header} />
 
       <main>
         <section className={styles.hero}>
-          <div className={styles.heroGlow} aria-hidden="true" />
           <div className={styles.heroInner}>
             <div className={styles.heroCopy}>
               <p className={styles.eyebrow}>{messages.catalog.heroEyebrow}</p>
@@ -205,25 +199,15 @@ export default async function CatalogPage({
             </div>
 
             <div
-              className={styles.heroProof}
+              className={styles.heroMosaic}
               aria-label={messages.catalog.proofAria}
             >
-              <div>
-                <strong>{catalog.total}</strong>
-                <span>
-                  {hasFilters
-                    ? messages.catalog.matchesFilters
-                    : messages.catalog.profilesInCatalog}
-                </span>
+              <div className={styles.mosaicMain}>
+                <ContractorPhoto contractor={{ id: "HK-64395", anonName: "Nerima Terrace", categories: ["Банкетный зал"] }} messages={messages} priority />
+                <span className={styles.mosaicCaption}>Nerima Terrace</span>
               </div>
-              <div>
-                <strong>{CATEGORIES.length}</strong>
-                <span>{messages.catalog.serviceCategories}</span>
-              </div>
-              <div>
-                <strong>{CITIES.length}</strong>
-                <span>{messages.catalog.searchGeographies}</span>
-              </div>
+              <ContractorPhoto contractor={{ id: "HK-44733", anonName: "Буллма", categories: ["Ведущий"] }} messages={messages} priority />
+              <ContractorPhoto contractor={{ id: "HK-90001", anonName: "Тихиро Огино", categories: ["Флорист"] }} messages={messages} priority />
             </div>
           </div>
         </section>
@@ -235,7 +219,8 @@ export default async function CatalogPage({
           <div className={styles.categoryStripInner}>
             <Link
               className={!filters.category ? styles.categoryActive : undefined}
-              href="/#catalog-results"
+              href={getCategoryHref("", filters)}
+              aria-current={!filters.category ? "true" : undefined}
             >
               {messages.catalog.all} <span>{facets.total}</span>
             </Link>
@@ -246,6 +231,7 @@ export default async function CatalogPage({
                   filters.category === category ? styles.categoryActive : undefined
                 }
                 href={getCategoryHref(category, filters)}
+                aria-current={filters.category === category ? "true" : undefined}
               >
                 {label} <span>{count}</span>
               </Link>
@@ -339,10 +325,6 @@ export default async function CatalogPage({
         </section>
       </main>
 
-      <footer className={styles.footer}>
-        <span>{messages.catalog.footerBrand}</span>
-        <p>{messages.catalog.footerNote}</p>
-      </footer>
     </div>
   );
 }

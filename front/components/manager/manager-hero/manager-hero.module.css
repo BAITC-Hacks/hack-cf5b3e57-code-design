@@ -1,18 +1,21 @@
 .hero { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; margin-bottom: 32px; }
 .hero > div:first-child { max-width: 760px; }
-.eyebrow { color: var(--color-accent, #0066cc); font-size: var(--font-12, 12px); font-weight: 760; letter-spacing: .12em; text-transform: uppercase; }
+.eyebrow { color: var(--tm-ink); font-size: var(--font-12, 12px); font-weight: 760; letter-spacing: 0; text-transform: none; }
 .hero h1 { max-width: 700px; margin: 10px 0 14px; font-size: clamp(var(--font-40, 40px), 5vw, var(--font-64, 64px)); font-weight: 690; letter-spacing: -.06em; line-height: .98; }
-.hero > div:first-child > p { max-width: 680px; margin: 0; color: rgb(59 59 61 / 72%); font-size: var(--font-18, 18px); line-height: 1.55; }
-.status { display: flex; min-width: 285px; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid rgb(29 29 31 / 10%); border-radius: 18px; background: rgb(255 255 255 / 82%); box-shadow: 0 14px 34px rgb(29 29 31 / 5%); }
+.hero > div:first-child > p { max-width: 680px; margin: 0; color: var(--tm-muted); font-size: var(--font-18, 18px); line-height: 1.55; }
+.status { display: flex; min-width: 285px; align-items: center; gap: 12px; padding: 16px 18px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }
 .status > span:last-child { display: grid; gap: 3px; }
 .status strong { font-size: var(--font-14, 14px); }
-.status small { max-width: 230px; color: rgb(59 59 61 / 72%); font-size: var(--font-12, 12px); line-height: 1.4; }
-.signal { width: 11px; height: 11px; flex: 0 0 auto; border-radius: 50%; background: #8e8e93; box-shadow: 0 0 0 6px rgb(142 142 147 / 12%); }
-.connecting .signal, .running .signal { background: var(--color-accent, #0066cc); box-shadow: 0 0 0 6px rgb(0 102 204 / 12%); animation: pulse 1.4s ease-in-out infinite; }
-.done .signal { background: #198754; box-shadow: 0 0 0 6px rgb(25 135 84 / 12%); }
-.error .signal { background: #c73e3e; box-shadow: 0 0 0 6px rgb(199 62 62 / 12%); }
-.cancelled .signal { background: #c27b1f; box-shadow: 0 0 0 6px rgb(194 123 31 / 12%); }
+.status small { max-width: 230px; color: var(--tm-muted); font-size: var(--font-12, 12px); line-height: 1.4; }
+.signal { width: 11px; height: 11px; flex: 0 0 auto; border-radius: 50%; background: var(--tm-muted); box-shadow: var(--tm-shadow-card); }
+.connecting .signal, .running .signal { background: var(--tm-ink); box-shadow: var(--tm-shadow-card); animation: pulse 1.4s ease-in-out infinite; }
+.done .signal { background: var(--tm-ocean-ink); box-shadow: var(--tm-shadow-card); }
+.error .signal { background: var(--tm-stop); box-shadow: var(--tm-shadow-card); }
+.cancelled .signal { background: var(--tm-warn); box-shadow: var(--tm-shadow-card); }
 @keyframes pulse { 50% { opacity: .5; transform: scale(.82); } }
 @media (max-width: 840px) { .hero { align-items: stretch; flex-direction: column; gap: 22px; } .status { min-width: 0; } }
 @media (max-width: 600px) { .hero h1 { font-size: var(--font-40, 40px); } .hero > div:first-child > p { font-size: var(--font-16, 16px); } }
 @media (prefers-reduced-motion: reduce) { .signal { animation: none !important; } }
+
+.hero h1 { font-size: clamp(32px, 3.8vw, 48px); line-height: 1.08; }
+.hero > div:first-child > p { font-size: 16px; }

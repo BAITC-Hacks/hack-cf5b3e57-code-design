@@ -12,11 +12,10 @@ export function MatchHeader({ copy }: MatchHeaderProps) {
   return (
     <header className={styles.header}>
       <Link className={styles.brand} href="/" aria-label={copy.brandAria}>
-        <span className={styles.brandMark} aria-hidden="true">
-          <span />
-          <span />
-          <span />
-        </span>
+        <svg className={styles.brandMark} viewBox="0 0 36 36" fill="none" aria-hidden="true">
+          <rect width="36" height="36" rx="11" fill="var(--tm-ember)" />
+          <path d="M9 11h17M17 11v16m5-8 3 3 5-6" stroke="var(--tm-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
+        </svg>
         <span>{copy.brand}</span>
       </Link>
 

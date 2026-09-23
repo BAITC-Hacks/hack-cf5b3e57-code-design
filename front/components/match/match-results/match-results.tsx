@@ -1,13 +1,12 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
-
 import type { Locale, MatchResponse } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CriteriaList } from "../criteria-list/criteria-list";
 import { FunnelSummary } from "../funnel-summary/funnel-summary";
 import { MatchCard } from "../match-card/match-card";
 import { OutcomeBanner } from "../outcome-banner/outcome-banner";
+import { Mascot } from "../mascot/mascot";
 import styles from "./match-results.module.css";
 
 interface MatchResultsProps {
@@ -18,17 +17,17 @@ interface MatchResultsProps {
 }
 
 export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsProps) {
-  const reduceMotion = useReducedMotion();
-
   return (
-    <motion.section
-      animate={{ opacity: 1, y: 0 }}
+    <section
       className={styles.results}
-      initial={reduceMotion ? false : { opacity: 0, y: 28 }}
       ref={sectionRef}
       tabIndex={-1}
-      transition={{ duration: reduceMotion ? 0 : 0.42, ease: [0.22, 1, 0.36, 1] }}
     >
+      <Mascot
+        pose={result.outcome === "found" ? "found" : "sorry"}
+        speech={result.outcome === "found" ? result.criteria[0] ?? result.summary : result.summary}
+        name={copy.mascotName}
+      />
       <OutcomeBanner copy={copy} result={result} />
       <CriteriaList copy={copy} criteria={result.criteria} />
 
@@ -40,16 +39,7 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
           </div>
           <div className={styles.grid}>
             {result.cards.map((card, index) => (
-              <motion.div
-                animate={{ opacity: 1, y: 0 }}
-                initial={reduceMotion ? false : { opacity: 0, y: 24 }}
-                key={card.id}
-                transition={{
-                  delay: reduceMotion ? 0 : 0.08 + index * 0.09,
-                  duration: reduceMotion ? 0 : 0.38,
-                  ease: [0.22, 1, 0.36, 1],
-                }}
-              >
+              <div key={card.id}>
                 <MatchCard
                   card={card}
                   categories={copy.categories}
@@ -58,7 +48,7 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
                   locale={locale}
                   rank={index + 1}
                 />
-              </motion.div>
+              </div>
             ))}
           </div>
         </div>
@@ -67,6 +57,6 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
       )}
 
       <FunnelSummary copy={copy} funnel={result.funnel} />
-    </motion.section>
+    </section>
   );
 }

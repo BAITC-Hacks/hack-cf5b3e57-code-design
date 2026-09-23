@@ -1,5 +1,5 @@
 import type { MatchMessages } from "@/lib/i18n/messages/match";
-import { CheckIcon, SparkIcon } from "../icons/icons";
+import { CheckIcon } from "../icons/icons";
 import styles from "./match-status.module.css";
 
 interface MatchStatusProps {
@@ -14,7 +14,6 @@ export function MatchStatus({ copy, error, loadingStep, onRetry, pending }: Matc
   if (pending) {
     return (
       <section className={styles.loading} aria-busy="true" aria-label={copy.loadingTitle}>
-        <div className={styles.orb}><SparkIcon /></div>
         <div>
           <p>{copy.loadingTitle}</p>
           <ol>

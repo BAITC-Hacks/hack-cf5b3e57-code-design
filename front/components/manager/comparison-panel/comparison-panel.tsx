@@ -3,6 +3,7 @@
 import type { MatchResponse } from "../../../../shared/contract";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import { MANAGER_MESSAGES } from "@/lib/i18n/messages/manager";
+import { ContractorPhoto } from "../shared/contractor-photo";
 import { Icon } from "../shared/icon";
 import type { DateComparison } from "../shared/manager-types";
 import styles from "./comparison-panel.module.css";
@@ -22,7 +23,7 @@ function Results({ first, second }: DateComparison) {
   return (
     <div className={styles.results}>
       <div className={styles.summary}><span>{messages.changed(leftOnly.length + rightOnly.length)}</span><p>{leftOnly.length ? messages.dropped(leftOnly.map((card) => card.anonName).join(", ")) : messages.unchanged}</p></div>
-      <div className={styles.columns}>{columns.map((column) => { const dateReason = column.response.funnel.find((step) => step.step === "date"); return <section key={column.date}><div className={styles.date}><strong>{column.date}</strong><span>{messages.count(column.response.cards.length)}</span></div><ol>{column.response.cards.map((card) => <li key={card.id}><span className={styles.avatar} aria-hidden="true">{card.anonName.slice(0, 1)}</span><span><strong>{card.anonName}</strong><small>{card.id}</small></span>{column.unique.some((item) => item.id === card.id) && <em>{messages.onlyHere}</em>}</li>)}</ol>{dateReason && <p className={styles.reason}>{dateReason.removedReason}</p>}</section>; })}</div>
+      <div className={styles.columns}>{columns.map((column) => { const dateReason = column.response.funnel.find((step) => step.step === "date"); return <section key={column.date}><div className={styles.date}><strong>{column.date}</strong><span>{messages.count(column.response.cards.length)}</span></div><ol>{column.response.cards.map((card) => <li key={card.id}><ContractorPhoto id={card.id} name={card.anonName} /><span><strong>{card.anonName}</strong><small>{card.id}</small></span>{column.unique.some((item) => item.id === card.id) && <em>{messages.onlyHere}</em>}</li>)}</ol>{dateReason && <p className={styles.reason}>{dateReason.removedReason}</p>}</section>; })}</div>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { useState } from "react";
 
 import type { Locale, MatchCard as MatchCardData } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
-import { hasContractorImage } from "@/lib/contractor-images";
+import { highlightReason } from "./highlight-reason";
 import cardStyles from "./match-card.module.css";
 
 import { CategoryIcon, CheckIcon, PinIcon, QuoteIcon } from "../icons/icons";
@@ -38,9 +38,8 @@ const LOCALE_TAG: Record<Locale, string> = {
 };
 
 export function MatchCard({ card, categories, cities, copy, locale, rank }: MatchCardProps) {
-  const [imageFailed, setImageFailed] = useState(
-    () => !hasContractorImage(card.id),
-  );
+  const [imageFailed, setImageFailed] = useState(false);
+  const { parts, remainingFacts } = highlightReason(card.reason, card.factsUsed);
   const flags = [
     card.flags.synthetic ? copy.synthetic : null,
     card.flags.priceImputed ? copy.priceImputed : null,
@@ -59,7 +58,7 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
             src={`/contractors/${card.id}.webp`}
             alt={`${card.anonName}, ${categories[card.category as keyof typeof categories] ?? card.category}`}
             fill
-            sizes="(max-width: 760px) 100vw, (max-width: 1120px) 50vw, 33vw"
+            sizes="(max-width: 680px) 100vw, (max-width: 1100px) 50vw, 33vw"
             className={cardStyles.image}
             onError={() => setImageFailed(true)}
           />
@@ -70,8 +69,8 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
           </div>
         )}
 
-        <span className={cardStyles.rank}>
-          {copy.choice} {String(rank).padStart(2, "0")}
+        <span className={cardStyles.rank} aria-label={`${copy.choice} ${rank}`}>
+          {rank}
         </span>
         {!imageFailed && <span className={cardStyles.photoNote}>{copy.aiPhoto}</span>}
       </div>
@@ -102,12 +101,13 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
         </div>
 
         <div className={cardStyles.reason}>
-          <QuoteIcon />
-          <p>{card.reason}</p>
+          <p>{parts.map((part) => part.verified ? (
+            <mark key={part.start} className={cardStyles.verified} title={copy.verified}>{part.text}</mark>
+          ) : part.text)}</p>
         </div>
 
-        <ul className={cardStyles.facts}>
-          {card.factsUsed.map((fact, index) => (
+        {remainingFacts.length > 0 && <ul className={cardStyles.facts}>
+          {remainingFacts.map((fact, index) => (
             <li
               className={fact.verified ? cardStyles.factVerified : cardStyles.factClaimed}
               key={`${fact.key}-${index}`}
@@ -121,7 +121,7 @@ export function MatchCard({ card, categories, cities, copy, locale, rank }: Matc
               </span>
             </li>
           ))}
-        </ul>
+        </ul>}
       </div>
     </article>
   );

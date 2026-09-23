@@ -82,19 +82,25 @@ export function MatchForm({
             <input inputMode="numeric" min="1" onChange={(event) => onChange("budgetKzt", event.target.value)} required step="10000" type="number" value={form.budgetKzt} />
           </label>
 
-          <label className={styles.field}>
-            <span>{copy.duration}</span>
-            <input inputMode="numeric" max="48" min="1" onChange={(event) => onChange("durationHours", event.target.value)} placeholder={copy.durationPlaceholder} step="1" type="number" value={form.durationHours} />
-          </label>
-
-          <label className={styles.field}>
-            <span>{copy.language}</span>
-            <select value={form.language} onChange={(event) => onChange("language", event.target.value)}>
-              <option value="">{copy.languageAny}</option>
-              {LANGUAGES.map((language) => <option key={language} value={language}>{copy.languages[language]}</option>)}
-            </select>
-          </label>
         </div>
+
+        <details className={styles.advanced}>
+          <summary>{copy.advancedFields}</summary>
+          <div className={styles.fields}>
+            <label className={styles.field}>
+              <span>{copy.duration}</span>
+              <input inputMode="numeric" max="48" min="1" onChange={(event) => onChange("durationHours", event.target.value)} placeholder={copy.durationPlaceholder} step="1" type="number" value={form.durationHours} />
+            </label>
+
+            <label className={styles.field}>
+              <span>{copy.language}</span>
+              <select value={form.language} onChange={(event) => onChange("language", event.target.value)}>
+                <option value="">{copy.languageAny}</option>
+                {LANGUAGES.map((language) => <option key={language} value={language}>{copy.languages[language]}</option>)}
+              </select>
+            </label>
+          </div>
+        </details>
 
         <div className={styles.footer}>
           <p aria-live="polite">{notice}</p>

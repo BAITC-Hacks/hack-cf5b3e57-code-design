@@ -142,9 +142,9 @@ export function ManagerWorkspace() {
           <DemoPresets busy={busy} onSelect={selectPreset} />
         </div>
         <PipelineTimeline timeline={timeline} streaming={streaming} error={error} onRetry={() => runMatch(localizedRequest)} />
+        <FunnelView steps={funnel} />
       </section>
       <section className={styles.insights}><CriteriaPanel criteria={criteria} rankedIds={rankedIds} /><CriticPanel critic={critic} /></section>
-      <FunnelView steps={funnel} />
       <ManagerResults cards={cards} result={result} />
       <ComparisonPanel comparing={isComparing} comparison={comparison} error={comparisonError} onCompare={compareDates} />
       <JsonPanel result={result} />

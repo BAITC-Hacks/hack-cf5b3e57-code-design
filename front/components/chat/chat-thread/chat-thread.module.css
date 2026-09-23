@@ -6,9 +6,7 @@
   gap: 18px;
   overflow-y: auto;
   padding: 25px;
-  background:
-    radial-gradient(circle at 100% 0%, rgb(105 153 130 / 7%), transparent 18rem),
-    #fff;
+  background: var(--tm-bg);
   scrollbar-width: thin;
 }
 
@@ -30,9 +28,9 @@
   flex: 0 0 auto;
   place-items: center;
   border-radius: 10px;
-  background: var(--color-dark);
-  color: #fff;
-  font-size: 10px;
+  background: var(--tm-ocean);
+  color: var(--tm-ink);
+  font-size: 12px;
   font-weight: 850;
 }
 
@@ -41,29 +39,29 @@
   max-width: min(78%, 570px);
   gap: 5px;
   padding: 12px 15px;
-  border: 1px solid #e3e4e1;
+  border: 1px solid var(--tm-line);
   border-radius: 17px 17px 17px 5px;
-  background: #f7f7f5;
+  background: var(--tm-surface);
 }
 
 .userRow .message {
-  border-color: #d9e9e0;
+  border-color: var(--tm-line);
   border-radius: 17px 17px 5px;
-  background: #e8f2ed;
+  background: var(--tm-ember-soft);
 }
 
 .role {
-  color: #7e807c;
-  font-size: 8px;
+  color: var(--tm-muted);
+  font-size: 12px;
   font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 .message p {
-  color: #343532;
-  font-size: 12px;
-  line-height: 1.58;
+  color: var(--tm-ink);
+  font-size: 14px;
+  line-height: 1.65;
   white-space: pre-wrap;
 }
 
@@ -80,7 +78,7 @@
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: #728078;
+  background: var(--tm-muted);
   animation: pulse 1s ease-in-out infinite;
 }
 
@@ -122,3 +120,7 @@
     opacity: 0.65;
   }
 }
+
+.message { min-width: 0; overflow-wrap: anywhere; box-shadow: var(--tm-shadow-card); }
+.assistantRow, .userRow { min-width: 0; }
+@media (max-width: 560px) { .message { max-width: calc(100% - 39px); } .userRow .message { max-width: 90%; } }

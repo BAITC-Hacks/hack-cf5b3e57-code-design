@@ -12,10 +12,10 @@ import { DEMO_PRESETS } from "../demo-presets/demo-presets";
 import type { DemoPreset } from "../demo-presets/demo-presets";
 import { MatchForm } from "../match-form/match-form";
 import type { MatchFormState } from "../match-form/match-form";
-import { MatchHeader } from "../match-header/match-header";
 import { MatchHero } from "../match-hero/match-hero";
 import { MatchResults } from "../match-results/match-results";
 import { MatchStatus } from "../match-status/match-status";
+import { Mascot } from "../mascot/mascot";
 import styles from "./match-experience.module.css";
 
 const INITIAL_FORM = toFormState(DEMO_PRESETS[0].request);
@@ -70,7 +70,7 @@ export function MatchExperience() {
     setForm(toFormState(preset.request));
     setNotice(copy.demoApplied);
     setError(null);
-    formRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    formRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
   }
 
   async function submitRequest(request: MatchRequest) {
@@ -91,7 +91,8 @@ export function MatchExperience() {
       const response = await requestMatch(request, controller.signal);
       setResult(response);
       window.requestAnimationFrame(() => {
-        resultRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+        resultRef.current?.focus({ preventScroll: true });
+        resultRef.current?.scrollIntoView({ behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches ? "instant" : "smooth", block: "start" });
       });
     } catch (requestError) {
       if (requestError instanceof DOMException && requestError.name === "AbortError") return;
@@ -111,12 +112,12 @@ export function MatchExperience() {
   }
 
   return (
-    <>
+    <div className={styles.root}>
       <a className={styles.skipLink} href="#match-form">{copy.skip}</a>
-      <MatchHeader copy={copy} />
 
       <div className={styles.shell}>
         <MatchHero copy={copy} />
+        <Mascot pose="hello" speech={copy.mascotHello} name={copy.mascotName} />
         <MatchForm
           copy={copy}
           form={form}
@@ -132,6 +133,8 @@ export function MatchExperience() {
           {pending ? copy.loadingSteps[loadingStep] : error ?? result?.summary ?? ""}
         </div>
 
+        {pending && <Mascot pose="thinking" speech={copy.loadingSteps[loadingStep]} name={copy.mascotName} />}
+
         <MatchStatus
           copy={copy}
           error={error}
@@ -145,8 +148,21 @@ export function MatchExperience() {
         )}
 
         <CompareDates copy={copy} locale={locale} />
+
+        <section className={styles.how} aria-labelledby="match-how-title">
+          <h2 id="match-how-title">{copy.howTitle}</h2>
+          <ol>
+            {copy.howSteps.map((step, index) => (
+              <li key={step.title}>
+                <span aria-hidden="true">{index + 1}</span>
+                <h3>{step.title}</h3>
+                <p>{step.text}</p>
+              </li>
+            ))}
+          </ol>
+        </section>
       </div>
-    </>
+    </div>
   );
 }
 

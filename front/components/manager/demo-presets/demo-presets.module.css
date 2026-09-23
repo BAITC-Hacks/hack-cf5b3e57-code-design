@@ -1,12 +1,15 @@
-.panel { padding: 22px 26px 26px; border: 1px solid rgb(29 29 31 / 10%); border-radius: 24px; background: rgb(255 255 255 / 94%); box-shadow: 0 12px 32px rgb(29 29 31 / 4%); }
+.panel { padding: 22px 26px 26px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }
 .heading { display: flex; align-items: center; justify-content: space-between; }
 .heading > span { font-size: var(--font-14, 14px); font-weight: 720; }
-.heading small { color: rgb(59 59 61 / 72%); font-size: var(--font-12, 12px); }
+.heading small { color: var(--tm-muted); font-size: var(--font-12, 12px); }
 .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; margin-top: 12px; }
-.grid button { position: relative; display: grid; min-height: 82px; padding: 13px 12px 12px 42px; overflow: hidden; border: 1px solid rgb(29 29 31 / 10%); border-radius: 13px; cursor: pointer; background: #fafafa; color: var(--color-dark, #1d1d1f); text-align: left; transition: 150ms ease; }
-.grid button:hover:not(:disabled) { border-color: rgb(0 102 204 / 32%); background: rgb(0 102 204 / 8%); transform: translateY(-1px); }
+.grid button { position: relative; display: grid; min-height: 82px; padding: 13px 12px 12px 42px; overflow: hidden; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-field); cursor: pointer; background: var(--tm-bg); color: var(--tm-ink); text-align: left; transition: 150ms ease; }
+.grid button:hover:not(:disabled) { border-color: var(--tm-ember-soft); background: var(--tm-ember-soft); transform: translateY(-1px); }
 .grid button:disabled { cursor: not-allowed; opacity: .55; }
-.grid button > span { position: absolute; top: 13px; left: 12px; display: grid; width: 22px; height: 22px; place-items: center; border-radius: 7px; background: var(--color-dark, #1d1d1f); color: white; font-size: 10px; font-weight: 760; }
+.grid button > span { position: absolute; top: 13px; left: 12px; display: grid; width: 22px; height: 22px; place-items: center; border-radius: 7px; background: var(--tm-ink); color: var(--tm-surface); font-size: 12px; font-weight: 760; }
 .grid strong { align-self: end; font-size: var(--font-14, 14px); }
-.grid small { margin-top: 2px; color: rgb(59 59 61 / 72%); font-size: 11px; }
-@media (max-width: 600px) { .panel { padding: 20px; border-radius: 18px; } .grid { grid-template-columns: 1fr; } }
+.grid small { margin-top: 2px; color: var(--tm-muted); font-size: 12px; }
+@media (max-width: 600px) { .panel { padding: 20px; border-radius: var(--tm-radius-card); } .grid { grid-template-columns: 1fr; } }
+
+.heading { flex-wrap: wrap; gap: 8px; }
+.grid button > span { background: var(--tm-ember-soft); color: var(--tm-ink); }

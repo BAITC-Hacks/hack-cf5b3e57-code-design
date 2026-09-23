@@ -3,10 +3,9 @@ import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CheckIcon, SlidersIcon, UsersIcon } from "../icons/icons";
 import styles from "./outcome-banner.module.css";
 
-function variant(outcome: MatchOutcome) {
-  if (outcome === "found") return styles.found;
-  if (outcome === "no_category_in_city") return styles.missing;
-  return styles.filtered;
+function variant(result: MatchResponse) {
+  if (result.outcome !== "found" || result.cards.length === 0) return styles.empty;
+  return result.cards.length < 3 ? styles.partial : styles.found;
 }
 
 function OutcomeIcon({ outcome }: { outcome: MatchOutcome }) {
@@ -16,15 +15,17 @@ function OutcomeIcon({ outcome }: { outcome: MatchOutcome }) {
 }
 
 export function OutcomeBanner({ copy, result }: { copy: MatchMessages; result: MatchResponse }) {
+  const partial = result.outcome === "found" && result.cards.length > 0 && result.cards.length < 3;
+  const outcomeCopy = partial ? copy.partialOutcome : copy.outcomes[result.outcome];
   return (
-    <div className={`${styles.banner} ${variant(result.outcome)}`}>
-      <span className={styles.icon}><OutcomeIcon outcome={result.outcome} /></span>
+    <div className={`${styles.banner} ${variant(result)}`}>
+      <span className={styles.icon}>{partial ? <UsersIcon /> : <OutcomeIcon outcome={result.outcome} />}</span>
       <div>
         <p>{copy.resultKicker}</p>
-        <h2>{copy.outcomes[result.outcome].title}</h2>
+        <h2>{outcomeCopy.title}</h2>
         <span>{result.summary}</span>
       </div>
-      <strong>{copy.outcomes[result.outcome].label}</strong>
+      <strong>{outcomeCopy.label}</strong>
     </div>
   );
 }

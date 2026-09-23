@@ -1,24 +1,16 @@
-.loading { display: grid; grid-template-columns: 110px 1fr; align-items: center; gap: 32px; margin-top: 34px; padding: 34px; border: 1px solid rgb(0 102 204 / 14%); border-radius: 24px; background: #f3f8fd; }
-.orb { display: grid; width: 92px; height: 92px; place-items: center; border-radius: 50%; background: var(--color-accent, #0066cc); color: #fff; box-shadow: 0 0 0 12px rgb(0 102 204 / 8%), 0 0 0 24px rgb(0 102 204 / 4%); animation: breathe 1.8s ease-in-out infinite; }
-.orb svg { width: 38px; height: 38px; }
-.loading > div:last-child > p { margin: 0; color: var(--color-dark, #1d1d1f); font-size: var(--font-20, 20px); font-weight: 740; }
-.loading ol { display: flex; flex-wrap: wrap; gap: 12px 20px; margin: 18px 0 0; padding: 0; list-style: none; }
-.loading li { display: inline-flex; align-items: center; gap: 7px; color: rgb(59 59 61 / 45%); font-size: var(--font-12, 12px); transition: color 180ms ease; }
-.loading li > span { display: grid; width: 22px; height: 22px; place-items: center; border: 1px solid rgb(29 29 31 / 14%); border-radius: 50%; font-size: 9px; font-weight: 750; }
-.loading li svg { width: 13px; height: 13px; }
-.loading .active { color: #004f9e; font-weight: 650; }
-.loading .active > span { border-color: var(--color-accent, #0066cc); background: var(--color-accent, #0066cc); color: #fff; }
-.error { display: grid; grid-template-columns: auto 1fr auto; align-items: center; gap: 17px; margin-top: 34px; padding: 24px; border: 1px solid #efc8c0; border-radius: 20px; background: #fff3f0; }
-.errorIcon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: #b34c3c; color: #fff; font-weight: 850; }
-.error h2 { margin: 0; color: #712c22; font-size: var(--font-18, 18px); }
-.error p { margin: 5px 0 0; color: #8f4a3f; font-size: var(--font-12, 12px); line-height: 1.45; }
-.error button { min-height: 44px; padding: 0 15px; border: 1px solid #d39286; border-radius: 11px; background: #fff; color: #7e3328; cursor: pointer; font-size: var(--font-12, 12px); font-weight: 700; }
-@keyframes breathe { 0%, 100% { transform: scale(.96); } 50% { transform: scale(1.03); } }
-@media (max-width: 680px) {
-  .loading { grid-template-columns: 1fr; justify-items: center; padding: 29px 22px; text-align: center; }
-  .loading ol { display: grid; justify-content: start; text-align: left; }
-  .error { grid-template-columns: auto 1fr; }
-  .error button { grid-column: 1 / -1; }
-}
-@media (prefers-reduced-motion: reduce) { .orb { animation: none; } }
-
+.loading { margin-top: 20px; padding: 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); }
+.loading p { margin: 0; color: var(--tm-ink); font-size: 20px; font-weight: 600; }
+.loading ol { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 16px; margin: 20px 0 0; padding: 0; list-style: none; }
+.loading li { display: flex; align-items: start; gap: 8px; padding-top: 12px; border-top: 3px solid var(--tm-line); color: var(--tm-muted); font-size: 13px; line-height: 1.5; }
+.loading li > span { display: grid; width: 24px; height: 24px; flex-shrink: 0; place-items: center; border: 1px solid var(--tm-line); border-radius: 50%; font-size: 12px; }
+.loading li svg { width: 14px; height: 14px; }
+.loading .active { border-top-color: var(--tm-ember); color: var(--tm-ink); }
+.loading .active > span { border-color: var(--tm-ember); background: var(--tm-ember); color: var(--tm-ink); }
+.error { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; align-items: center; gap: 16px; margin-top: 24px; padding: 24px; border: 1px solid var(--tm-stop); border-radius: var(--tm-radius-card); background: var(--tm-stop-soft); color: var(--tm-stop); }
+.errorIcon { display: grid; width: 42px; height: 42px; place-items: center; border-radius: 50%; background: var(--tm-stop); color: var(--tm-surface); font-weight: 700; }
+.error h2 { margin: 0; font-size: 20px; }
+.error p { margin: 6px 0 0; font-size: 14px; line-height: 1.5; }
+.error button { min-height: 44px; padding: 10px 16px; border: 1px solid var(--tm-stop); border-radius: var(--tm-radius-field); background: var(--tm-surface); color: var(--tm-stop); cursor: pointer; font: inherit; font-size: 14px; }
+.error button:focus-visible { outline: 3px solid var(--tm-ocean-ink); outline-offset: 3px; }
+@media (max-width: 900px) { .loading ol { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+@media (max-width: 680px) { .loading ol { grid-template-columns: 1fr; } .error { grid-template-columns: auto minmax(0, 1fr); padding: 20px; } .error button { grid-column: 1 / -1; } }

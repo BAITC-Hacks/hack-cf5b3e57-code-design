@@ -15,7 +15,7 @@ export function CriteriaPanel({ criteria, rankedIds }: { criteria: string[]; ran
       </article>
       <article className={styles.panel}>
         <div className={styles.heading}><span>{messages.ranking}</span><strong>{rankedIds.length || "—"}</strong></div>
-        {rankedIds.length ? <ol className={styles.ranking}>{rankedIds.map((id, index) => <li key={id}><span>{index + 1}</span><code>{id}</code></li>)}</ol> : <p>{messages.rankingEmpty}</p>}
+        {rankedIds.length ? <ol className={styles.ranking}>{rankedIds.map((id, index) => <li key={id}><span>{index + 1}</span><span>{id}</span></li>)}</ol> : <p>{messages.rankingEmpty}</p>}
       </article>
     </>
   );

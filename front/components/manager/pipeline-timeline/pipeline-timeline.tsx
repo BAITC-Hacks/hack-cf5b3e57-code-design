@@ -39,9 +39,9 @@ export function PipelineTimeline({ timeline, streaming, error, onRetry }: {
           <ol>
             <AnimatePresence initial={false}>
               {timeline.map((item, index) => (
-                <motion.li key={item.id} initial={reducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={reducedMotion ? undefined : { opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .26 }}>
+                <motion.li key={item.id} className={item.type === "criteria" || item.type === "card" ? styles.ai : styles.code} initial={reducedMotion ? false : { opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} exit={reducedMotion ? undefined : { opacity: 0 }} transition={{ duration: reducedMotion ? 0 : .26 }}>
                   <span className={styles.line} aria-hidden="true" /><span className={styles.eventIcon}><TimelineIcon type={item.type} /></span>
-                  <div><span className={styles.meta}>{messages.step} {String(index + 1).padStart(2, "0")} · {item.time}</span><strong>{item.title}</strong><p>{item.detail}</p></div>
+                  <div><span className={styles.meta}><span>{messages.step} {index + 1}</span><span>{item.type === "criteria" || item.type === "card" ? messages.ai : messages.code}</span><time>{item.time}</time></span><strong>{item.title}</strong><p>{item.detail}</p></div>
                 </motion.li>
               ))}
             </AnimatePresence>

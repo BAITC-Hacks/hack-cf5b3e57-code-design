@@ -1,0 +1,5 @@
+.photo { width: 88px; flex: 0 0 88px; margin: 0; }
+.visual { position: relative; display: grid; width: 72px; height: 72px; place-items: center; overflow: hidden; border-radius: var(--tm-radius-field); background: var(--tm-ocean); }
+.visual img { object-fit: cover; }
+.visual svg { width: 28px; fill: none; stroke: var(--tm-ocean-ink); stroke-width: 1.5; }
+.photo figcaption { margin-top: 5px; color: var(--tm-muted); font-size: 12px; line-height: 1.35; overflow-wrap: anywhere; }

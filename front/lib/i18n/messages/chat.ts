@@ -87,6 +87,8 @@ export interface ChatMessages {
     retry: string;
   };
   result: {
+    photo: string;
+    photoMissing: string;
     eyebrow: string;
     criteria: string;
     cards: string;
@@ -218,7 +220,7 @@ const messages = {
       optional: "необязательно",
     },
     assistant: {
-      name: "Ассистент Тройки",
+      name: "Ассистент ToiMatch",
       label: "Помощник",
       greeting:
         "Здравствуйте! Я помогу сформировать точный запрос и найти подходящих подрядчиков.",
@@ -248,6 +250,7 @@ const messages = {
       retry: "Повторить подбор",
     },
     result: {
+      photo: "Фото: ИИ-иллюстрация", photoMissing: "Фото недоступно",
       eyebrow: "Ответ matching engine",
       criteria: "На что смотреть",
       cards: "Подходящие подрядчики",
@@ -424,6 +427,7 @@ const messages = {
       retry: "Қайта таңдау",
     },
     result: {
+      photo: "Фото: ЖИ иллюстрациясы", photoMissing: "Фото қолжетімсіз",
       eyebrow: "Matching engine жауабы",
       criteria: "Неге назар аудару керек",
       cards: "Сәйкес мердігерлер",
@@ -600,6 +604,7 @@ const messages = {
       retry: "Retry matching",
     },
     result: {
+      photo: "Photo: AI illustration", photoMissing: "Photo unavailable",
       eyebrow: "Matching engine response",
       criteria: "What to look for",
       cards: "Suitable contractors",

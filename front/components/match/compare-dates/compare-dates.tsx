@@ -1,6 +1,5 @@
 "use client";
 
-import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 
 import type { Locale, MatchRequest, MatchResponse } from "../../../../shared/contract";
@@ -31,14 +30,12 @@ function formatShortDate(date: string, locale: Locale) {
 function monthLabel(date: string, locale: Locale) {
   return new Intl.DateTimeFormat(localeTag(locale), { month: "short" })
     .format(new Date(`${date}T12:00:00`))
-    .replace(".", "")
-    .toLocaleUpperCase(localeTag(locale));
+    .replace(".", "");
 }
 
 export function CompareDates({ copy, locale }: { copy: MatchMessages; locale: Locale }) {
   const [state, setState] = useState<CompareState>(EMPTY_STATE);
   const controllerRef = useRef<AbortController | null>(null);
-  const reduceMotion = useReducedMotion();
 
   useEffect(() => () => controllerRef.current?.abort(), []);
 
@@ -99,14 +96,9 @@ export function CompareDates({ copy, locale }: { copy: MatchMessages; locale: Lo
         {state.error && <p className={styles.error}>{state.error}</p>}
 
         {!state.pending && !state.error && state.left && state.right && (
-          <motion.div
-            animate={{ opacity: 1, scale: 1 }}
-            className={styles.results}
-            initial={reduceMotion ? false : { opacity: 0, scale: 0.98 }}
-            transition={{ duration: reduceMotion ? 0 : 0.3 }}
-          >
+          <div className={styles.results}>
             <ComparisonResults copy={copy} left={state.left} locale={locale} right={state.right} />
-          </motion.div>
+          </div>
         )}
 
         {!state.pending && !state.error && !state.left && (
@@ -132,7 +124,7 @@ function ComparisonResults({ copy, left, locale, right }: { copy: MatchMessages;
     <>
       <div className={styles.summary}>
         <span className={changed ? styles.changedDot : styles.sameDot} />
-        <div><strong>{copy.compareChanged}</strong><small>{copy.compareChangedText}</small></div>
+        <div><strong>{changed ? copy.compareChanged : copy.compareUnchanged}</strong><small>{changed ? copy.compareChangedText : copy.compareUnchangedText}</small></div>
       </div>
       <div className={styles.columns}>
         <ComparisonDate date="2026-10-16" label={copy.compareLeft} locale={locale} response={left} otherIds={rightIds} changedLabel={copy.compareLostRight} sameLabel={copy.compareSame} />

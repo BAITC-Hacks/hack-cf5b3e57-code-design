@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { CatalogHeader } from "@/components/catalog/catalog-header/catalog-header";
+import { AvailabilityCalendar } from "@/components/catalog/availability-calendar";
 import { ContractorPhoto } from "@/components/catalog/contractor-photo/contractor-photo";
 import {
   CatalogApiError,
@@ -21,7 +21,7 @@ import type {
   Language,
   Locale,
 } from "../../../../shared/contract";
-import styles from "./page.module.css";
+import styles from "@/components/catalog/profile-page.module.css";
 
 export async function generateMetadata(): Promise<Metadata> {
   const locale = await getRequestLocale();
@@ -35,26 +35,6 @@ export async function generateMetadata(): Promise<Metadata> {
 
 function getIntlLocale(locale: Locale) {
   return locale === "kk" ? "kk-KZ" : locale === "en" ? "en-US" : "ru-RU";
-}
-
-function toUtcDate(value: string) {
-  return new Date(`${value}T00:00:00Z`);
-}
-
-function getBusyDatesByMonth(
-  busyDates: string[],
-  monthFormatter: Intl.DateTimeFormat,
-) {
-  const months = new Map<string, string[]>();
-
-  for (const busyDate of [...busyDates].sort()) {
-    const month = monthFormatter.format(toUtcDate(busyDate));
-    const dates = months.get(month) ?? [];
-    dates.push(busyDate);
-    months.set(month, dates);
-  }
-
-  return [...months.entries()];
 }
 
 function getMatchHref(contractor: ContractorDetail) {
@@ -98,17 +78,6 @@ export default async function ContractorPage({
   const messages = catalogMessages[locale];
   const intlLocale = getIntlLocale(locale);
   const priceFormatter = new Intl.NumberFormat(intlLocale);
-  const monthFormatter = new Intl.DateTimeFormat(intlLocale, {
-    month: "long",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-  const dayFormatter = new Intl.DateTimeFormat(intlLocale, {
-    day: "numeric",
-    month: "short",
-    weekday: "short",
-    timeZone: "UTC",
-  });
   const { id } = await params;
   let contractor: ContractorDetail;
 
@@ -126,16 +95,11 @@ export default async function ContractorPage({
 
     return (
       <div className={styles.page}>
-        <CatalogHeader messages={messages.header} />
         <DetailUnavailable message={message} messages={messages} />
       </div>
     );
   }
 
-  const busyDatesByMonth = getBusyDatesByMonth(
-    contractor.busyDates,
-    monthFormatter,
-  );
   const dataFlags = [
     contractor.flags.synthetic && {
       title: messages.detail.syntheticTitle,
@@ -155,7 +119,6 @@ export default async function ContractorPage({
 
   return (
     <div className={styles.page}>
-      <CatalogHeader messages={messages.header} />
 
       <main className={styles.main}>
         <Link className={styles.backLink} href="/">
@@ -203,18 +166,18 @@ export default async function ContractorPage({
 
             <div className={styles.quickFacts}>
               <div>
-                <span>{messages.detail.formatsCount}</span>
-                <strong>{contractor.eventFormats.length}</strong>
+                <span>{messages.detail.formats}</span>
+                <strong>{contractor.eventFormats.map(value => messages.values.eventFormats[value as EventFormat] ?? value).join(", ")}</strong>
               </div>
               <div>
-                <span>{messages.detail.languagesCount}</span>
-                <strong>{contractor.languages.length}</strong>
+                <span>{messages.detail.languages}</span>
+                <strong>{contractor.languages.map(value => messages.values.languages[value as Language] ?? value).join(", ")}</strong>
               </div>
               <div>
-                <span>{messages.detail.upTo}</span>
+                <span>{messages.card.duration}</span>
                 <strong>
                   {contractor.maxHours === null
-                    ? "∞"
+                    ? messages.card.unlimited
                     : messages.detail.hoursShort.replace(
                         "{hours}",
                         String(contractor.maxHours),
@@ -246,43 +209,6 @@ export default async function ContractorPage({
               <p className={styles.sourceNote}>{messages.detail.sourceNote}</p>
             </section>
 
-            <section className={styles.panel}>
-              <div className={styles.panelHeading}>
-                <div>
-                  <p className={styles.eyebrow}>
-                    {messages.detail.calendarEyebrow}
-                  </p>
-                  <h2>{messages.detail.busyDates}</h2>
-                </div>
-                <span>
-                  {messages.detail.datesCount.replace(
-                    "{count}",
-                    String(contractor.busyDates.length),
-                  )}
-                </span>
-              </div>
-
-              {busyDatesByMonth.length > 0 ? (
-                <div className={styles.calendar}>
-                  {busyDatesByMonth.map(([month, dates]) => (
-                    <div className={styles.calendarMonth} key={month}>
-                      <h3>{month}</h3>
-                      <div>
-                        {dates.map((date) => (
-                          <time key={date} dateTime={date}>
-                            {dayFormatter.format(toUtcDate(date))}
-                          </time>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              ) : (
-                <p className={styles.noBusyDates}>
-                  {messages.detail.noBusyDates}
-                </p>
-              )}
-            </section>
           </div>
 
           <aside className={styles.secondaryColumn}>
@@ -345,6 +271,7 @@ export default async function ContractorPage({
             </section>
           </aside>
         </div>
+        <AvailabilityCalendar contractor={contractor} locale={locale} today={new Date().toISOString().slice(0, 10)} />
       </main>
     </div>
   );

@@ -29,7 +29,7 @@ export function FunnelView({ steps }: { steps: FunnelStep[] }) {
             return (
               <motion.li key={`${step.step}-${index}`} initial={reducedMotion ? false : { opacity: 0, x: -10 }} animate={{ opacity: 1, x: 0 }} transition={{ duration: reducedMotion ? 0 : .28, delay: reducedMotion ? 0 : index * .045 }}>
                 <div className={styles.stepHeading}><span>{index + 1}</span><strong>{messages.steps[step.step]}</strong><em>{step.before} → {step.after}</em></div>
-                <div className={styles.track} aria-hidden="true"><motion.span style={{ width: `${Math.max((step.after / maximum) * 100, 2)}%` }} initial={reducedMotion ? false : { scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: reducedMotion ? 0 : .48, delay: reducedMotion ? 0 : index * .055 }} /></div>
+                <div className={styles.track} aria-hidden="true"><motion.span style={{ width: `${(step.after / maximum) * 100}%` }} initial={reducedMotion ? false : { scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ duration: reducedMotion ? 0 : .48, delay: reducedMotion ? 0 : index * .055 }} /></div>
                 <p>{removed > 0 ? messages.funnel.removed(removed) : messages.funnel.noneRemoved} {step.removedReason}</p>
               </motion.li>
             );

@@ -5,7 +5,8 @@ import styles from "./funnel-summary.module.css";
 
 export function FunnelSummary({ copy, funnel }: { copy: MatchMessages; funnel: FunnelStep[] }) {
   return (
-    <div className={styles.funnel}>
+    <details className={styles.funnel}>
+      <summary className={styles.toggle}>{copy.exclusionsTitle}</summary>
       <div className={styles.heading}>
         <div>
           <SlidersIcon />
@@ -22,7 +23,7 @@ export function FunnelSummary({ copy, funnel }: { copy: MatchMessages; funnel: F
             <span className={styles.number}>{String(index + 1).padStart(2, "0")}</span>
             <span className={styles.copy}>
               <strong>{copy.funnelNames[step.step as FunnelStepName]}</strong>
-              <small>{step.removedReason}</small>
+              {step.before > step.after && <small>{step.removedReason}</small>}
             </span>
             <span className={styles.count}>
               <strong>{step.before} → {step.after}</strong>
@@ -31,7 +32,8 @@ export function FunnelSummary({ copy, funnel }: { copy: MatchMessages; funnel: F
           </li>
         ))}
       </ol>
-    </div>
+      <p className={styles.note}>{copy.exclusionsNote}</p>
+    </details>
   );
 }
 

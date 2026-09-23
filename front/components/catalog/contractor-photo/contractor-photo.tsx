@@ -8,7 +8,6 @@ import type {
   ContractorListItem,
 } from "../../../../shared/contract";
 import type { CatalogMessages } from "@/lib/i18n/messages/catalog";
-import { hasContractorImage } from "@/lib/contractor-images";
 import styles from "./contractor-photo.module.css";
 
 export function ContractorPhoto({
@@ -20,9 +19,8 @@ export function ContractorPhoto({
   messages: CatalogMessages;
   priority?: boolean;
 }) {
-  const [imageUnavailable, setImageUnavailable] = useState(
-    () => !hasContractorImage(contractor.id),
-  );
+  const [unavailableId, setUnavailableId] = useState<string | null>(null);
+  const imageUnavailable = unavailableId === contractor.id;
   const rawCategory = contractor.categories[0];
   const category = rawCategory
     ? (messages.values.categories[rawCategory as Category] ?? rawCategory)
@@ -57,7 +55,7 @@ export function ContractorPhoto({
           fill
           priority={priority}
           sizes="(max-width: 680px) 100vw, (max-width: 1100px) 50vw, 33vw"
-          onError={() => setImageUnavailable(true)}
+          onError={() => setUnavailableId(contractor.id)}
         />
       )}
       <span className={styles.disclosure}>{messages.photo.disclosure}</span>

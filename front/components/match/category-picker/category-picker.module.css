@@ -1,57 +1,8 @@
 .fieldset { min-width: 0; margin: 0; padding: 0; border: 0; }
-.fieldset legend { color: var(--color-gray, #3b3b3d); font-size: var(--font-12, 12px); font-weight: 730; }
-
-.rail {
-  display: grid;
-  max-height: 214px;
-  grid-template-columns: repeat(6, minmax(0, 1fr));
-  gap: 9px;
-  margin-top: 12px;
-  padding: 2px 2px 8px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  scrollbar-color: rgb(29 29 31 / 20%) transparent;
-  scrollbar-width: thin;
-}
-
-.rail button {
-  display: grid;
-  min-height: 74px;
-  place-items: center;
-  gap: 5px;
-  padding: 10px 8px;
-  border: 1px solid rgb(29 29 31 / 10%);
-  border-radius: 14px;
-  background: #fafaf9;
-  color: rgb(59 59 61 / 72%);
-  cursor: pointer;
-  font-size: 10px;
-  font-weight: 650;
-  line-height: 1.2;
-  text-align: center;
-  transition: border-color 150ms ease, background 150ms ease, color 150ms ease, transform 150ms ease;
-}
-
-.rail button:hover { border-color: rgb(0 102 204 / 35%); color: var(--color-accent, #0066cc); transform: translateY(-1px); }
-.rail button svg { width: 23px; height: 23px; }
-.rail .active { border-color: var(--color-accent, #0066cc); background: #eef6ff; color: #004d99; box-shadow: inset 0 0 0 1px rgb(0 102 204 / 10%); }
-
-@media (max-width: 1120px) { .rail { grid-template-columns: repeat(5, minmax(0, 1fr)); } }
-@media (max-width: 900px) { .rail { grid-template-columns: repeat(4, minmax(0, 1fr)); } }
-
-@media (max-width: 680px) {
-  .rail {
-    display: flex;
-    max-height: none;
-    margin-inline: -17px;
-    padding: 2px 17px 12px;
-    overflow-x: auto;
-    overflow-y: hidden;
-    scroll-snap-type: x proximity;
-  }
-
-  .rail button { min-width: 106px; scroll-snap-align: start; }
-}
-
-@media (prefers-reduced-motion: reduce) { .rail button { transition: none; } }
-
+.fieldset legend { color: var(--tm-ink); font-size: 13px; font-weight: 550; }
+.rail { display: flex; gap: 8px; margin-top: 10px; padding: 5px 4px 12px; overflow-x: auto; overscroll-behavior-inline: contain; scrollbar-color: var(--tm-line) transparent; scrollbar-width: thin; }
+.rail button { display: inline-flex; flex-shrink: 0; min-height: 46px; align-items: center; justify-content: center; gap: 8px; padding: 10px 14px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-field); background: var(--tm-bg); color: var(--tm-muted); cursor: pointer; font: inherit; font-size: 13px; line-height: 1.4; }
+.rail button:hover { border-color: var(--tm-ember); color: var(--tm-ink); }
+.rail button:focus-visible { outline: 3px solid var(--tm-ocean-ink); outline-offset: 2px; }
+.rail button svg { width: 20px; height: 20px; flex-shrink: 0; }
+.rail .active { border-color: var(--tm-ember); background: var(--tm-ember-soft); color: var(--tm-ink); font-weight: 650; }

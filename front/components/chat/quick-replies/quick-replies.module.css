@@ -9,21 +9,21 @@
 }
 
 .list button {
-  min-height: 34px;
+  min-height: 44px;
   padding: 0 12px;
-  border: 1px solid #d8ddd9;
+  border: 1px solid var(--tm-muted);
   border-radius: 999px;
-  background: #fff;
-  color: #4d5852;
+  background: var(--tm-surface);
+  color: var(--tm-muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 12px;
   font-weight: 700;
 }
 
 .list button:hover:not(:disabled) {
-  border-color: #4f7d67;
-  background: #f0f6f2;
-  color: #315a46;
+  border-color: var(--tm-ink);
+  background: var(--tm-ember-soft);
+  color: var(--tm-ink);
 }
 
 .list button:disabled {

@@ -1,0 +1,116 @@
+.header {
+  position: relative;
+  z-index: 20;
+  display: grid;
+  width: min(calc(100% - 48px), var(--max-width, 1280px));
+  min-height: 76px;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 34px;
+  margin: 0 auto;
+  border-bottom: 1px solid rgb(29 29 31 / 10%);
+}
+
+.brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-dark, #1d1d1f);
+  font-size: var(--font-20, 20px);
+  font-weight: 800;
+  letter-spacing: -0.04em;
+}
+
+.brandMark {
+  display: flex;
+  width: 35px;
+  height: 35px;
+  align-items: flex-end;
+  justify-content: center;
+  gap: 3px;
+  padding: 8px;
+  border-radius: 11px;
+  background: var(--color-dark, #1d1d1f);
+}
+
+.brandMark span {
+  width: 4px;
+  border-radius: 4px;
+  background: #fff;
+}
+
+.brandMark span:nth-child(1) { height: 8px; }
+.brandMark span:nth-child(2) { height: 17px; background: #5da0e4; }
+.brandMark span:nth-child(3) { height: 12px; }
+
+.navigation {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(18px, 3vw, 36px);
+}
+
+.navigation a {
+  position: relative;
+  padding: 27px 0 25px;
+  color: rgb(59 59 61 / 67%);
+  font-size: var(--font-14, 14px);
+  font-weight: 650;
+  white-space: nowrap;
+}
+
+.navigation a::after {
+  position: absolute;
+  right: 0;
+  bottom: -1px;
+  left: 0;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--color-accent, #0066cc);
+  content: "";
+  opacity: 0;
+  transform: scaleX(0.5);
+  transition: opacity 140ms ease, transform 140ms ease;
+}
+
+.navigation a:hover,
+.navigation .active {
+  color: var(--color-dark, #1d1d1f);
+}
+
+.navigation .active::after {
+  opacity: 1;
+  transform: scaleX(1);
+}
+
+.localeSwitcher { justify-self: end; }
+
+@media (max-width: 1120px) {
+  .navigation { gap: 16px; }
+}
+
+@media (max-width: 900px) {
+  .header {
+    width: min(calc(100% - 32px), var(--max-width, 1280px));
+    grid-template-columns: 1fr auto;
+    gap: 18px;
+  }
+
+  .navigation { display: none; }
+}
+
+@media (max-width: 680px) {
+  .header { min-height: 67px; }
+  .brand { font-size: var(--font-18, 18px); }
+  .brandMark { width: 32px; height: 32px; }
+}
+
+@media (max-width: 390px) {
+  .header { width: calc(100% - 24px); }
+  .brand > span:last-child { display: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .navigation a::after { transition: none; }
+}

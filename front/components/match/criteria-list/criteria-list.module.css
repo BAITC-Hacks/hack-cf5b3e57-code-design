@@ -1,0 +1,10 @@
+.criteria { display: grid; grid-template-columns: minmax(160px, .45fr) minmax(0, 1.55fr); gap: 24px; margin-top: 24px; padding: 24px 26px; border: 1px solid rgb(29 29 31 / 9%); border-radius: 22px; background: #fff; }
+.criteria > div { display: flex; align-items: center; gap: 10px; }
+.criteria > div svg { width: 23px; height: 23px; color: var(--color-accent, #0066cc); }
+.criteria h3 { margin: 0; color: var(--color-dark, #1d1d1f); font-size: var(--font-16, 16px); }
+.criteria ol { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 9px; margin: 0; padding: 0; list-style: none; }
+.criteria li { display: grid; grid-template-columns: 24px 1fr; align-items: start; gap: 8px; color: var(--color-gray, #3b3b3d); font-size: var(--font-12, 12px); line-height: 1.45; }
+.criteria li span { display: grid; width: 22px; height: 22px; place-items: center; border-radius: 50%; background: #eaf3fc; color: var(--color-accent, #0066cc); font-size: 9px; font-weight: 800; }
+@media (max-width: 900px) { .criteria { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .criteria ol { grid-template-columns: 1fr; } }
+

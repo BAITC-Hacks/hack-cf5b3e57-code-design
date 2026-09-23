@@ -1,0 +1,20 @@
+.demos { display: grid; grid-template-columns: minmax(150px, .55fr) minmax(0, 2.45fr); gap: 18px; margin-top: 37px; padding-top: 28px; border-top: 1px solid rgb(29 29 31 / 9%); }
+.intro { display: flex; align-items: flex-start; gap: 10px; }
+.intro > span { padding: 5px 7px; border-radius: 6px; background: #1f705b; color: #fff; font-size: 9px; font-weight: 800; letter-spacing: .08em; }
+.intro > div { display: grid; gap: 5px; }
+.intro strong { color: var(--color-dark, #1d1d1f); font-size: var(--font-14, 14px); }
+.intro small { color: rgb(59 59 61 / 60%); font-size: 10px; line-height: 1.4; }
+.grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 9px; }
+
+.grid button { display: grid; min-height: 62px; grid-template-columns: 29px 1fr 18px; align-items: center; gap: 10px; padding: 9px 13px; border: 1px solid rgb(29 29 31 / 9%); border-radius: 13px; background: #fafafa; color: var(--color-gray, #3b3b3d); cursor: pointer; text-align: left; transition: border-color 140ms ease, background 140ms ease, transform 140ms ease; }
+.grid button:hover { border-color: rgb(0 102 204 / 30%); background: #f4f8fd; transform: translateY(-1px); }
+.grid button > span:first-child { display: grid; width: 28px; height: 28px; place-items: center; border-radius: 50%; background: #edeae5; color: rgb(59 59 61 / 70%); font-size: 9px; font-weight: 800; }
+.grid button > span:nth-child(2) { display: grid; min-width: 0; gap: 3px; }
+.grid strong { font-size: var(--font-12, 12px); }
+.grid small { overflow: hidden; color: rgb(59 59 61 / 57%); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.grid svg { width: 17px; height: 17px; color: rgb(59 59 61 / 46%); }
+
+@media (max-width: 900px) { .demos { grid-template-columns: 1fr; } }
+@media (max-width: 680px) { .grid { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { .grid button { transition: none; } }
+

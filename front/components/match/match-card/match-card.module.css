@@ -1,0 +1,277 @@
+.card {
+  min-width: 0;
+  overflow: hidden;
+  border: 1px solid rgb(29 29 31 / 10%);
+  border-radius: 24px;
+  background: #fff;
+  box-shadow: 0 20px 56px rgb(29 29 31 / 8%);
+}
+
+.visual {
+  position: relative;
+  min-height: 255px;
+  overflow: hidden;
+  background: linear-gradient(145deg, #e9dfd3, #ccd8cf);
+}
+
+.visual::after {
+  position: absolute;
+  inset: 58% 0 0;
+  z-index: 1;
+  background: linear-gradient(to bottom, transparent, rgb(18 22 20 / 70%));
+  content: "";
+  pointer-events: none;
+}
+
+.image {
+  object-fit: cover;
+  transition: transform 500ms ease;
+}
+
+.card:hover .image {
+  transform: scale(1.025);
+}
+
+.placeholder {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: 14px;
+  color: rgb(29 29 31 / 58%);
+}
+
+.placeholder svg {
+  width: 64px;
+  height: 64px;
+}
+
+.placeholder span {
+  max-width: 18rem;
+  font-size: var(--font-14, 14px);
+  font-weight: 700;
+  text-align: center;
+}
+
+.rank,
+.photoNote {
+  position: absolute;
+  z-index: 2;
+  border: 1px solid rgb(255 255 255 / 22%);
+  color: #fff;
+  backdrop-filter: blur(12px);
+}
+
+.rank {
+  top: 16px;
+  left: 16px;
+  padding: 8px 11px;
+  border-radius: 999px;
+  background: rgb(21 24 23 / 55%);
+  font-size: var(--font-12, 12px);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.photoNote {
+  right: 13px;
+  bottom: 12px;
+  padding: 5px 8px;
+  border-radius: 7px;
+  background: rgb(21 24 23 / 46%);
+  font-size: 10px;
+}
+
+.body {
+  padding: 22px;
+}
+
+.identity {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.category {
+  margin: 0;
+  color: var(--color-accent, #0066cc);
+  font-size: var(--font-12, 12px);
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.identity h3 {
+  margin: 6px 0 0;
+  color: var(--color-dark, #1d1d1f);
+  font-size: var(--font-24, 24px);
+  line-height: 1.15;
+  letter-spacing: -0.035em;
+}
+
+.location {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 5px;
+  margin: 3px 0 0;
+  color: rgb(59 59 61 / 75%);
+  font-size: var(--font-12, 12px);
+  white-space: nowrap;
+}
+
+.location svg {
+  width: 15px;
+  height: 15px;
+}
+
+.flags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.flags li {
+  padding: 5px 8px;
+  border: 1px solid #ead8bb;
+  border-radius: 999px;
+  background: #fff9ed;
+  color: #76531d;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.price {
+  display: flex;
+  align-items: baseline;
+  gap: 7px;
+  margin-top: 17px;
+}
+
+.price span {
+  color: rgb(59 59 61 / 65%);
+  font-size: var(--font-12, 12px);
+}
+
+.price strong {
+  color: var(--color-dark, #1d1d1f);
+  font-size: var(--font-20, 20px);
+  letter-spacing: -0.025em;
+}
+
+.reason {
+  position: relative;
+  display: grid;
+  grid-template-columns: 24px 1fr;
+  gap: 9px;
+  margin-top: 18px;
+  padding: 16px;
+  border-radius: 16px;
+  background: #f2f6fb;
+  color: #173858;
+}
+
+.reason > svg {
+  width: 21px;
+  height: 21px;
+  color: var(--color-accent, #0066cc);
+}
+
+.reason p {
+  margin: 0;
+  font-size: var(--font-14, 14px);
+  font-weight: 610;
+  line-height: 1.55;
+}
+
+.facts {
+  display: grid;
+  gap: 9px;
+  margin: 17px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.facts li {
+  display: grid;
+  grid-template-columns: 28px 1fr;
+  gap: 10px;
+  min-width: 0;
+  align-items: flex-start;
+  padding-top: 10px;
+  border-top: 1px solid rgb(29 29 31 / 8%);
+}
+
+.factIcon {
+  display: grid;
+  width: 27px;
+  height: 27px;
+  place-items: center;
+  border-radius: 50%;
+}
+
+.factIcon svg {
+  width: 15px;
+  height: 15px;
+}
+
+.factVerified .factIcon {
+  background: #e5f5ea;
+  color: #176c38;
+}
+
+.factClaimed .factIcon {
+  background: #f2f0ec;
+  color: #706a62;
+}
+
+.facts li > span:last-child {
+  display: grid;
+  min-width: 0;
+  gap: 3px;
+}
+
+.facts strong {
+  color: var(--color-gray, #3b3b3d);
+  font-size: var(--font-12, 12px);
+  line-height: 1.4;
+}
+
+.facts small {
+  color: rgb(59 59 61 / 58%);
+  font-size: 10px;
+}
+
+@media (max-width: 560px) {
+  .visual {
+    min-height: 225px;
+  }
+
+  .body {
+    padding: 19px;
+  }
+
+  .identity {
+    display: grid;
+  }
+
+  .location {
+    margin-top: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image {
+    transition: none;
+  }
+
+  .card:hover .image {
+    transform: none;
+  }
+}

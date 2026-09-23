@@ -1,5 +1,6 @@
 import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CheckIcon, SparkIcon } from "../icons/icons";
+import { MascotGuide } from "../mascot-guide/mascot-guide";
 import styles from "./match-hero.module.css";
 
 export function MatchHero({ copy }: { copy: MatchMessages }) {
@@ -22,21 +23,12 @@ export function MatchHero({ copy }: { copy: MatchMessages }) {
         </ul>
       </div>
 
-      <div className={styles.graphic} aria-hidden="true">
-        <div className={styles.orbitLarge} />
-        <div className={styles.orbitSmall} />
-        <div className={styles.primaryCard}>
-          <span>01</span>
-          <strong>3 / 66</strong>
-          <small>{copy.heroShortlist}</small>
-        </div>
-        <div className={styles.secondaryCard}>
-          <CheckIcon />
-          <span>{copy.heroFacts}</span>
-        </div>
-        <div className={styles.spark}>
-          <SparkIcon />
-        </div>
+      <div className={styles.graphic}>
+        <MascotGuide
+          copy={copy.mascot}
+          message={copy.mascot.helloMessage}
+          variant="hello"
+        />
       </div>
     </section>
   );

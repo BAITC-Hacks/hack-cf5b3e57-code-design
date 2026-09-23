@@ -4,6 +4,7 @@ import Link from "next/link";
 import { CatalogFilters } from "@/components/catalog/catalog-filters/catalog-filters";
 import { CatalogHeader } from "@/components/catalog/catalog-header/catalog-header";
 import { ContractorCard } from "@/components/catalog/contractor-card/contractor-card";
+import { BrandLogo } from "@/components/shared/brand-logo/brand-logo";
 import {
   CATEGORIES,
   CITIES,
@@ -340,7 +341,11 @@ export default async function CatalogPage({
       </main>
 
       <footer className={styles.footer}>
-        <span>{messages.catalog.footerBrand}</span>
+        <BrandLogo
+          ariaLabel={messages.header.homeAria}
+          className={styles.footerLogo}
+          light
+        />
         <p>{messages.catalog.footerNote}</p>
       </footer>
     </div>

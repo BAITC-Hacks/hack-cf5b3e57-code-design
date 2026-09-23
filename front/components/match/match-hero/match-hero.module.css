@@ -71,22 +71,16 @@
 
 .graphic {
   position: relative;
-  min-height: 380px;
-  overflow: hidden;
-  border: 1px solid rgb(29 29 31 / 10%);
-  border-radius: 42px;
-  background: radial-gradient(circle at 70% 24%, rgb(255 255 255 / 30%), transparent 28%), linear-gradient(145deg, #1a4e79, #25705c);
-  box-shadow: 0 36px 80px rgb(20 62 65 / 19%);
-  transform: rotate(1.5deg);
+  min-width: 0;
+  padding: 22px;
+  border: 1px solid var(--color-line, #dce2d9);
+  border-radius: 36px;
+  background: linear-gradient(145deg, #fffdf9, #f7ead9);
+  box-shadow: 0 36px 80px rgb(37 61 53 / 12%);
 }
 
 .graphic::before {
-  position: absolute;
-  inset: 0;
-  background-image: radial-gradient(rgb(255 255 255 / 24%) 0.7px, transparent 0.7px);
-  background-size: 14px 14px;
-  content: "";
-  opacity: 0.36;
+  content: none;
 }
 
 .orbitLarge,
@@ -177,4 +171,3 @@
   .hero h1 { font-size: 38px; }
   .proofs { display: grid; }
 }
-

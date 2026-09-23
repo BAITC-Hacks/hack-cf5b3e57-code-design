@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/shared/brand-logo/brand-logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher/locale-switcher";
 import type { CatalogMessages } from "@/lib/i18n/messages/catalog";
 import styles from "./catalog-header.module.css";
@@ -12,15 +13,11 @@ export function CatalogHeader({
   return (
     <header className={styles.header}>
       <div className={styles.inner}>
-        <Link className={styles.brand} href="/" aria-label={messages.homeAria}>
-          <span className={styles.brandMark} aria-hidden="true">
-            3
-          </span>
-          <span>
-            {messages.brand}
-            <small>{messages.tagline}</small>
-          </span>
-        </Link>
+        <BrandLogo
+          ariaLabel={messages.homeAria}
+          className={styles.brand}
+          tagline={messages.tagline}
+        />
 
         <nav className={styles.nav} aria-label={messages.navigationAria}>
           <Link className={styles.active} href="/">

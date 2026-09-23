@@ -2,10 +2,10 @@ import type { Locale } from "../../../../shared/contract";
 
 const messages = {
   ru: {
-    pageTitle: "Тройка — AI-подбор подрядчиков",
+    pageTitle: "ToiMatch — AI-подбор подрядчиков",
     pageDescription: "Подбор до трёх event-подрядчиков с объяснениями и проверенными фактами.",
-    brand: "Тройка",
-    brandAria: "Тройка — каталог подрядчиков",
+    brand: "ToiMatch",
+    brandAria: "ToiMatch — каталог подрядчиков",
     navigationAria: "Основная навигация",
     cities: { "Алматы": "Алматы", "Астана": "Астана", "Зарубежье": "Зарубежье" },
     eventFormats: {
@@ -30,6 +30,17 @@ const messages = {
     intro:
       "Расскажите о событии — алгоритм проверит город, дату, формат и бюджет, а затем объяснит каждый выбор фактами из каталога.",
     proof: ["До 3 вариантов", "Проверка занятости", "Объяснение каждого выбора"],
+    mascot: {
+      name: "Нурлан, AI-консьерж",
+      helloMessage: "Расскажите о событии — я помогу собрать запрос и покажу доказательства каждого выбора.",
+      thinkingMessage: "Проверяю каталог, занятость и факты — это займёт несколько секунд.",
+      alt: {
+        hello: "Нурлан приветствует пользователя",
+        thinking: "Нурлан проверяет параметры подбора",
+        found: "Нурлан показывает найденные варианты",
+        sorry: "Нурлан объясняет, почему вариантов нет",
+      },
+    },
     heroShortlist: "точный список",
     heroFacts: "Факты проверены",
     formKicker: "Конструктор запроса",
@@ -125,10 +136,10 @@ const messages = {
     },
   },
   kk: {
-    pageTitle: "Тройка — мердігерлерді AI арқылы таңдау",
+    pageTitle: "ToiMatch — мердігерлерді AI арқылы таңдау",
     pageDescription: "Түсініктемелері мен тексерілген деректері бар үш мердігерге дейін таңдау.",
-    brand: "Тройка",
-    brandAria: "Тройка — мердігерлер каталогы",
+    brand: "ToiMatch",
+    brandAria: "ToiMatch — мердігерлер каталогы",
     navigationAria: "Негізгі навигация",
     cities: { "Алматы": "Алматы", "Астана": "Астана", "Зарубежье": "Шетел" },
     eventFormats: {
@@ -153,6 +164,17 @@ const messages = {
     intro:
       "Іс-шара туралы айтыңыз — алгоритм қала, күн, формат пен бюджетті тексеріп, әр таңдауды каталог деректерімен түсіндіреді.",
     proof: ["3 нұсқаға дейін", "Бос күнді тексеру", "Әр таңдауға түсініктеме"],
+    mascot: {
+      name: "Нұрлан, AI-консьерж",
+      helloMessage: "Іс-шара туралы айтыңыз — сұранысты жинап, әр таңдаудың дәлелін көрсетемін.",
+      thinkingMessage: "Каталогты, бос күндерді және деректерді тексеріп жатырмын — бұл бірнеше секунд алады.",
+      alt: {
+        hello: "Нұрлан пайдаланушымен амандасады",
+        thinking: "Нұрлан таңдау параметрлерін тексеріп жатыр",
+        found: "Нұрлан табылған нұсқаларды көрсетеді",
+        sorry: "Нұрлан неліктен нұсқа жоқ екенін түсіндіреді",
+      },
+    },
     heroShortlist: "нақты қысқа тізім",
     heroFacts: "Деректер тексерілді",
     formKicker: "Сұраныс конструкторы",
@@ -248,10 +270,10 @@ const messages = {
     },
   },
   en: {
-    pageTitle: "Troika — AI contractor matching",
+    pageTitle: "ToiMatch — AI contractor matching",
     pageDescription: "Match up to three event contractors with explanations and verified facts.",
-    brand: "Troika",
-    brandAria: "Troika — contractor catalog",
+    brand: "ToiMatch",
+    brandAria: "ToiMatch — contractor catalog",
     navigationAria: "Primary navigation",
     cities: { "Алматы": "Almaty", "Астана": "Astana", "Зарубежье": "International" },
     eventFormats: {
@@ -276,6 +298,17 @@ const messages = {
     intro:
       "Describe the event. The algorithm checks location, date, format and budget, then explains every choice with catalog facts.",
     proof: ["Up to 3 options", "Availability check", "Reason for every choice"],
+    mascot: {
+      name: "Nurlan, AI concierge",
+      helloMessage: "Tell me about the event. I will build the request and show evidence for every choice.",
+      thinkingMessage: "I am checking the catalog, availability and facts. This takes only a few seconds.",
+      alt: {
+        hello: "Nurlan welcomes the user",
+        thinking: "Nurlan checks the matching parameters",
+        found: "Nurlan presents the matched options",
+        sorry: "Nurlan explains why no options matched",
+      },
+    },
     heroShortlist: "precise shortlist",
     heroFacts: "Facts verified",
     formKicker: "Request builder",

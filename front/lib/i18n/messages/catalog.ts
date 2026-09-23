@@ -154,8 +154,8 @@ export const catalogMessages = {
         "Подробная карточка event-подрядчика и календарь занятости.",
     },
     header: {
-      homeAria: "Тройка — каталог",
-      brand: "Тройка",
+      homeAria: "ToiMatch — каталог",
+      brand: "ToiMatch",
       tagline: "умный выбор подрядчиков",
       catalog: "Каталог",
       match: "Подбор",
@@ -270,7 +270,7 @@ export const catalogMessages = {
       bannerText:
         "Никакой магии: сначала фильтр по фактам, затем детерминированный рейтинг и персональное объяснение.",
       startMatch: "Начать подбор",
-      footerBrand: "Тройка · HackAlem AI 2026",
+      footerBrand: "ToiMatch · HackAlem AI 2026",
       footerNote:
         "Фото подрядчиков — ИИ-иллюстрации. Профили анонимизированы.",
     },
@@ -330,8 +330,8 @@ export const catalogMessages = {
         "Іс-шара мердігерінің толық профилі және бос емес күндер күнтізбесі.",
     },
     header: {
-      homeAria: "Тройка — каталог",
-      brand: "Тройка",
+      homeAria: "ToiMatch — каталог",
+      brand: "ToiMatch",
       tagline: "мердігерлерді ақылды таңдау",
       catalog: "Каталог",
       match: "Іріктеу",
@@ -446,7 +446,7 @@ export const catalogMessages = {
       bannerText:
         "Сиқыр жоқ: алдымен фактілер бойынша сүзгі, кейін детерминирленген рейтинг және жеке түсіндірме.",
       startMatch: "Іріктеуді бастау",
-      footerBrand: "Тройка · HackAlem AI 2026",
+      footerBrand: "ToiMatch · HackAlem AI 2026",
       footerNote:
         "Мердігер фотолары — AI иллюстрациялары. Профильдер анонимдендірілген.",
     },
@@ -506,8 +506,8 @@ export const catalogMessages = {
         "A detailed event contractor profile with an availability calendar.",
     },
     header: {
-      homeAria: "Troika — catalog",
-      brand: "Troika",
+      homeAria: "ToiMatch — catalog",
+      brand: "ToiMatch",
       tagline: "smart contractor selection",
       catalog: "Catalog",
       match: "Match",
@@ -622,7 +622,7 @@ export const catalogMessages = {
       bannerText:
         "No magic: facts are filtered first, followed by deterministic ranking and a personal explanation.",
       startMatch: "Start matching",
-      footerBrand: "Troika · HackAlem AI 2026",
+      footerBrand: "ToiMatch · HackAlem AI 2026",
       footerNote:
         "Contractor images are AI illustrations. Profiles are anonymized.",
     },

@@ -6,8 +6,8 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "Тройка — подбор подрядчиков",
-    template: "%s · Тройка",
+    default: "ToiMatch — подбор подрядчиков",
+    template: "%s · ToiMatch",
   },
   description:
     "Объяснимый подбор подрядчиков для мероприятий по городу, дате и бюджету",

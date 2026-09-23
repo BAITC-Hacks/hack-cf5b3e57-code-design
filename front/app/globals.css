@@ -13,10 +13,26 @@
   --font-48: clamp(24px, 3.17vw, 48px);
   --font-64: clamp(32px, 4.23vw, 64px);
 
-  --color-gray: #3b3b3d;
-  --color-dark: #1d1d1f;
-  --color-body: #f5f5f7;
-  --color-accent: #0066cc;
+  --color-ivory: #fff8f0;
+  --color-surface: #ffffff;
+  --color-ink: #253d35;
+  --color-muted: #617067;
+  --color-ocean: #9dd9d2;
+  --color-gold: #f4d06f;
+  --color-orange: #ff8811;
+  --color-teal: #25685e;
+  --color-amber: #914609;
+  --color-mint: #e7f1e9;
+  --color-warm: #fff0d9;
+  --color-line: #dce2d9;
+  --color-footer: #151515;
+
+  /* Compatibility aliases used by the existing component modules. */
+  --color-gray: var(--color-muted);
+  --color-dark: var(--color-ink);
+  --color-body: var(--color-ivory);
+  --color-accent: var(--color-teal);
+  --color-action: var(--color-orange);
 
   --font-primary: "Onest Variable", "Onest", "Montserrat", "Segoe UI", sans-serif;
   --font-display: "Onest Variable", "Onest", "Cormorant Garamond", "Segoe UI", sans-serif;
@@ -40,7 +56,7 @@ html {
 }
 
 ::selection {
-  background: rgb(0 102 204 / 18%);
+  background: rgb(255 136 17 / 24%);
   color: var(--color-dark);
 }
 
@@ -78,7 +94,7 @@ svg {
 }
 
 :focus-visible {
-  outline: 3px solid rgb(0 102 204 / 28%);
+  outline: 3px solid rgb(37 104 94 / 34%);
   outline-offset: 3px;
 }
 

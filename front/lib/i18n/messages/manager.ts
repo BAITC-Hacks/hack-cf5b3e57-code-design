@@ -38,7 +38,7 @@ export type ManagerMessages = {
 };
 
 const ru: ManagerMessages = {
-  navigation: { catalog: "Каталог", match: "Подобрать", manager: "Для менеджера", brandAria: "Тройка — каталог", publicMode: "Открытый демо-режим", tagline: "AI-подбор с доказательствами", aria: "Основная навигация", localeAria: "Язык интерфейса" },
+  navigation: { catalog: "Каталог", match: "Подобрать", manager: "Для менеджера", brandAria: "ToiMatch — каталог", publicMode: "Открытый демо-режим", tagline: "AI-подбор с доказательствами", aria: "Основная навигация", localeAria: "Язык интерфейса" },
   shell: { skip: "Перейти к рабочей области" },
   hero: {
     eyebrow: "Рабочее место менеджера", title: "Видно каждое решение AI",
@@ -83,7 +83,7 @@ const ru: ManagerMessages = {
 
 const kk: ManagerMessages = {
   ...ru,
-  navigation: { catalog: "Каталог", match: "Іріктеу", manager: "Менеджерге", brandAria: "Үштік — каталог", publicMode: "Ашық демо-режим", tagline: "Дәлелді AI-іріктеу", aria: "Негізгі навигация", localeAria: "Интерфейс тілі" },
+  navigation: { catalog: "Каталог", match: "Іріктеу", manager: "Менеджерге", brandAria: "ToiMatch — каталог", publicMode: "Ашық демо-режим", tagline: "Дәлелді AI-іріктеу", aria: "Негізгі навигация", localeAria: "Интерфейс тілі" },
   shell: { skip: "Жұмыс аймағына өту" },
   hero: { eyebrow: "Менеджердің жұмыс орны", title: "AI-дың әр шешімі көрінеді", description: "Критерийлерден тексерілген карточкаға дейінгі жолды нақты уақытта бақылаңыз: сүзгілер, рейтинг, түсіндірме және критик.", statuses: {
     idle: { label: "Іске қосуға дайын", description: "Сұрауды толтырыңыз немесе демо-сценарийді таңдаңыз." }, connecting: { label: "Қосылып жатыр", description: "Backend оқиғалар ағынын ашып жатырмыз." }, running: { label: "Пайплайн жұмыс істеп тұр", description: "Қадамдар өңделу барысында пайда болады." }, done: { label: "Іріктеу аяқталды", description: "Жауап тексеріліп, карточкаларға жиналды." }, cancelled: { label: "Тоқтатылды", description: "Ағын тоқтатылды. Қайта іске қосуға болады." }, error: { label: "Байланыс жоқ", description: "Backend-ті тексеріп, қайта іске қосыңыз." },
@@ -101,7 +101,7 @@ const kk: ManagerMessages = {
 
 const en: ManagerMessages = {
   ...ru,
-  navigation: { catalog: "Catalog", match: "AI matching", manager: "For managers", brandAria: "Troika — catalog", publicMode: "Open demo mode", tagline: "Evidence-backed AI matching", aria: "Main navigation", localeAria: "Interface language" },
+  navigation: { catalog: "Catalog", match: "AI matching", manager: "For managers", brandAria: "ToiMatch — catalog", publicMode: "Open demo mode", tagline: "Evidence-backed AI matching", aria: "Main navigation", localeAria: "Interface language" },
   shell: { skip: "Skip to workspace" },
   hero: { eyebrow: "Manager workspace", title: "Every AI decision is visible", description: "Follow the path from criteria to a verified card in real time: filters, ranking, explanation, and critic.", statuses: {
     idle: { label: "Ready to run", description: "Complete the request or choose a demo scenario." }, connecting: { label: "Connecting", description: "Opening the backend event stream." }, running: { label: "Pipeline is running", description: "Steps appear as the request is processed." }, done: { label: "Matching complete", description: "The response is verified and assembled into cards." }, cancelled: { label: "Stopped", description: "The stream was cancelled. You can run it again." }, error: { label: "No connection", description: "Check the backend and try again." },

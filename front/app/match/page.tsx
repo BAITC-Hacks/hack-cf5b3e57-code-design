@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 
+import { SiteFooter } from "@/components/site/site-footer";
+import { SiteHeader } from "@/components/site/site-header";
 import { MatchExperience } from "@/components/match/match-experience/match-experience";
 import { getRequestLocale } from "@/lib/i18n/get-request-locale";
 
@@ -32,8 +34,12 @@ export async function generateMetadata(): Promise<Metadata> {
 
 export default function MatchPage() {
   return (
-    <main className="tm-match-page" id="main-content">
-      <MatchExperience />
-    </main>
+    <>
+      <SiteHeader />
+      <main className="tm-match-page" id="main-content">
+        <MatchExperience />
+      </main>
+      <SiteFooter />
+    </>
   );
 }

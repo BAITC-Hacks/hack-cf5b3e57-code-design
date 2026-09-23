@@ -77,7 +77,21 @@ export function MatchForm({
 
           <label className={styles.field}>
             <span>{copy.date}</span>
-            <input max="2026-12-31" min="2026-09-23" onChange={(event) => onChange("date", event.target.value)} required type="date" value={form.date} />
+            <input
+              max="2026-12-31"
+              min="2026-09-23"
+              onChange={(event) => onChange("date", event.target.value)}
+              onClick={(event) => {
+                try {
+                  event.currentTarget.showPicker?.();
+                } catch {
+                  event.currentTarget.focus();
+                }
+              }}
+              required
+              type="date"
+              value={form.date}
+            />
           </label>
 
           <label className={styles.field}>

@@ -77,6 +77,20 @@
 
 .field input:focus-visible { outline: 2px solid var(--tm-focus, #1f1a17); outline-offset: 2px; }
 
+.field input[type="date"] {
+  color-scheme: light;
+  cursor: pointer;
+}
+
+.field input[type="date"]::-webkit-calendar-picker-indicator {
+  width: 20px;
+  height: 20px;
+  margin-right: -6px;
+  padding: 6px;
+  cursor: pointer;
+  opacity: 1;
+}
+
 .hint {
   color: var(--tm-muted);
   font-size: 13px;

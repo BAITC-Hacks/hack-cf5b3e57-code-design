@@ -17,7 +17,13 @@
   grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr);
   align-items: center;
   gap: 56px;
-  padding: 56px 0 48px;
+  padding: 48px;
+  border: 1px solid var(--tm-line);
+  border-radius: 32px;
+  background:
+    radial-gradient(circle at 85% 15%, rgb(157 217 210 / 46%), transparent 38%),
+    linear-gradient(135deg, var(--tm-surface), var(--tm-ember-soft));
+  box-shadow: var(--tm-shadow-soft);
 }
 
 .heroCopy {
@@ -177,6 +183,12 @@
 
 .categoryStrip {
   position: relative;
+  margin-top: 16px;
+  padding: 16px 18px 2px;
+  border: 1px solid var(--tm-line);
+  border-radius: var(--tm-radius-card);
+  background: linear-gradient(135deg, rgb(157 217 210 / 22%), var(--tm-surface));
+  box-shadow: var(--tm-shadow-soft);
 }
 
 .categoryStripInner {
@@ -186,7 +198,12 @@
   overflow-x: auto;
   list-style: none;
   scroll-snap-type: x proximity;
-  scrollbar-width: thin;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.categoryStripInner::-webkit-scrollbar {
+  display: none;
 }
 
 .categoryStripInner li {
@@ -529,7 +546,11 @@
 
 @media (max-width: 760px) {
   .hero {
-    padding-top: 28px;
+    padding: 28px 22px;
+  }
+
+  .categoryStrip {
+    padding: 12px 12px 0;
   }
 
   .heroCopy h1 {

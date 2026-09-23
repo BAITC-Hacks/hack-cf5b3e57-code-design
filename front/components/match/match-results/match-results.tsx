@@ -7,7 +7,6 @@ import { FunnelSummary } from "../funnel-summary/funnel-summary";
 import { MatchCard } from "../match-card/match-card";
 import { MascotGuide } from "../mascot-guide/mascot-guide";
 import { OutcomeBanner } from "../outcome-banner/outcome-banner";
-import { Mascot } from "../mascot/mascot";
 import styles from "./match-results.module.css";
 
 interface MatchResultsProps {
@@ -24,11 +23,6 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
       ref={sectionRef}
       tabIndex={-1}
     >
-      <Mascot
-        pose={result.outcome === "found" ? "found" : "sorry"}
-        speech={result.outcome === "found" ? result.criteria[0] ?? result.summary : result.summary}
-        name={copy.mascotName}
-      />
       <OutcomeBanner copy={copy} result={result} />
       <div className={styles.mascot}>
         <MascotGuide

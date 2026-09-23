@@ -38,7 +38,7 @@ export function MatchRequestForm({ request, busy, onChange, onRun, onCancel }: {
         </div>
         <div className={styles.grid}>
           <label><span>{messages.event}</span><CustomSelect value={request.eventType} onChange={(event) => onChange({ ...request, eventType: event.target.value })} options={EVENT_FORMATS.map((value) => ({ value, label: messages.events[value] ?? value }))} /></label>
-          <label><span>{messages.budget}</span><input type="number" value={request.budgetKzt || ""} min={1} step={10_000} required onChange={(event) => onChange({ ...request, budgetKzt: Number(event.target.value) })} /></label>
+          <label><span>{messages.budget}</span><input type="number" value={request.budgetKzt || ""} min={10_000} step={10_000} required onChange={(event) => onChange({ ...request, budgetKzt: Number(event.target.value) })} /></label>
         </div>
         <details className={styles.optional}>
           <summary>{messages.optional}</summary>

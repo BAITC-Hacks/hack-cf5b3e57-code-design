@@ -79,7 +79,7 @@ export function MatchForm({
 
           <label className={styles.field}>
             <span>{copy.budget}</span>
-            <input inputMode="numeric" min="1" onChange={(event) => onChange("budgetKzt", event.target.value)} required step="10000" type="number" value={form.budgetKzt} />
+            <input inputMode="numeric" min="1" onChange={(event) => onChange("budgetKzt", event.target.value)} required step="any" type="number" value={form.budgetKzt} />
           </label>
 
         </div>

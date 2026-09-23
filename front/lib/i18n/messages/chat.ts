@@ -37,6 +37,18 @@ export interface ChatMessages {
     description: string;
     badge: string;
   };
+  modes: Record<"search" | "bundle", { label: string; description: string }> & {
+    label: string;
+  };
+  session: {
+    eyebrow: string;
+    title: string;
+    id: string;
+    status: Record<"starting" | "ready" | "streaming" | "error", string>;
+    statusDescription: Record<"starting" | "ready" | "streaming" | "error", string>;
+  };
+  tools: Record<"search_contractors" | "build_event_bundle", string>;
+  starterPrompts: Record<"search" | "bundle", readonly string[]>;
   fields: Record<ChatField, FieldCopy>;
   progress: {
     eyebrow: string;
@@ -66,6 +78,7 @@ export interface ChatMessages {
     send: string;
     sending: string;
     hint: string;
+    placeholder: string;
   };
   actions: {
     anyLanguage: string;
@@ -91,6 +104,15 @@ export interface ChatMessages {
       cityImputed: string;
     };
   };
+  bundle: {
+    eyebrow: string;
+    title: string;
+    required: string;
+    recommended: string;
+    category: string;
+    budget: string;
+    empty: string;
+  };
   labels: Pick<MatchMessages, "categories" | "cities" | "eventFormats" | "languages">;
   quickDates: readonly { label: string; value: string }[];
   quickBudgets: readonly { label: string; value: string }[];
@@ -114,6 +136,48 @@ const messages = {
       description:
         "Помощник задаст короткие вопросы, проверит ваш запрос по каталогу и покажет до трёх вариантов с доказательствами.",
       badge: "Работает на matching engine",
+    },
+    modes: {
+      label: "Режим ассистента",
+      search: {
+        label: "Один подрядчик",
+        description: "Диалог и до трёх вариантов в одной категории",
+      },
+      bundle: {
+        label: "Пакет события",
+        description: "Обязательные и рекомендуемые категории в одном бюджете",
+      },
+    },
+    session: {
+      eyebrow: "Живая AI-сессия",
+      title: "Состояние диалога",
+      id: "Сессия",
+      status: {
+        starting: "Подключаемся",
+        ready: "Ассистент готов",
+        streaming: "Формирует ответ",
+        error: "Нужна повторная попытка",
+      },
+      statusDescription: {
+        starting: "Создаём сессию на backend",
+        ready: "Сообщения обрабатывает реальный chat API",
+        streaming: "Ответ поступает потоком SSE",
+        error: "Соединение или обработка завершились ошибкой",
+      },
+    },
+    tools: {
+      search_contractors: "Проверяем каталог и запускаем matching engine",
+      build_event_bundle: "Собираем пакет по нескольким категориям",
+    },
+    starterPrompts: {
+      search: [
+        "Ведущий, Алматы, корпоратив 2026-10-16, бюджет 1 000 000 ₸",
+        "Флорист, Алматы, свадьба 2026-10-15, бюджет 300 000 ₸",
+      ],
+      bundle: [
+        "Соберите пакет на свадьбу в Алматы 2026-10-16, бюджет 5 000 000 ₸",
+        "Нужен пакет на корпоратив в Алматы 2026-10-23, бюджет 4 000 000 ₸",
+      ],
     },
     fields: {
       category: {
@@ -177,6 +241,7 @@ const messages = {
       send: "Отправить",
       sending: "Проверяем…",
       hint: "Можно написать несколько параметров сразу — например: «Ведущий, Алматы, корпоратив 16.10, бюджет 1 млн».",
+      placeholder: "Опишите событие или ответьте ассистенту",
     },
     actions: {
       anyLanguage: "Любой язык",
@@ -204,6 +269,15 @@ const messages = {
         priceImputed: "цена дополнена",
         cityImputed: "город дополнен",
       },
+    },
+    bundle: {
+      eyebrow: "Пакет мероприятия",
+      title: "Подрядчики по категориям",
+      required: "Обязательные категории",
+      recommended: "Рекомендуемые категории",
+      category: "Категория",
+      budget: "Бюджет",
+      empty: "В этой категории подходящих вариантов нет",
     },
     labels: {
       categories: MATCH_MESSAGES.ru.categories,
@@ -239,6 +313,48 @@ const messages = {
       description:
         "Көмекші қысқа сұрақтар қояды, сұранысты каталог бойынша тексереді және дәлелдері бар үш нұсқаға дейін көрсетеді.",
       badge: "Matching engine арқылы жұмыс істейді",
+    },
+    modes: {
+      label: "Көмекші режимі",
+      search: {
+        label: "Бір мердігер",
+        description: "Диалог және бір санаттағы үш нұсқаға дейін",
+      },
+      bundle: {
+        label: "Іс-шара пакеті",
+        description: "Бір бюджеттегі міндетті және ұсынылатын санаттар",
+      },
+    },
+    session: {
+      eyebrow: "Белсенді AI-сессия",
+      title: "Диалог күйі",
+      id: "Сессия",
+      status: {
+        starting: "Қосылуда",
+        ready: "Көмекші дайын",
+        streaming: "Жауап дайындауда",
+        error: "Қайталап көру қажет",
+      },
+      statusDescription: {
+        starting: "Backend жүйесінде сессия жасалуда",
+        ready: "Хабарламаларды нақты chat API өңдейді",
+        streaming: "Жауап SSE ағынымен келіп жатыр",
+        error: "Қосылу немесе өңдеу қатемен аяқталды",
+      },
+    },
+    tools: {
+      search_contractors: "Каталог тексеріліп, matching engine іске қосылды",
+      build_event_bundle: "Бірнеше санат бойынша пакет жиналуда",
+    },
+    starterPrompts: {
+      search: [
+        "Жүргізуші, Алматы, корпоратив 2026-10-16, бюджет 1 000 000 ₸",
+        "Флорист, Алматы, үйлену тойы 2026-10-15, бюджет 300 000 ₸",
+      ],
+      bundle: [
+        "Алматыда 2026-10-16 өтетін үйлену тойына 5 000 000 ₸ пакет жинаңыз",
+        "Алматыда 2026-10-23 өтетін корпоративке 4 000 000 ₸ пакет керек",
+      ],
     },
     fields: {
       category: {
@@ -302,6 +418,7 @@ const messages = {
       send: "Жіберу",
       sending: "Тексерудеміз…",
       hint: "Бірнеше параметрді бірге жаза аласыз: «Жүргізуші, Алматы, корпоратив 16.10, бюджет 1 млн».",
+      placeholder: "Іс-шараны сипаттаңыз немесе көмекшіге жауап беріңіз",
     },
     actions: {
       anyLanguage: "Кез келген тіл",
@@ -329,6 +446,15 @@ const messages = {
         priceImputed: "баға толықтырылған",
         cityImputed: "қала толықтырылған",
       },
+    },
+    bundle: {
+      eyebrow: "Іс-шара пакеті",
+      title: "Санаттар бойынша мердігерлер",
+      required: "Міндетті санаттар",
+      recommended: "Ұсынылатын санаттар",
+      category: "Санат",
+      budget: "Бюджет",
+      empty: "Бұл санатта сәйкес нұсқа жоқ",
     },
     labels: {
       categories: MATCH_MESSAGES.kk.categories,
@@ -364,6 +490,48 @@ const messages = {
       description:
         "The assistant asks short questions, checks your request against the catalog and shows up to three evidence-backed options.",
       badge: "Powered by the matching engine",
+    },
+    modes: {
+      label: "Assistant mode",
+      search: {
+        label: "Single contractor",
+        description: "A conversation and up to three options in one category",
+      },
+      bundle: {
+        label: "Event bundle",
+        description: "Required and recommended categories within one budget",
+      },
+    },
+    session: {
+      eyebrow: "Live AI session",
+      title: "Conversation status",
+      id: "Session",
+      status: {
+        starting: "Connecting",
+        ready: "Assistant ready",
+        streaming: "Building the response",
+        error: "Retry required",
+      },
+      statusDescription: {
+        starting: "Creating a backend session",
+        ready: "Messages are handled by the real chat API",
+        streaming: "The response is arriving over SSE",
+        error: "The connection or processing ended with an error",
+      },
+    },
+    tools: {
+      search_contractors: "Checking the catalog with the matching engine",
+      build_event_bundle: "Building a bundle across several categories",
+    },
+    starterPrompts: {
+      search: [
+        "Host, Almaty, corporate event 2026-10-16, budget 1,000,000 ₸",
+        "Florist, Almaty, wedding 2026-10-15, budget 300,000 ₸",
+      ],
+      bundle: [
+        "Build a wedding bundle in Almaty for 2026-10-16 with a 5,000,000 ₸ budget",
+        "I need a corporate bundle in Almaty for 2026-10-23 with a 4,000,000 ₸ budget",
+      ],
     },
     fields: {
       category: {
@@ -427,6 +595,7 @@ const messages = {
       send: "Send",
       sending: "Checking…",
       hint: "You can include several details at once, such as “Host, Almaty, corporate event on 16.10, budget 1 million”.",
+      placeholder: "Describe the event or answer the assistant",
     },
     actions: {
       anyLanguage: "Any language",
@@ -454,6 +623,15 @@ const messages = {
         priceImputed: "price imputed",
         cityImputed: "city imputed",
       },
+    },
+    bundle: {
+      eyebrow: "Event bundle",
+      title: "Contractors by category",
+      required: "Required categories",
+      recommended: "Recommended categories",
+      category: "Category",
+      budget: "Budget",
+      empty: "No suitable option in this category",
     },
     labels: {
       categories: MATCH_MESSAGES.en.categories,

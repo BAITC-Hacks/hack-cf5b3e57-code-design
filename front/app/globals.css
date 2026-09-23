@@ -1,24 +1,6 @@
 @import "tailwindcss";
 
 :root {
-  --tm-bg: #FFF8F0;
-  --tm-surface: #FFFFFF;
-  --tm-ink: #1F1A17;
-  --tm-muted: #6B625B;
-  --tm-line: #F1E6D8;
-  --tm-ember: #FF8811;
-  --tm-ember-soft: #FFE9D2;
-  --tm-gold: #F4D06F;
-  --tm-ocean: #9DD9D2;
-  --tm-ocean-ink: #1E6F68;
-  --tm-warn: #9A5B00;
-  --tm-warn-soft: #FDF0DA;
-  --tm-stop: #A8321F;
-  --tm-stop-soft: #FBE7E5;
-  --tm-footer: #151515;
-  --tm-radius-card: 20px;
-  --tm-radius-field: 14px;
-  --tm-shadow-card: 0 1px 2px rgb(31 26 23 / .04), 0 10px 28px rgb(31 26 23 / .07);
   --max-width: calc(1332px + 16px * 2);
   --font-12: 12px;
   --font-14: 14px;
@@ -31,15 +13,31 @@
   --font-48: clamp(24px, 3.17vw, 48px);
   --font-64: clamp(32px, 4.23vw, 64px);
 
-  --color-gray: var(--tm-muted);
-  --color-dark: var(--tm-ink);
-  --color-body: var(--tm-bg);
-  --color-accent: var(--tm-ember);
+  --color-ivory: #fff8f0;
+  --color-surface: #ffffff;
+  --color-ink: #253d35;
+  --color-muted: #617067;
+  --color-ocean: #9dd9d2;
+  --color-gold: #f4d06f;
+  --color-orange: #ff8811;
+  --color-teal: #25685e;
+  --color-amber: #914609;
+  --color-mint: #e7f1e9;
+  --color-warm: #fff0d9;
+  --color-line: #dce2d9;
+  --color-footer: #151515;
+
+  /* Compatibility aliases used by the existing component modules. */
+  --color-gray: var(--color-muted);
+  --color-dark: var(--color-ink);
+  --color-body: var(--color-ivory);
+  --color-accent: var(--color-teal);
+  --color-action: var(--color-orange);
 
   --font-primary: "Onest Variable", "Onest", "Montserrat", "Segoe UI", sans-serif;
   --font-display: "Onest Variable", "Onest", "Cormorant Garamond", "Segoe UI", sans-serif;
   --header-h: 80px;
-  --blog-bg: var(--tm-surface);
+  --blog-bg: #ffffff;
   --policy-ease: cubic-bezier(0.16, 1, 0.3, 1);
   --policy-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
 }
@@ -58,39 +56,17 @@ html {
 }
 
 ::selection {
-  background: var(--tm-ocean);
+  background: rgb(255 136 17 / 24%);
   color: var(--color-dark);
 }
 
 body {
-  display: flex;
-  flex-direction: column;
   min-height: 100vh;
   padding-bottom: env(safe-area-inset-bottom);
-  background-color: var(--tm-bg);
+  background-color: var(--color-body);
   color: var(--color-dark);
   font-family: var(--font-primary);
   text-rendering: optimizeLegibility;
-}
-
-#site-content {
-  flex: 1;
-  min-width: 0;
-}
-
-.tm-match-page,
-.tm-chat-page,
-.tm-manager-page {
-  background: var(--tm-bg);
-  color: var(--tm-ink);
-}
-
-/* Legacy navigation is nested in other streams' experiences. The root layout
-   owns navigation now; these selectors can go when those headers are removed. */
-.tm-match-page > header,
-.tm-chat-page > header,
-.tm-manager-page header:has(> a[href="/"]) {
-  display: none;
 }
 
 button,
@@ -118,7 +94,7 @@ svg {
 }
 
 :focus-visible {
-  outline: 3px solid var(--tm-ocean-ink);
+  outline: 3px solid rgb(37 104 94 / 34%);
   outline-offset: 3px;
 }
 

@@ -1,5 +1,6 @@
 import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CheckIcon } from "../icons/icons";
+import { MascotGuide } from "../mascot-guide/mascot-guide";
 import styles from "./match-status.module.css";
 
 interface MatchStatusProps {
@@ -14,6 +15,7 @@ export function MatchStatus({ copy, error, loadingStep, onRetry, pending }: Matc
   if (pending) {
     return (
       <section className={styles.loading} aria-busy="true" aria-label={copy.loadingTitle}>
+        <MascotGuide compact copy={copy.mascot} variant="thinking" />
         <div>
           <p>{copy.loadingTitle}</p>
           <ol>
@@ -41,4 +43,3 @@ export function MatchStatus({ copy, error, loadingStep, onRetry, pending }: Matc
 
   return null;
 }
-

@@ -51,7 +51,20 @@ function HealthPanel() {
   };
 
   useEffect(() => {
-    load();
+    let active = true;
+
+    void fetch(`${API}/api/v1/health`)
+      .then((response) => response.json())
+      .then((payload) => {
+        if (active) setData(payload);
+      })
+      .catch((error: unknown) => {
+        if (active) setErr(error instanceof Error ? error.message : String(error));
+      });
+
+    return () => {
+      active = false;
+    };
   }, []);
 
   return (
@@ -293,7 +306,7 @@ function MatchPanel() {
               <ul className="text-xs text-zinc-600 dark:text-zinc-400 list-disc pl-5">
                 {c.factsUsed.map((f, i) => (
                   <li key={i}>
-                    {f.verified ? '✓' : '⊙'} {f.label}
+                    {f.verified ? 'Проверено' : 'Со слов подрядчика'}: {f.label}
                   </li>
                 ))}
               </ul>
@@ -363,7 +376,6 @@ function ChatPanel() {
       const dec = new TextDecoder();
       let buf = '';
       // разбираем SSE построчно: event: X \n data: Y \n\n
-      // eslint-disable-next-line no-constant-condition
       while (true) {
         const { value, done } = await reader.read();
         if (done) break;

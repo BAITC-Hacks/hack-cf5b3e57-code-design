@@ -3,13 +3,13 @@
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef } from "react";
 
-import type { ChatTranscriptMessage } from "@/lib/chat/chat-assistant";
+import type { ChatMessage } from "../../../../shared/contract";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
 import styles from "./chat-thread.module.css";
 
 interface ChatThreadProps {
   copy: ChatMessages;
-  messages: readonly ChatTranscriptMessage[];
+  messages: readonly ChatMessage[];
   pending: boolean;
 }
 
@@ -48,7 +48,7 @@ export function ChatThread({ copy, messages, pending }: ChatThreadProps) {
               <span className={styles.role}>
                 {message.role === "assistant" ? copy.assistant.label : copy.composer.label}
               </span>
-              <p>{message.text}</p>
+              <p>{message.content}</p>
             </div>
           </motion.div>
         ))}

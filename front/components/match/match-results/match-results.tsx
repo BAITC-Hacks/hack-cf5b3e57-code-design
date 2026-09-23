@@ -5,6 +5,7 @@ import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CriteriaList } from "../criteria-list/criteria-list";
 import { FunnelSummary } from "../funnel-summary/funnel-summary";
 import { MatchCard } from "../match-card/match-card";
+import { MascotGuide } from "../mascot-guide/mascot-guide";
 import { OutcomeBanner } from "../outcome-banner/outcome-banner";
 import { Mascot } from "../mascot/mascot";
 import styles from "./match-results.module.css";
@@ -29,6 +30,17 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
         name={copy.mascotName}
       />
       <OutcomeBanner copy={copy} result={result} />
+      <div className={styles.mascot}>
+        <MascotGuide
+          copy={copy.mascot}
+          message={
+            result.outcome === "found"
+              ? (result.criteria[0] ?? result.summary)
+              : result.summary
+          }
+          variant={result.outcome === "found" ? "found" : "sorry"}
+        />
+      </div>
       <CriteriaList copy={copy} criteria={result.criteria} />
 
       {result.cards.length > 0 ? (

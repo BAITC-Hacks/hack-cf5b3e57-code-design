@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Image from "next/image";
 
+import { BrandLogo } from "@/components/shared/brand-logo/brand-logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher/locale-switcher";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
 import styles from "./chat-header.module.css";
@@ -8,10 +8,7 @@ import styles from "./chat-header.module.css";
 export function ChatHeader({ copy }: { copy: ChatMessages }) {
   return (
     <header className={styles.header}>
-      <Link className={styles.brand} href="/" aria-label={copy.brandAria}>
-        <Image src="/brand/toimatch-mark.svg" width={32} height={32} alt="" />
-        <span>{copy.brand}</span>
-      </Link>
+      <BrandLogo ariaLabel={copy.brandAria} className={styles.brand} />
 
       <nav className={styles.navigation} aria-label={copy.navigationAria}>
         <Link href="/">{copy.nav.catalog}</Link>

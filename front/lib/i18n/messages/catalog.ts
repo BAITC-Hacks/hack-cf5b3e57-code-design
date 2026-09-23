@@ -159,9 +159,9 @@ export const catalogMessages = {
       tagline: "умный выбор подрядчиков",
       catalog: "Каталог",
       match: "Подбор",
-      assistant: "ИИ-ассистент",
+      assistant: "AI-ассистент",
       jury: "Для жюри",
-      chooseWithAi: "Подобрать с ИИ",
+      chooseWithAi: "Подобрать с AI",
       localeAria: "Выбрать язык интерфейса",
       navigationAria: "Основная навигация",
     },
@@ -237,15 +237,15 @@ export const catalogMessages = {
       cityImputed: "Город проставлен",
       priceImputed: "Цена проставлена",
       profile: "Профиль",
-      checkWithAi: "Проверить с ИИ",
+      checkWithAi: "Проверить с AI",
     },
     catalog: {
       heroEyebrow: "Каталог event-подрядчиков Казахстана",
       heroTitleFirst: "Найдите своих.",
       heroTitleSecond: "Доверьте выбор фактам.",
       heroLead:
-        "Изучайте полный каталог сами или опишите событие — ИИ проверит город, дату, формат и бюджет и объяснит каждый вариант.",
-      chooseWithAi: "Подобрать с ИИ",
+        "Изучайте полный каталог сами или опишите событие — AI проверит город, дату, формат и бюджет и объяснит каждый вариант.",
+      chooseWithAi: "Подобрать с AI",
       browseCatalog: "Смотреть каталог",
       proofAria: "О каталоге",
       matchesFilters: "подходит под фильтры",
@@ -258,19 +258,19 @@ export const catalogMessages = {
       allContractors: "Все подрядчики",
       otherCategory: "Другое",
       sortNote:
-        "В каждой категории — от меньшей цены к большей. Профили анонимизированы.",
+        "Сортировка по цене, при совпадении — по ID. Данные профилей анонимизированы для хакатона.",
       filtersAria: "Фильтры каталога",
       emptyTitle: "По этим фильтрам никого не нашли",
       emptyText:
-        "Сбросьте часть параметров или передайте задачу ИИ — он покажет, на каком условии отсеялись кандидаты.",
+        "Сбросьте часть параметров или передайте задачу AI — он покажет, на каком условии отсеялись кандидаты.",
       resetFilters: "Сбросить фильтры",
-      tryAiMatch: "Попробовать ИИ-подбор",
+      tryAiMatch: "Попробовать AI-подбор",
       bannerEyebrow: "Не хотите сравнивать вручную?",
-      bannerTitle: "ИИ выберет до трёх и докажет каждый выбор.",
+      bannerTitle: "AI выберет до трёх и докажет каждый выбор.",
       bannerText:
-        "Учитываем город, дату, формат и бюджет. Для каждого варианта объясняем, почему он подходит.",
+        "Никакой магии: сначала фильтр по фактам, затем детерминированный рейтинг и персональное объяснение.",
       startMatch: "Начать подбор",
-      footerBrand: "ToiMatch, HackAlem AI 2026",
+      footerBrand: "ToiMatch · HackAlem AI 2026",
       footerNote:
         "Фото подрядчиков — ИИ-иллюстрации. Профили анонимизированы.",
     },
@@ -282,7 +282,7 @@ export const catalogMessages = {
       upTo: "До",
       hoursShort: "{hours} ч",
       checkForEvent: "Проверить для моего события",
-      askAi: "Спросить ИИ",
+      askAi: "Спросить AI",
       aboutEyebrow: "О подрядчике",
       descriptionTitle: "Описание профиля",
       sourceNote:
@@ -308,13 +308,13 @@ export const catalogMessages = {
       cleanDataText: "Город и цена пришли из исходного профиля.",
     },
     errors: {
-      catalogEyebrow: "Каталог подрядчиков",
+      catalogEyebrow: "Каталог на связи с backend",
       catalogTitle: "Не удалось загрузить подрядчиков",
       catalogUnavailable:
-        "Каталог временно недоступен. Попробуйте обновить страницу немного позже.",
+        "Каталог временно недоступен. Проверьте, что backend запущен на порту 3001.",
       genericUnavailable: "Сервис данных временно недоступен.",
       retry: "Повторить",
-      goToAi: "Перейти к ИИ-подбору",
+      goToAi: "Перейти к AI-подбору",
       detailEyebrow: "Профиль подрядчика",
       detailTitle: "Не удалось загрузить профиль",
       backToCatalog: "Вернуться в каталог",
@@ -434,7 +434,7 @@ export const catalogMessages = {
       allContractors: "Барлық мердігер",
       otherCategory: "Басқа",
       sortNote:
-        "Әр санатта бағасы төменнен жоғарыға қарай. Профильдер анонимдендірілген.",
+        "Бағасы бойынша сұрыпталған, тең болса — ID бойынша. Профиль деректері хакатон үшін анонимдендірілген.",
       filtersAria: "Каталог сүзгілері",
       emptyTitle: "Бұл сүзгілер бойынша ешкім табылмады",
       emptyText:
@@ -444,9 +444,9 @@ export const catalogMessages = {
       bannerEyebrow: "Қолмен салыстырғыңыз келмей ме?",
       bannerTitle: "AI үшке дейін нұсқа таңдап, әр шешімді дәлелдейді.",
       bannerText:
-        "Қаланы, күнді, форматты және бюджетті ескереміз. Әр нұсқаның неге сәйкес келетінін түсіндіреміз.",
+        "Сиқыр жоқ: алдымен фактілер бойынша сүзгі, кейін детерминирленген рейтинг және жеке түсіндірме.",
       startMatch: "Іріктеуді бастау",
-      footerBrand: "ToiMatch, HackAlem AI 2026",
+      footerBrand: "ToiMatch · HackAlem AI 2026",
       footerNote:
         "Мердігер фотолары — AI иллюстрациялары. Профильдер анонимдендірілген.",
     },
@@ -484,10 +484,10 @@ export const catalogMessages = {
       cleanDataText: "Қала мен баға бастапқы профильден алынған.",
     },
     errors: {
-      catalogEyebrow: "Мердігерлер каталогы",
+      catalogEyebrow: "Каталог backend-пен байланысады",
       catalogTitle: "Мердігерлерді жүктеу мүмкін болмады",
       catalogUnavailable:
-        "Каталог уақытша қолжетімсіз. Бетті сәл кейінірек жаңартып көріңіз.",
+        "Каталог уақытша қолжетімсіз. Backend 3001 портында іске қосылғанын тексеріңіз.",
       genericUnavailable: "Деректер сервисі уақытша қолжетімсіз.",
       retry: "Қайталау",
       goToAi: "AI іріктеуіне өту",
@@ -610,7 +610,7 @@ export const catalogMessages = {
       allContractors: "All contractors",
       otherCategory: "Other",
       sortNote:
-        "Lowest prices first within each category. Profiles are anonymized.",
+        "Sorted by price, then by ID on ties. Profile data is anonymized for the hackathon.",
       filtersAria: "Catalog filters",
       emptyTitle: "No one matches these filters",
       emptyText:
@@ -620,9 +620,9 @@ export const catalogMessages = {
       bannerEyebrow: "Do not want to compare manually?",
       bannerTitle: "AI will select up to three and prove every choice.",
       bannerText:
-        "We check the city, date, format, and budget, then explain why each option fits.",
+        "No magic: facts are filtered first, followed by deterministic ranking and a personal explanation.",
       startMatch: "Start matching",
-      footerBrand: "ToiMatch, HackAlem AI 2026",
+      footerBrand: "ToiMatch · HackAlem AI 2026",
       footerNote:
         "Contractor images are AI illustrations. Profiles are anonymized.",
     },
@@ -663,7 +663,7 @@ export const catalogMessages = {
       catalogEyebrow: "Catalog connection",
       catalogTitle: "Could not load contractors",
       catalogUnavailable:
-        "The catalog is temporarily unavailable. Please try refreshing the page again shortly.",
+        "The catalog is temporarily unavailable. Check that the backend is running on port 3001.",
       genericUnavailable: "The data service is temporarily unavailable.",
       retry: "Try again",
       goToAi: "Go to AI matching",

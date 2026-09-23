@@ -1,5 +1,6 @@
 import Link from "next/link";
 
+import { BrandLogo } from "@/components/shared/brand-logo/brand-logo";
 import { LocaleSwitcher } from "@/components/shared/locale-switcher/locale-switcher";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
 import styles from "./match-header.module.css";
@@ -11,13 +12,7 @@ interface MatchHeaderProps {
 export function MatchHeader({ copy }: MatchHeaderProps) {
   return (
     <header className={styles.header}>
-      <Link className={styles.brand} href="/" aria-label={copy.brandAria}>
-        <svg className={styles.brandMark} viewBox="0 0 36 36" fill="none" aria-hidden="true">
-          <rect width="36" height="36" rx="11" fill="var(--tm-ember)" />
-          <path d="M9 11h17M17 11v16m5-8 3 3 5-6" stroke="var(--tm-ink)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" />
-        </svg>
-        <span>{copy.brand}</span>
-      </Link>
+      <BrandLogo ariaLabel={copy.brandAria} className={styles.brand} />
 
       <nav className={styles.navigation} aria-label={copy.navigationAria}>
         <Link href="/">{copy.nav.catalog}</Link>

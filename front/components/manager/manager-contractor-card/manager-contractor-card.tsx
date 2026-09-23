@@ -2,6 +2,10 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 
+import {
+  CheckStatusIcon,
+  ClaimedStatusIcon,
+} from "@/components/shared/status-icons/status-icons";
 import type { MatchCard } from "../../../../shared/contract";
 import { useLocale } from "@/lib/i18n/locale-provider";
 import { MANAGER_MESSAGES } from "@/lib/i18n/messages/manager";
@@ -20,7 +24,7 @@ export function ManagerContractorCard({ card, position }: { card: MatchCard; pos
       <div className={styles.heading}><ContractorPhoto id={card.id} name={card.anonName} /><div><h3>{card.anonName}</h3><p>{messages.form.categories[card.category] ?? card.category}</p><p>{messages.form.cities[card.city] ?? card.city}</p></div></div>
       <p className={styles.price}>{price}</p><p className={styles.reason}>{card.reason}</p>
       <div className={styles.facts} aria-label={messages.cards.evidenceAria}>
-        {card.factsUsed.map((fact, index) => <div className={fact.verified ? styles.verified : styles.claimed} key={`${fact.key}-${index}`}><span className={styles.factIcon} aria-hidden="true">{fact.verified ? "✓" : "○"}</span><span><strong>{fact.verified ? messages.cards.verified : messages.cards.claimed}</strong>{fact.label}</span></div>)}
+        {card.factsUsed.map((fact, index) => <div className={fact.verified ? styles.verified : styles.claimed} key={`${fact.key}-${index}`}><span className={styles.factIcon} aria-hidden="true">{fact.verified ? <CheckStatusIcon /> : <ClaimedStatusIcon />}</span><span><strong>{fact.verified ? messages.cards.verified : messages.cards.claimed}</strong>{fact.label}</span></div>)}
       </div>
       {(card.flags.synthetic || card.flags.cityImputed || card.flags.priceImputed) && <div className={styles.flags} aria-label={messages.cards.flagsAria}>{card.flags.synthetic && <span>{messages.cards.synthetic}</span>}{card.flags.cityImputed && <span>{messages.cards.cityImputed}</span>}{card.flags.priceImputed && <span>{messages.cards.priceImputed}</span>}</div>}
     </motion.article>

@@ -1,16 +1,16 @@
 .card {
   overflow: hidden;
-  border: 1px solid var(--tm-line);
-  border-radius: var(--tm-radius-card);
-  background: var(--tm-surface);
-  box-shadow: var(--tm-shadow-card);
+  border: 1px solid rgb(29 29 31 / 9%);
+  border-radius: 22px;
+  background: #fff;
+  box-shadow: 0 20px 48px rgb(35 44 38 / 6%);
 }
 
 .visual {
   position: relative;
   min-height: 210px;
   overflow: hidden;
-  background: var(--tm-bg);
+  background: #e7ece8;
 }
 
 .image {
@@ -25,14 +25,14 @@
   justify-content: space-between;
   padding: 24px;
   background:
-    radial-gradient(circle at 75% 30%, var(--tm-surface), transparent 34%),
-    linear-gradient(145deg, var(--tm-ocean), var(--tm-ocean));
-  color: var(--tm-ocean-ink);
+    radial-gradient(circle at 75% 30%, rgb(255 255 255 / 48%), transparent 34%),
+    linear-gradient(145deg, #dce7e1, #b8cfc3);
+  color: #335543;
 }
 
 .placeholder span {
   align-self: flex-start;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
 }
 
@@ -51,9 +51,9 @@
   height: 28px;
   place-items: center;
   border-radius: 999px;
-  background: var(--tm-ember);
-  color: var(--tm-ink);
-  font-size: 12px;
+  background: rgb(29 29 31 / 88%);
+  color: #fff;
+  font-size: 9px;
   font-weight: 800;
   backdrop-filter: blur(8px);
 }
@@ -72,11 +72,11 @@
 }
 
 .identity p {
-  color: var(--tm-ocean-ink);
-  font-size: 12px;
+  color: #51705f;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
 }
 
 .identity h3 {
@@ -90,31 +90,31 @@
   flex: 0 0 auto;
   padding: 6px 8px;
   border-radius: 999px;
-  background: var(--tm-bg);
-  color: var(--tm-muted);
-  font-size: 12px;
+  background: #f0f1ef;
+  color: #696a67;
+  font-size: 9px;
   font-weight: 700;
 }
 
 .price {
-  color: var(--tm-muted);
-  font-size: 12px;
+  color: #777874;
+  font-size: 10px;
 }
 
 .price strong {
   margin-left: 4px;
-  color: var(--tm-ink);
+  color: var(--color-dark);
   font-size: var(--font-16);
 }
 
 .reason {
   padding: 13px 14px;
-  border-left: 3px solid var(--tm-ocean-ink);
+  border-left: 3px solid #6c9d84;
   border-radius: 0 11px 11px 0;
-  background: var(--tm-bg);
-  color: var(--tm-ink);
-  font-size: 14px;
-  line-height: 1.65;
+  background: #f4f7f5;
+  color: #4e514d;
+  font-size: 10px;
+  line-height: 1.6;
 }
 
 .flags {
@@ -126,25 +126,25 @@
 
 .flags li {
   padding: 5px 7px;
-  border: 1px solid var(--tm-line);
+  border: 1px solid #e4dfcf;
   border-radius: 999px;
-  background: var(--tm-warn-soft);
-  color: var(--tm-warn);
-  font-size: 12px;
+  background: #faf8f1;
+  color: #7c7253;
+  font-size: 8px;
   font-weight: 700;
 }
 
 .facts {
   padding-top: 14px;
-  border-top: 1px solid var(--tm-line);
+  border-top: 1px solid rgb(29 29 31 / 8%);
 }
 
 .facts h4 {
   font-family: var(--font-primary);
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 800;
-  letter-spacing: 0;
-  text-transform: none;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
 
 .facts ul {
@@ -167,18 +167,23 @@
   height: 22px;
   place-items: center;
   border-radius: 7px;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
 }
 
+.facts li > span:first-child svg {
+  width: 13px;
+  height: 13px;
+}
+
 .verified {
-  background: var(--tm-bg);
-  color: var(--tm-ocean-ink);
+  background: #e2f0e8;
+  color: #34704f;
 }
 
 .claimed {
-  background: var(--tm-warn-soft);
-  color: var(--tm-warn);
+  background: #f1ece0;
+  color: #857047;
 }
 
 .facts li > span:last-child {
@@ -187,14 +192,14 @@
 }
 
 .facts strong {
-  font-size: 12px;
+  font-size: 9px;
   font-weight: 700;
   line-height: 1.4;
 }
 
 .facts small {
-  color: var(--tm-muted);
-  font-size: 12px;
+  color: #898a86;
+  font-size: 8px;
 }
 
 .profileLink {
@@ -202,19 +207,17 @@
   align-items: center;
   justify-content: space-between;
   padding-top: 13px;
-  border-top: 1px solid var(--tm-line);
-  color: var(--tm-ocean-ink);
-  font-size: 12px;
+  border-top: 1px solid rgb(29 29 31 / 8%);
+  color: #416b56;
+  font-size: 9px;
   font-weight: 800;
 }
 
 .profileLink:hover {
-  color: var(--tm-ocean-ink);
+  color: #244b37;
 }
 
-.photoLabel { position: absolute; bottom: 10px; left: 10px; max-width: calc(100% - 20px); padding: 5px 8px; border-radius: 8px; background: var(--tm-surface); color: var(--tm-muted); font-size: 12px; line-height: 1.4; }
-.price { justify-self: start; padding: 6px 10px; border-radius: 9px; background: var(--tm-gold); color: var(--tm-ink); }
-.identity { flex-wrap: wrap; }
-.identity > div { min-width: 0; }
-.profileLink { min-height: 44px; }
-.facts strong { font-weight: 500; font-size: 14px; }
+.profileLink svg {
+  width: 15px;
+  height: 15px;
+}

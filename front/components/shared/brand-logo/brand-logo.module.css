@@ -1,0 +1,29 @@
+.brand {
+  display: inline-grid;
+  width: max-content;
+  min-width: 0;
+  align-items: center;
+  gap: 3px;
+}
+
+.logo {
+  width: clamp(118px, 11vw, 148px);
+  height: auto;
+}
+
+.brand small {
+  overflow: hidden;
+  color: var(--color-muted, #617067);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .brand small {
+    display: none;
+  }
+}

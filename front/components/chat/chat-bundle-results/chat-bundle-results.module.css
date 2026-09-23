@@ -1,0 +1,149 @@
+.results {
+  display: grid;
+  gap: 24px;
+  width: min(calc(100% - 40px), 1100px);
+  margin: 34px auto 0;
+  scroll-margin-top: 24px;
+}
+
+.overview,
+.group {
+  padding: 26px 28px;
+  border: 1px solid rgb(29 29 31 / 8%);
+  border-radius: 22px;
+  background: rgb(255 255 255 / 78%);
+}
+
+.overview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px 24px;
+  border-color: #cbddd3;
+  background: #ecf4f0;
+}
+
+.overview > div p,
+.item header p {
+  color: #4b725d;
+  font-size: 9px;
+  font-weight: 800;
+  letter-spacing: 0.13em;
+  text-transform: uppercase;
+}
+
+.overview h2 {
+  margin-top: 6px;
+  font-size: var(--font-24);
+  letter-spacing: -0.04em;
+}
+
+.overview > span {
+  align-self: start;
+  padding: 9px 12px;
+  border-radius: 999px;
+  background: #fff;
+  color: #476954;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.overview > p {
+  grid-column: 1 / -1;
+  color: #626761;
+  font-size: 12px;
+  line-height: 1.65;
+}
+
+.group > h3 {
+  font-size: var(--font-20);
+  letter-spacing: -0.035em;
+}
+
+.items {
+  display: grid;
+  gap: 18px;
+  margin-top: 18px;
+}
+
+.item {
+  display: grid;
+  gap: 15px;
+  padding: 18px;
+  border: 1px solid #e2e4e1;
+  border-radius: 18px;
+  background: #f8f8f6;
+}
+
+.item header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.item h4 {
+  margin-top: 5px;
+  font-size: var(--font-18);
+  letter-spacing: -0.03em;
+}
+
+.item header > span {
+  padding: 7px 9px;
+  border-radius: 999px;
+  background: #fff;
+  color: #5d645f;
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.summary,
+.empty {
+  color: #686d68;
+  font-size: 10px;
+  line-height: 1.55;
+}
+
+.cards {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.empty {
+  padding: 16px;
+  border: 1px dashed #d8cfbd;
+  border-radius: 12px;
+  background: #fffdf8;
+  text-align: center;
+}
+
+@media (max-width: 920px) {
+  .cards {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 640px) {
+  .results {
+    width: min(calc(100% - 24px), 1100px);
+  }
+
+  .overview,
+  .group {
+    padding: 20px;
+  }
+
+  .overview,
+  .item header {
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+
+  .item header {
+    flex-direction: column;
+  }
+
+  .cards {
+    grid-template-columns: 1fr;
+  }
+}

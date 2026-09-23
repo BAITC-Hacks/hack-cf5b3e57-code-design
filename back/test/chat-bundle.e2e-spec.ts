@@ -1029,6 +1029,88 @@ describe('bundle chat in MOCK mode', () => {
       jest.useRealTimers();
     }
   });
+
+  it('keeps only the named categories when the user says to remove everything else', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+
+      const missingDate = await collect(
+        chat.streamMessage(
+          sessionId,
+          'У меня свадьба в Алмате, но есть только 2 млн',
+        ),
+      );
+      const missingDateDone = missingDate.find(
+        (event) => event.type === 'done',
+      );
+      if (missingDateDone?.type !== 'done') {
+        throw new Error('missing date-question done event');
+      }
+      expect(missingDateDone.data.message.content).toMatch(/дат/iu);
+
+      await collect(chat.streamMessage(sessionId, 'На 28 октября'));
+      const callsBeforeVagueRemoval = execute.mock.calls.length;
+      const vagueRemoval = await collect(
+        chat.streamMessage(sessionId, 'Давай уберем категории'),
+      );
+      expect(execute.mock.calls).toHaveLength(callsBeforeVagueRemoval);
+      const vagueDone = vagueRemoval.find((event) => event.type === 'done');
+      if (vagueDone?.type !== 'done') {
+        throw new Error('missing vague-removal done event');
+      }
+      expect(vagueDone.data.message.content).toMatch(/какие именно/iu);
+      expect(vagueDone.data.message.content).toMatch(/ведущ/iu);
+      expect(vagueDone.data.message.content).toMatch(/банкетн/iu);
+
+      const selection = await collect(
+        chat.streamMessage(
+          sessionId,
+          'Давай уберем все кроме ведущего и банкетного зала',
+        ),
+      );
+      expect(selection.some((event) => event.type === 'error')).toBe(false);
+      const estimateCalls = execute.mock.calls.filter(
+        ([name]) => name === 'estimate_bundle_minimum',
+      );
+      expect(estimateCalls.at(-1)).toEqual([
+        'estimate_bundle_minimum',
+        expect.objectContaining({
+          city: 'Алматы',
+          date: '2026-10-28',
+          eventType: 'свадьба',
+          requiredCategories: ['Ведущий', 'Банкетный зал'],
+        }),
+      ]);
+      const selectionDone = selection.find((event) => event.type === 'done');
+      if (selectionDone?.type !== 'done') {
+        throw new Error('missing category-selection done event');
+      }
+      expect(selectionDone.data.message.content).toMatch(
+        /оставил.{0,50}ведущ.{0,50}банкетн/isu,
+      );
+      expect(selectionDone.data.message.content).not.toMatch(
+        /исключена категория «Ведущий»/iu,
+      );
+
+      const callsBeforeCorrection = execute.mock.calls.length;
+      const correction = await collect(
+        chat.streamMessage(
+          sessionId,
+          'Нет, наоборот. Оставить только ведущего и банкетный зал',
+        ),
+      );
+      expect(execute.mock.calls).toHaveLength(callsBeforeCorrection);
+      const correctionDone = correction.find((event) => event.type === 'done');
+      if (correctionDone?.type !== 'done') {
+        throw new Error('missing correction done event');
+      }
+      expect(correctionDone.data.message.content).toMatch(/уже|учтен/iu);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 describe('search chat in MOCK mode — slot extraction and memory', () => {

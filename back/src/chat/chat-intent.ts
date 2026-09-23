@@ -254,7 +254,10 @@ function parseOne(text: string, now: Date): ChatIntent {
   };
 }
 
-export function parseCategoryActions(text: string): CategoryAction[] {
+export function parseCategoryActions(
+  text: string,
+  availableCategories?: string[],
+): CategoryAction[] {
   const normalized = text.toLowerCase().replace(/ё/g, 'е');
   // A question or a hypothetical is not permission to change the package.
   if (
@@ -289,6 +292,26 @@ export function parseCategoryActions(text: string): CategoryAction[] {
       continue;
     }
     distinctMentions.push(mention);
+  }
+
+  const keepOnlyRequest =
+    /(?:убер\S*\s+все\s+кроме|остав\S*\s+только|нужн\S*\s*,?\s*чтобы\s+(?:были|остались)\s+только|нужны\s+только)/iu.test(
+      normalized,
+    );
+  if (keepOnlyRequest && distinctMentions.length > 0) {
+    const kept = new Set(distinctMentions.map(({ category }) => category));
+    const candidates = availableCategories ?? [
+      ...new Set(
+        Object.values(BUNDLE_CATEGORIES).flatMap((group) => [
+          ...group.required,
+          ...group.recommended,
+        ]),
+      ),
+    ];
+    return candidates.map((category) => ({
+      category,
+      action: kept.has(category) ? 'add' : 'remove',
+    }));
   }
 
   for (const { category, start, end } of distinctMentions) {
@@ -336,7 +359,16 @@ export function parseChatIntent(
         (intent as Record<string, unknown>)[key] = parsed[key];
       }
     }
-    for (const { category, action } of parseCategoryActions(message)) {
+    const bundleCategories = intent.eventType
+      ? [
+          ...BUNDLE_CATEGORIES[intent.eventType].required,
+          ...BUNDLE_CATEGORIES[intent.eventType].recommended,
+        ]
+      : undefined;
+    for (const { category, action } of parseCategoryActions(
+      message,
+      bundleCategories,
+    )) {
       if (action === 'remove') excluded.add(category);
       else excluded.delete(category);
     }

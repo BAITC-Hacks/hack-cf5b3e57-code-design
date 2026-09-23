@@ -158,6 +158,10 @@ export class ChatService {
         }));
       const intent = parseChatIntent(acceptedUserMessages);
       const previousIntent = parseChatIntent(acceptedUserMessages.slice(0, -1));
+      const currentCategoryActions = this.categoryActions(
+        content,
+        intent.eventType,
+      );
       const attachments: ChatAttachment[] = [];
       const missing = this.missingRequired(intent, session.mode as ChatMode);
       let finalText: string;
@@ -166,7 +170,7 @@ export class ChatService {
         session.mode === 'bundle' &&
         intent.eventType &&
         this.isCategoryOverviewQuestion(content) &&
-        parseCategoryActions(content).length === 0
+        currentCategoryActions.length === 0
       ) {
         finalText = this.bundleCategoriesText(
           intent.eventType,
@@ -201,6 +205,10 @@ export class ChatService {
             ? `Да, категорию «${intent.category}» можно убрать из пакета. Если хотите исключить её и пересчитать бюджет, напишите: «Убери ${intent.category.toLowerCase()}». Пока состав пакета не менял.`
             : 'Да, любую категорию можно убрать из пакета. Назовите её, и я пересчитаю бюджет. Пока состав пакета не менял.';
         } else if (
+          this.isVagueCategoryRemoval(content, currentCategoryActions)
+        ) {
+          finalText = `Какие именно категории убрать?\n\n${this.bundleCategoriesText(eventType, intent.excludedCategories ?? [])}`;
+        } else if (
           this.isUnchangedBundleRequest(content, intent, previousIntent)
         ) {
           finalText =
@@ -228,7 +236,7 @@ export class ChatService {
               { city, eventType },
               estimate,
               budget,
-              parseCategoryActions(content),
+              currentCategoryActions,
               intent.excludedCategories ?? [],
             );
           } else {
@@ -258,7 +266,7 @@ export class ChatService {
             yield { type: 'attachment', data: attachment };
             finalText = this.renderAttachment(
               attachment,
-              parseCategoryActions(content),
+              currentCategoryActions,
             );
           }
         }
@@ -381,7 +389,7 @@ export class ChatService {
     intent: ChatIntent,
     previousIntent: ChatIntent,
   ): boolean {
-    const actions = parseCategoryActions(content);
+    const actions = this.categoryActions(content, intent.eventType);
     if (actions.length === 0) return false;
     const previouslyExcluded = new Set(previousIntent.excludedCategories ?? []);
     if (
@@ -416,6 +424,17 @@ export class ChatService {
     return 'Эти изменения уже учтены. Условия подбора не изменились.';
   }
 
+  private categoryActions(
+    content: string,
+    eventType?: string,
+  ): CategoryAction[] {
+    const base = eventType ? BUNDLE_CATEGORIES[eventType] : undefined;
+    return parseCategoryActions(
+      content,
+      base ? [...base.required, ...base.recommended] : undefined,
+    );
+  }
+
   private isCategoryOverviewQuestion(content: string): boolean {
     const normalized = content.toLowerCase().replace(/ё/g, 'е');
     return (
@@ -433,6 +452,15 @@ export class ChatService {
     return /(?:можно|могу|если|стоит).{0,60}(?:убрать|убер|исключ|без)/iu.test(
       normalized,
     );
+  }
+
+  private isVagueCategoryRemoval(
+    content: string,
+    actions: CategoryAction[],
+  ): boolean {
+    if (actions.length > 0) return false;
+    const normalized = content.toLowerCase().replace(/ё/g, 'е');
+    return /(?:убер|убрать|исключ).{0,30}категор/iu.test(normalized);
   }
 
   private isUnchangedBundleRequest(
@@ -581,9 +609,7 @@ export class ChatService {
       .filter((item) => item.count === 0)
       .map((item) => item.category);
     const changed =
-      actions.length > 0
-        ? `Обновил состав пакета: ${actions.map((item) => `${item.action === 'remove' ? 'исключена' : 'добавлена'} категория «${item.category}»`).join(', ')}.\n`
-        : '';
+      actions.length > 0 ? `${this.categoryChangesText(actions)}\n` : '';
     const alreadyExcluded =
       actions.length === 0 && excludedCategories.length > 0
         ? `Уже исключены из пакета: ${excludedCategories.join(', ')}.\n`
@@ -628,18 +654,31 @@ export class ChatService {
       .map((item) => item.category);
     const prefix = actions.length > 0 ? 'Обновил пакет' : 'Подбор';
     return [
-      ...(actions.length > 0
-        ? [
-            `Состав пакета изменён: ${actions.map(({ category, action }) => `${action === 'remove' ? 'исключена' : 'добавлена'} категория «${category}»`).join(', ')}.`,
-            '',
-          ]
-        : []),
+      ...(actions.length > 0 ? [this.categoryChangesText(actions), ''] : []),
       `${prefix} ${cityLoc(bundle.city)} на ${date}, бюджет ${bundle.totalBudgetKzt.toLocaleString('ru-RU')} ₸.`,
       `Обязательные: ${foundRequired}/${bundle.required.length}; дополнительные: ${foundRecommended}/${bundle.recommended.length}.`,
       missing.length > 0
         ? `Не нашёл: ${missing.join(', ')}. Причины — в карточках ниже.`
         : 'Все категории закрыты. Причины выбора — в карточках ниже.',
     ].join('\n');
+  }
+
+  private categoryChangesText(actions: CategoryAction[]): string {
+    const kept = actions
+      .filter(({ action }) => action === 'add')
+      .map(({ category }) => `«${category}»`);
+    const removed = actions
+      .filter(({ action }) => action === 'remove')
+      .map(({ category }) => `«${category}»`);
+    if (kept.length > 0 && removed.length > 1) {
+      return `Оставил в пакете только: ${kept.join(', ')}.`;
+    }
+    return `Обновил состав пакета: ${actions
+      .map(
+        ({ category, action }) =>
+          `${action === 'remove' ? 'исключена' : 'добавлена'} категория «${category}»`,
+      )
+      .join(', ')}.`;
   }
 
   private toContractMessage(message: {

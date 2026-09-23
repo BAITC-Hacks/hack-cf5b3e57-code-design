@@ -1,4 +1,4 @@
-import { Inject, Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import {
@@ -12,11 +12,10 @@ import {
   otherCities,
 } from './copy/nouns';
 import { summarizeCauses } from './copy/reasons';
+import { criteriaFor, eventLabel } from './criteria';
 import { MatchRequestDto } from './dto/match-request.dto';
 import { ExplainerService } from './explainer.service';
 import { FilterService } from './filter.service';
-import type { LlmClient } from './llm/llm-client';
-import { LLM_CLIENT } from './llm/llm-client';
 import { RankingService } from './ranking.service';
 import type { FunnelStep, MatchCard, MatchResponse } from './types';
 
@@ -41,7 +40,6 @@ export class MatchingService {
     private readonly filter: FilterService,
     private readonly ranking: RankingService,
     private readonly explainer: ExplainerService,
-    @Inject(LLM_CLIENT) private readonly llm: LlmClient,
   ) {}
 
   /** Синхронный вариант — для `POST /api/v1/match`. */
@@ -56,21 +54,9 @@ export class MatchingService {
 
   /** SSE-вариант: генерирует события по мере готовности. */
   async *stream(req: MatchRequestDto): AsyncGenerator<PipelineEvent> {
-    // 1. Критерии от LLM (можно параллельно с фильтром, но лучше сначала —
-    // чтобы UI показал «на что смотреть» раньше, чем начнёт крутить воронку).
-    const criteria = await this.llm.criteria({
-      request: {
-        city: req.city,
-        date: req.date,
-        eventType: req.eventType,
-        category: req.category,
-        budgetKzt: req.budgetKzt,
-        durationHours: req.durationHours,
-        language: req.language,
-        locale: req.locale,
-      },
-      poolSize: 0,
-    });
+    // Same deterministic dimensions drive visible criteria, ranking and
+    // candidate evidence. This stage needs no network call.
+    const criteria = criteriaFor(req).map((item) => item.label);
     yield { type: 'criteria', criteria };
 
     // 2. Фильтр — детерминированный, шаги эмитим по одному.
@@ -98,14 +84,16 @@ export class MatchingService {
     yield { type: 'ranked', ids: orderedIds };
 
     // 5. Объяснения (топ-3).
-    const cards = await this.explainer.build(orderedIds, req, criteria);
+    const { cards, critic, omittedForEvidence } = await this.explainer.build(
+      orderedIds,
+      req,
+      criteria,
+    );
     for (const card of cards) yield { type: 'card', card };
 
-    // 6. Критик — по объяснениям карточек.
-    const criticOut = await this.llm.critic(
-      cards.map((c) => ({ id: c.id, reason: c.reason })),
-    );
-    yield { type: 'critic', ok: criticOut.ok, problems: criticOut.problems };
+    // No provisional card is ever emitted: every visible card has already
+    // passed the fact-grounded critic/retry/fallback path.
+    yield { type: 'critic', ok: critic.ok, problems: critic.problems };
 
     // 7. Финал.
     const response: MatchResponse = {
@@ -113,15 +101,16 @@ export class MatchingService {
       criteria,
       cards,
       funnel: filtered.funnel,
-      summary: this.summaryFound(cards.length, filtered, req),
+      summary: this.summaryFound(cards.length, filtered, req, omittedForEvidence),
     };
     yield { type: 'done', response };
   }
 
   private classify(funnel: FunnelStep[]): MatchResponse['outcome'] {
-    const cityStep = funnel.find((s) => s.step === 'city');
     const catStep = funnel.find((s) => s.step === 'category');
-    if (cityStep && catStep && cityStep.after > 0 && catStep.after === 0) {
+    // A city with no profiles also has no profiles in the requested category.
+    // Calling that "all filtered out" would incorrectly imply candidates existed.
+    if (catStep?.after === 0) {
       return 'no_category_in_city';
     }
     const last = funnel[funnel.length - 1];
@@ -133,12 +122,35 @@ export class MatchingService {
     shown: number,
     filtered: { survivors: string[]; funnel: FunnelStep[] },
     req: MatchRequestDto,
+    omittedForEvidence = 0,
   ): string {
     const suitable = filtered.survivors.length;
     const inCategory =
       filtered.funnel.find((step) => step.step === 'category')?.after ??
       suitable;
     const removed = inCategory - suitable;
+
+    if (req.locale === 'en' || req.locale === 'kk') {
+      const causes = this.localizedCauses(filtered.funnel, req);
+      if (req.locale === 'en') {
+        const base = `Found ${suitable} matching contractors in ${req.city}; showing ${shown}.`;
+        const filteredNote = removed > 0 ? ` ${removed} did not pass: ${causes}.` : '';
+        const evidenceNote = omittedForEvidence > 0
+          ? ` ${omittedForEvidence} omitted because their available facts do not distinguish them.`
+          : '';
+        return `${base}${filteredNote}${evidenceNote}`;
+      }
+      const base = `${req.city}: ${suitable} сәйкес мердігер табылды; ${shown} көрсетілді.`;
+      const filteredNote = removed > 0 ? ` ${removed} сүзгіден өтпеді: ${causes}.` : '';
+      const evidenceNote = omittedForEvidence > 0
+        ? ` ${omittedForEvidence} мердігердің деректері оларды айыруға жетпегендіктен көрсетілмеді.`
+        : '';
+      return `${base}${filteredNote}${evidenceNote}`;
+    }
+
+    if (omittedForEvidence > 0) {
+      return `По фильтрам подходят ${suitable} ${categoryPlural(req.category, suitable)}. Показываем ${shown}: для ${omittedForEvidence} не нашлось достаточно отличительных подтверждённых фактов.`;
+    }
 
     if (shown === 3 && removed > 0) {
       return `Подобрали 3 из ${suitable} подходящих ${categoryPlural(req.category, suitable)}. Остальные ${removed} ${cityLoc(req.city)}: ${summarizeCauses(filtered.funnel, req)}.`;
@@ -168,7 +180,17 @@ export class MatchingService {
       );
       const available = alternatives.filter(({ count }) => count > 0);
       if (available.length === 0) {
+        if (req.locale === 'en') return `No ${req.category} profiles in the catalog yet.`;
+        if (req.locale === 'kk') return `Каталогта әзірге ${req.category} санаты жоқ.`;
         return `В каталоге пока нет ${categoryGenPl(req.category)}.`;
+      }
+      if (req.locale === 'en') {
+        const elsewhere = available.map(({ city, count }) => `${city}: ${count}`).join('; ');
+        return `No ${req.category} profiles in ${req.city}. Other cities: ${elsewhere}.`;
+      }
+      if (req.locale === 'kk') {
+        const elsewhere = available.map(({ city, count }) => `${city}: ${count}`).join('; ');
+        return `${req.city} қаласында ${req.category} санаты жоқ. Басқа қалалар: ${elsewhere}.`;
       }
       const elsewhere = available
         .map(({ city, count }) => `Есть ${cityLoc(city)}: ${count}.`)
@@ -187,9 +209,56 @@ export class MatchingService {
       },
     });
     const independentFunnel = this.independentCauseFunnel(candidates, req);
+    if (req.locale === 'en') {
+      return `${candidates.length} ${req.category} profiles in ${req.city}, but none meets all requirements: ${this.localizedCauses(independentFunnel, req)}.`;
+    }
+    if (req.locale === 'kk') {
+      return `${req.city} қаласында ${candidates.length} ${req.category} бар, бірақ ешқайсысы барлық шартқа сай емес: ${this.localizedCauses(independentFunnel, req)}.`;
+    }
     const causes = summarizeCauses(independentFunnel, req);
     const hint = await this.relaxationHint(req);
     return `В ${cityLoc(req.city).replace(/^\u0432\s+/u, '')} ${candidates.length} ${categoryPlural(req.category, candidates.length)}, но никто не подходит: ${causes}.${hint ? ` ${hint}` : ''}`;
+  }
+
+  private localizedCauses(funnel: FunnelStep[], req: MatchRequestDto): string {
+    const english = req.locale === 'en';
+    const phrases: string[] = [];
+    for (const step of funnel) {
+      const count = step.before - step.after;
+      if (count <= 0) continue;
+      switch (step.step) {
+        case 'date':
+          phrases.push(english
+            ? `${count} booked on ${req.date}`
+            : `${count} мердігер ${req.date} күні бос емес`);
+          break;
+        case 'format':
+          phrases.push(english
+            ? `${count} do not accept ${eventLabel(req.eventType, 'en')}`
+            : `${count} мердігер ${eventLabel(req.eventType, 'kk')} форматын алмайды`);
+          break;
+        case 'budget':
+          phrases.push(english
+            ? `${count} exceed ${money(req.budgetKzt)}`
+            : `${count} мердігердің бағасы ${money(req.budgetKzt)}-ден жоғары`);
+          break;
+        case 'language':
+          if (req.language) phrases.push(english
+            ? `${count} do not offer ${req.language}`
+            : `${count} мердігер ${req.language} тілінде жұмыс істемейді`);
+          break;
+        case 'hours':
+          if (req.durationHours) phrases.push(english
+            ? `${count} offer fewer than ${req.durationHours} hours`
+            : `${count} мердігер ${req.durationHours} сағаттан аз жұмыс істейді`);
+          break;
+        case 'city':
+        case 'category':
+          break;
+      }
+    }
+    return phrases.join(', ')
+      || (english ? 'no profile passes the combined filters' : 'бірде-бір профиль барлық сүзгіден өтпейді');
   }
 
   /** Для пустого исхода каждое условие считаем независимо, а не каскадом. */

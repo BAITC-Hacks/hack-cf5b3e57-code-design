@@ -5,6 +5,7 @@ import {
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { ChatCompletionMessageParam } from 'openai/resources/chat/completions';
+import { cityLoc } from '../matching/copy/nouns';
 import type { MatchResponse } from '../matching/types';
 import { PrismaService } from '../prisma/prisma.service';
 import { ChatMode, CreateSessionDto, Locale } from './dto/create-session.dto';
@@ -46,7 +47,8 @@ const BUNDLE_ADDENDUM = `ДОПОЛНИТЕЛЬНО: не ищи по одной
 - Корпоратив: обязательные [Ведущий, Банкетный зал, Фотограф]; рекомендуемые [Лайв-бэнд, Видеограф, Шоу-программа].
 - Конференция: обязательные [Банкетный зал, Ведущий]; рекомендуемые [Фотограф, Видеограф].
 - Юбилей / день рождения: обязательные [Ведущий, Банкетный зал]; рекомендуемые [Фотограф, Лайв-бэнд, Декоратор, Флорист].
-Вызывай ОДИН раз build_event_bundle с этим списком.`;
+Вызывай ОДИН раз build_event_bundle с этим списком.
+ВАЖНО: перед вызовом build_event_bundle ОБЯЗАТЕЛЬНО сначала вызови estimate_bundle_minimum чтобы узнать минимально возможную стоимость пакета. Если totalMinKzt > бюджета пользователя — НЕ вызывай build_event_bundle. Вместо этого честно скажи пользователю: "На полный пакет {событие} в {городе} нужно минимум X ₸ (по вашим обязательным категориям), у вас {Y} ₸. Что выберем: (а) поднять бюджет до X, (б) убрать категорию — какую, (в) искать поштучно по каждой категории?" Дай пользователю ответить, потом действуй.`;
 
 const GREETINGS: Record<Locale, Record<ChatMode, string>> = {
   ru: {
@@ -156,7 +158,11 @@ export class ChatService {
           role: message.role === 'assistant' ? 'assistant' : 'user',
           content:
             message.role === 'user'
-              ? this.wrapUserMessage(message.content)
+              ? this.wrapUserMessage(
+                  this.openai.isMock() && session.mode === 'bundle'
+                    ? this.normalizeMockBundleMessage(message.content)
+                    : message.content,
+                )
               : message.content,
         })),
       ];
@@ -165,35 +171,103 @@ export class ChatService {
       let tokensIn = completion.tokensIn ?? null;
       let tokensOut = completion.tokensOut ?? null;
       const attachments: ChatAttachment[] = [];
+      const estimatedMinimums = new Map<string, number>();
+      let budgetShortfall: string | null = null;
 
-      if (completion.toolCalls.length > 0) {
+      for (
+        let round = 0;
+        round < 4 && completion.toolCalls.length > 0;
+        round++
+      ) {
         messages.push(completion.assistantMessage);
+        let terminalToolCalled = false;
         for (const call of completion.toolCalls) {
           if (call.type !== 'function') continue;
           const name = this.toolName(call.function.name);
           const args = this.parseToolArgs(call.function.arguments);
+
+          if (name === 'build_event_bundle') {
+            const estimateArgs = {
+              city: args.city,
+              eventType: args.eventType,
+              requiredCategories: args.requiredCategories,
+            };
+            const estimateKey = JSON.stringify(estimateArgs);
+            let minimum = estimatedMinimums.get(estimateKey);
+            if (minimum === undefined) {
+              yield {
+                type: 'tool_start',
+                data: { name: 'estimate_bundle_minimum', args: estimateArgs },
+              };
+              const estimate = await this.tools.execute(
+                'estimate_bundle_minimum',
+                estimateArgs,
+              );
+              minimum = this.minimumFromResult(estimate);
+              estimatedMinimums.set(estimateKey, minimum);
+            }
+
+            const budget = args.totalBudgetKzt;
+            if (typeof budget !== 'number' || !Number.isFinite(budget)) {
+              throw new Error('Invalid bundle budget');
+            }
+            if (minimum > budget) {
+              budgetShortfall = this.budgetShortfallText(args, minimum, budget);
+              messages.push({
+                role: 'tool',
+                tool_call_id: call.id,
+                content: JSON.stringify({
+                  skipped: true,
+                  totalMinKzt: minimum,
+                  summary: budgetShortfall,
+                }),
+              });
+              break;
+            }
+          }
+
           yield { type: 'tool_start', data: { name, args } };
           const result = await this.tools.execute(name, args);
-          const attachment = this.toAttachment(name, result);
-          attachments.push(attachment);
-          yield { type: 'attachment', data: attachment };
+          if (name === 'estimate_bundle_minimum') {
+            estimatedMinimums.set(
+              JSON.stringify({
+                city: args.city,
+                eventType: args.eventType,
+                requiredCategories: args.requiredCategories,
+              }),
+              this.minimumFromResult(result),
+            );
+          } else {
+            const attachment = this.toAttachment(name, result);
+            attachments.push(attachment);
+            yield { type: 'attachment', data: attachment };
+            terminalToolCalled = true;
+          }
           messages.push({
             role: 'tool',
             tool_call_id: call.id,
             content: JSON.stringify(result),
           });
         }
-        const finalCompletion = await this.openai.complete(
+        if (budgetShortfall !== null) break;
+        // The tool result already contains verified, user-facing explanations.
+        // Do not ask the model to restate them: it could introduce new facts.
+        if (terminalToolCalled) break;
+        const nextCompletion = await this.openai.complete(
           messages,
-          [],
-          'none',
+          round === 3 ? [] : CHAT_TOOLS,
+          round === 3 ? 'none' : 'auto',
         );
-        completion = finalCompletion;
-        tokensIn = this.sumNullable(tokensIn, finalCompletion.tokensIn);
-        tokensOut = this.sumNullable(tokensOut, finalCompletion.tokensOut);
+        completion = nextCompletion;
+        tokensIn = this.sumNullable(tokensIn, nextCompletion.tokensIn);
+        tokensOut = this.sumNullable(tokensOut, nextCompletion.tokensOut);
       }
 
-      const finalText = completion.content.trim() || 'Подбор завершён.';
+      const finalText =
+        budgetShortfall ??
+        (attachments.length > 0
+          ? attachments.map((item) => this.renderAttachment(item)).join('\n\n')
+          : this.unverifiedCompletionText(completion.content));
       for (const token of finalText.match(/\S+\s*/g) ?? [finalText]) {
         yield { type: 'token', data: { text: token } };
       }
@@ -262,15 +336,141 @@ export class ChatService {
   }
 
   private toolName(value: string): ChatToolName {
-    if (value === 'search_contractors' || value === 'build_event_bundle')
+    if (
+      value === 'search_contractors' ||
+      value === 'estimate_bundle_minimum' ||
+      value === 'build_event_bundle'
+    )
       return value;
     throw new Error(`Unsupported tool: ${value}`);
   }
 
-  private toAttachment(name: ChatToolName, result: unknown): ChatAttachment {
+  private toAttachment(
+    name: Exclude<ChatToolName, 'estimate_bundle_minimum'>,
+    result: unknown,
+  ): ChatAttachment {
     return name === 'search_contractors'
       ? { type: 'match', match: result as MatchResponse }
       : { type: 'bundle', bundle: result as EventBundle };
+  }
+
+  private minimumFromResult(result: unknown): number {
+    if (
+      !result ||
+      typeof result !== 'object' ||
+      !('totalMinKzt' in result) ||
+      typeof result.totalMinKzt !== 'number' ||
+      !Number.isFinite(result.totalMinKzt)
+    ) {
+      throw new Error('Invalid bundle minimum estimate');
+    }
+    return result.totalMinKzt;
+  }
+
+  private budgetShortfallText(
+    args: Record<string, unknown>,
+    minimum: number,
+    budget: number,
+  ): string {
+    const eventType = String(args.eventType ?? 'мероприятие');
+    const eventName: Record<string, string> = {
+      свадьба: 'свадьбы',
+      той: 'тоя',
+      корпоратив: 'корпоратива',
+      конференция: 'конференции',
+      юбилей: 'юбилея',
+      'день рождения': 'дня рождения',
+    };
+    const event = eventName[eventType] ?? eventType;
+    const city = cityLoc(String(args.city ?? 'в вашем городе'));
+    const minText = minimum.toLocaleString('ru-RU');
+    const budgetText = budget.toLocaleString('ru-RU');
+    return `На полный пакет ${event} ${city} нужно минимум ${minText} ₸ (по вашим обязательным категориям), у вас ${budgetText} ₸. Что выберем: (а) поднять бюджет до ${minText} ₸, (б) убрать категорию — какую, (в) искать поштучно по каждой категории?`;
+  }
+
+  private renderAttachment(attachment: ChatAttachment): string {
+    if (attachment.type === 'match') {
+      const { match } = attachment;
+      if (match.cards.length === 0) return match.summary;
+      return [
+        match.summary,
+        ...match.cards.map((card) => `${card.anonName}: ${card.reason}`),
+      ].join('\n');
+    }
+
+    const { bundle } = attachment;
+    const renderItem = (item: EventBundle['required'][number]): string => {
+      const card = item.match.cards[0];
+      return `${item.category}: ${card ? `${card.anonName} — ${card.reason}` : item.match.summary}`;
+    };
+    return [
+      bundle.summary,
+      ...bundle.required.map(renderItem),
+      ...bundle.recommended.map(renderItem),
+    ].join('\n');
+  }
+
+  private unverifiedCompletionText(content: string): string {
+    const text = content.trim();
+    // Until a search tool has supplied cards, contractor IDs are unverified.
+    if (/\bHK-\d+\b/i.test(text)) {
+      return 'Чтобы подобрать подрядчика, уточните город, дату, формат мероприятия, категорию и бюджет.';
+    }
+    return text || 'Расскажите, какое мероприятие вы планируете?';
+  }
+
+  private normalizeMockBundleMessage(content: string): string {
+    const details: string[] = [];
+    const millionMatch = content.match(
+      /(?:^|[^\d])(\d+(?:[.,]\d+)?)\s*(?:млн\.?|миллион(?:а|ов)?)/i,
+    );
+    if (!/\b\d{4}-\d{2}-\d{2}\b/.test(content)) {
+      const monthNames = [
+        'января',
+        'февраля',
+        'марта',
+        'апреля',
+        'мая',
+        'июня',
+        'июля',
+        'августа',
+        'сентября',
+        'октября',
+        'ноября',
+        'декабря',
+      ];
+      const dateMatch = content
+        .toLowerCase()
+        .match(
+          /(?:^|[^\d])([0-3]?\d)\s+(января|февраля|марта|апреля|мая|июня|июля|августа|сентября|октября|ноября|декабря)(?:\s+(\d{4}))?/,
+        );
+      if (dateMatch) {
+        const day = Number(dateMatch[1]);
+        const month = monthNames.indexOf(dateMatch[2]);
+        const now = new Date();
+        let year = dateMatch[3] ? Number(dateMatch[3]) : now.getFullYear();
+        if (
+          !dateMatch[3] &&
+          Date.UTC(year, month, day) <
+            Date.UTC(now.getFullYear(), now.getMonth(), now.getDate())
+        ) {
+          year++;
+        }
+        const date = new Date(Date.UTC(year, month, day));
+        if (date.getUTCDate() === day && date.getUTCMonth() === month) {
+          details.push(`Дата: ${date.toISOString().slice(0, 10)}.`);
+        }
+      }
+    }
+
+    if (millionMatch) {
+      const amount = Math.round(
+        Number(millionMatch[1].replace(',', '.')) * 1_000_000,
+      );
+      if (Number.isFinite(amount)) details.push(`Бюджет: ${amount} тенге.`);
+    }
+
+    return details.length > 0 ? `${content}\n${details.join(' ')}` : content;
   }
 
   private toContractMessage(message: {

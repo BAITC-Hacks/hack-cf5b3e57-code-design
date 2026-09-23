@@ -5,8 +5,7 @@ import {
   ExplainOutput,
   LlmClient,
 } from './llm-client';
-import type { Differentiator } from '../explainer.service';
-import { money } from '../copy/nouns';
+import type { CardFact } from '../types';
 
 /**
  * MOCK-провайдер: работает без сети и ключа, детерминирован по построению.
@@ -27,36 +26,25 @@ export class MockLlmClient implements LlmClient {
   }
 
   async explain(input: ExplainInput): Promise<ExplainOutput> {
-    const { candidate, request, differentiators } = input;
-    const diffs = differentiators as unknown as Differentiator[];
-    const first = diffs[0];
-    const second = diffs[1];
-
-    const sentence = (value: string): string => {
-      const clean = value
-        .trim()
-        .replace(/;/g, ',')
-        .replace(/[.!?]+$/g, '');
-      return `${clean.charAt(0).toUpperCase()}${clean.slice(1)}.`;
-    };
-
-    const fallback = `${money(candidate.priceFromKzt)} — в бюджете, остаётся ${money(request.budgetKzt - candidate.priceFromKzt)}`;
-    const reason = [
-      sentence(first.text),
-      sentence(second?.text ?? fallback),
-    ].join(' ');
-    const factsUsed = [first.factKey, second?.factKey ?? 'budget'];
-
-    return {
-      reason,
-      factsUsed: [...new Set(factsUsed)],
-    };
+    return { selectedId: input.options[0]?.id ?? '' };
   }
 
-  async critic(): Promise<{
+  async critic(
+    reasons: { id: string; reason: string; facts: CardFact[] }[],
+  ): Promise<{
     ok: boolean;
     problems: { id: string; problem: string }[];
   }> {
-    return { ok: true, problems: [] };
+    const seen = new Set<string>();
+    const problems: { id: string; problem: string }[] = [];
+    for (const item of reasons) {
+      const text = item.reason.toLocaleLowerCase('ru-RU');
+      if (seen.has(text)) problems.push({ id: item.id, problem: 'interchangeable' });
+      seen.add(text);
+      if (!item.facts.some((fact) => fact.verified)) {
+        problems.push({ id: item.id, problem: 'no_verified_facts' });
+      }
+    }
+    return { ok: problems.length === 0, problems };
   }
 }

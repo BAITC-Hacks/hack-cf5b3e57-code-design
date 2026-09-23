@@ -3,198 +3,216 @@
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useMemo, useRef, useState } from "react";
 
-import {
-  CATEGORIES,
-  CITIES,
-  EVENT_FORMATS,
-  LANGUAGES,
+import type {
+  ChatAttachment,
+  ChatMessage,
+  ChatMode,
+  ChatSseEventMap,
 } from "../../../../shared/contract";
-import type { MatchResponse } from "../../../../shared/contract";
-import {
-  EMPTY_CHAT_DRAFT,
-  getNextChatField,
-  invalidMessage,
-  parseChatInput,
-  toMatchRequest,
-  type ChatDraft,
-  type ChatTranscriptMessage,
-} from "@/lib/chat/chat-assistant";
+import { ChatApiError, createChatSession, streamChatMessage } from "@/lib/chat/chat-api";
 import { useLocale } from "@/lib/i18n/locale-provider";
-import { CHAT_MESSAGES, type ChatField } from "@/lib/i18n/messages/chat";
-import { MatchApiError, requestMatch } from "@/lib/match-api";
+import { CHAT_MESSAGES } from "@/lib/i18n/messages/chat";
+import { ChatAttachmentResults } from "../chat-attachment-results/chat-attachment-results";
 import { ChatComposer } from "../chat-composer/chat-composer";
 import { ChatHeader } from "../chat-header/chat-header";
 import { ChatHero } from "../chat-hero/chat-hero";
-import { ChatProgress } from "../chat-progress/chat-progress";
-import { ChatResults } from "../chat-results/chat-results";
+import {
+  ChatSessionPanel,
+  type ChatConnectionPhase,
+} from "../chat-session-panel/chat-session-panel";
 import { ChatThread } from "../chat-thread/chat-thread";
 import type { QuickReply } from "../quick-replies/quick-replies";
 import styles from "./chat-experience.module.css";
 
-type ChatPhase = "collecting" | "loading" | "result" | "error";
-
-function initialMessages(copy: (typeof CHAT_MESSAGES)["ru"]): ChatTranscriptMessage[] {
-  return [
-    { id: "welcome", role: "assistant", text: copy.assistant.greeting },
-    { id: "transparency", role: "assistant", text: copy.assistant.transparency },
-    { id: "first-question", role: "assistant", text: copy.fields.category.prompt },
-  ];
+function localMessage(role: ChatMessage["role"], content: string): ChatMessage {
+  return {
+    id: `local-${crypto.randomUUID()}`,
+    role,
+    content,
+    createdAt: new Date().toISOString(),
+  };
 }
 
 export function ChatExperience() {
   const { locale } = useLocale();
   const copy = CHAT_MESSAGES[locale];
   const reduceMotion = useReducedMotion();
-  const [draft, setDraft] = useState<ChatDraft>(EMPTY_CHAT_DRAFT);
-  const [activeField, setActiveField] = useState<ChatField | null>("category");
-  const [messages, setMessages] = useState<ChatTranscriptMessage[]>(() => initialMessages(copy));
-  const [phase, setPhase] = useState<ChatPhase>("collecting");
-  const [result, setResult] = useState<MatchResponse | null>(null);
+  const [mode, setMode] = useState<ChatMode>("search");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [phase, setPhase] = useState<ChatConnectionPhase>("starting");
+  const [tool, setTool] = useState<ChatSseEventMap["tool_start"]["name"] | null>(null);
+  const [attachment, setAttachment] = useState<ChatAttachment | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const messageSequence = useRef(3);
-  const controllerRef = useRef<AbortController | null>(null);
+  const [restartKey, setRestartKey] = useState(0);
+  const [lastMessage, setLastMessage] = useState<string | null>(null);
+  const sessionController = useRef<AbortController | null>(null);
+  const messageController = useRef<AbortController | null>(null);
   const resultRef = useRef<HTMLElement | null>(null);
 
-  useEffect(() => () => controllerRef.current?.abort(), []);
-
-  const quickReplies = useMemo<readonly QuickReply[]>(() => {
-    switch (activeField) {
-      case "category":
-        return CATEGORIES.map((value) => ({ label: copy.labels.categories[value], value }));
-      case "city":
-        return CITIES.map((value) => ({ label: copy.labels.cities[value], value }));
-      case "date":
-        return copy.quickDates;
-      case "eventType":
-        return EVENT_FORMATS.map((value) => ({ label: copy.labels.eventFormats[value], value }));
-      case "budgetKzt":
-        return copy.quickBudgets;
-      case "language":
-        return [
-          ...LANGUAGES.map((value) => ({ label: copy.labels.languages[value], value })),
-          { label: copy.actions.anyLanguage, value: "any" },
-        ];
-      default:
-        return [];
-    }
-  }, [activeField, copy]);
-
-  function appendMessage(role: ChatTranscriptMessage["role"], text: string) {
-    messageSequence.current += 1;
-    const message = { id: `chat-${messageSequence.current}`, role, text };
-    setMessages((current) => [...current, message]);
-  }
-
-  function appendAssistant(...texts: string[]) {
-    setMessages((current) => [
-      ...current,
-      ...texts.map((text) => {
-        messageSequence.current += 1;
-        return {
-          id: `chat-${messageSequence.current}`,
-          role: "assistant" as const,
-          text,
-        };
-      }),
-    ]);
-  }
-
-  async function runMatch(nextDraft: ChatDraft) {
-    controllerRef.current?.abort();
+  useEffect(() => {
+    sessionController.current?.abort();
+    messageController.current?.abort();
     const controller = new AbortController();
-    controllerRef.current = controller;
-    setPhase("loading");
-    setResult(null);
+    sessionController.current = controller;
+
+    void (async () => {
+      await Promise.resolve();
+      if (controller.signal.aborted) return;
+      setPhase("starting");
+      setSessionId(null);
+      setMessages([]);
+      setAttachment(null);
+      setTool(null);
+      setError(null);
+
+      try {
+        const session = await createChatSession({ mode, locale }, controller.signal);
+        if (controller.signal.aborted) return;
+        setSessionId(session.sessionId);
+        setMessages([localMessage("assistant", session.greeting)]);
+        setPhase("ready");
+      } catch (sessionError) {
+        if (sessionError instanceof DOMException && sessionError.name === "AbortError") return;
+        setError(
+          sessionError instanceof ChatApiError
+            ? sessionError.message
+            : copy.assistant.error,
+        );
+        setPhase("error");
+      }
+    })();
+
+    return () => controller.abort();
+  }, [copy.assistant.error, locale, mode, restartKey]);
+
+  useEffect(
+    () => () => {
+      sessionController.current?.abort();
+      messageController.current?.abort();
+    },
+    [],
+  );
+
+  const quickReplies = useMemo<readonly QuickReply[]>(
+    () => copy.starterPrompts[mode].map((value) => ({ label: value, value })),
+    [copy, mode],
+  );
+
+  function focusAttachment() {
+    window.requestAnimationFrame(() => {
+      resultRef.current?.focus({ preventScroll: true });
+      resultRef.current?.scrollIntoView({
+        behavior: reduceMotion ? "auto" : "smooth",
+        block: "start",
+      });
+    });
+  }
+
+  async function handleSend(content: string, displayValue = content) {
+    if (!sessionId || phase === "starting" || phase === "streaming") return;
+    messageController.current?.abort();
+    const controller = new AbortController();
+    messageController.current = controller;
+    const streamId = `stream-${crypto.randomUUID()}`;
+    let streamedText = "";
+    let streamMessageAdded = false;
+    let terminalError = false;
+
+    setLastMessage(content);
+    setMessages((current) => [...current, localMessage("user", displayValue)]);
+    setAttachment(null);
+    setTool(null);
     setError(null);
+    setPhase("streaming");
 
     try {
-      const response = await requestMatch(toMatchRequest(nextDraft, locale), controller.signal);
-      setResult(response);
-      setPhase("result");
-      appendAssistant(copy.assistant.resultReady);
-      window.requestAnimationFrame(() => {
-        resultRef.current?.focus({ preventScroll: true });
-        resultRef.current?.scrollIntoView({
-          behavior: reduceMotion ? "auto" : "smooth",
-          block: "start",
-        });
-      });
-    } catch (requestError) {
-      if (requestError instanceof DOMException && requestError.name === "AbortError") return;
-      const message = requestError instanceof MatchApiError
-        ? requestError.message
-        : copy.assistant.error;
-      setError(message);
+      await streamChatMessage(
+        sessionId,
+        { content },
+        (event) => {
+          if (event.type === "token") {
+            streamedText += event.data.text;
+            setMessages((current) => {
+              const streamMessage: ChatMessage = {
+                id: streamId,
+                role: "assistant",
+                content: streamedText,
+                createdAt: new Date().toISOString(),
+              };
+              if (!streamMessageAdded) {
+                streamMessageAdded = true;
+                return [...current, streamMessage];
+              }
+              return current.map((message) =>
+                message.id === streamId ? streamMessage : message,
+              );
+            });
+            return;
+          }
+          if (event.type === "tool_start") {
+            setTool(event.data.name);
+            return;
+          }
+          if (event.type === "attachment") {
+            setAttachment(event.data);
+            focusAttachment();
+            return;
+          }
+          if (event.type === "done") {
+            setMessages((current) => {
+              if (streamMessageAdded) {
+                return current.map((message) =>
+                  message.id === streamId ? event.data.message : message,
+                );
+              }
+              return [...current, event.data.message];
+            });
+            const finalAttachment = event.data.message.attachments?.at(-1);
+            if (finalAttachment) setAttachment(finalAttachment);
+            setPhase("ready");
+            setTool(null);
+            return;
+          }
+          terminalError = true;
+          setError(event.data.message || copy.assistant.error);
+          setPhase("error");
+          setTool(null);
+        },
+        controller.signal,
+      );
+    } catch (streamError) {
+      if (streamError instanceof DOMException && streamError.name === "AbortError") return;
+      terminalError = true;
+      setError(streamError instanceof ChatApiError ? streamError.message : copy.assistant.error);
       setPhase("error");
-      appendAssistant(copy.assistant.error);
+      setTool(null);
     } finally {
-      if (controllerRef.current === controller) controllerRef.current = null;
+      if (!terminalError && messageController.current === controller) {
+        setPhase((current) => (current === "streaming" ? "ready" : current));
+      }
+      if (messageController.current === controller) messageController.current = null;
     }
   }
 
-  function handleSend(value: string, displayValue = value) {
-    if (phase === "loading") return;
-    appendMessage("user", displayValue);
-
-    const expectedField = activeField;
-    const parsed = parseChatInput(value, draft, expectedField, copy.labels);
-    setDraft(parsed.draft);
-
-    if (expectedField && !parsed.recognized.includes(expectedField)) {
-      appendAssistant(invalidMessage(expectedField, copy), copy.fields[expectedField].prompt);
-      return;
-    }
-
-    if (!expectedField && parsed.recognized.length === 0) {
-      appendAssistant(copy.assistant.noRecognition);
-      return;
-    }
-
-    const nextField = getNextChatField(parsed.draft);
-    if (nextField) {
-      setActiveField(nextField);
-      setPhase("collecting");
-      appendAssistant(copy.assistant.understood, copy.fields[nextField].prompt);
-      return;
-    }
-
-    setActiveField(null);
-    appendAssistant(
-      getNextChatField(draft) === null ? copy.assistant.changed : copy.assistant.understood,
-      copy.assistant.searching,
-    );
-    void runMatch(parsed.draft);
+  function restart() {
+    messageController.current?.abort();
+    setRestartKey((current) => current + 1);
   }
 
-  function handleEdit(field: ChatField) {
-    controllerRef.current?.abort();
-    setActiveField(field);
-    setPhase("collecting");
-    setResult(null);
-    setError(null);
-    appendAssistant(copy.fields[field].prompt);
-  }
-
-  function handleRestart() {
-    controllerRef.current?.abort();
-    messageSequence.current = 4;
-    setDraft(EMPTY_CHAT_DRAFT);
-    setActiveField("category");
-    setPhase("collecting");
-    setResult(null);
-    setError(null);
-    setMessages([
-      ...initialMessages(copy).slice(0, 2),
-      { id: "restart", role: "assistant", text: copy.assistant.restarted },
-      { id: "restart-question", role: "assistant", text: copy.fields.category.prompt },
-    ]);
-  }
-
-  const pending = phase === "loading";
+  const pending = phase === "starting" || phase === "streaming";
+  const summary =
+    attachment?.type === "match"
+      ? attachment.match.summary
+      : attachment?.type === "bundle"
+        ? attachment.bundle.summary
+        : "";
 
   return (
     <>
-      <a className={styles.skipLink} href="#chat-conversation">{copy.skip}</a>
+      <a className={styles.skipLink} href="#chat-conversation">
+        {copy.skip}
+      </a>
       <ChatHeader copy={copy} />
       <ChatHero copy={copy} />
 
@@ -208,53 +226,61 @@ export function ChatExperience() {
           <div className={styles.conversationHeader}>
             <div>
               <span aria-hidden="true" />
-              <strong>{copy.assistant.name}</strong>
+              <strong>{copy.modes[mode].label}</strong>
             </div>
-            <button disabled={pending} onClick={handleRestart} type="button">
+            <button disabled={pending} onClick={restart} type="button">
               {copy.actions.restart}
             </button>
           </div>
           <ChatThread copy={copy} messages={messages} pending={pending} />
           <ChatComposer
             copy={copy}
-            disabled={pending}
-            focusKey={activeField ?? phase}
+            disabled={pending || !sessionId}
+            focusKey={`${sessionId ?? "starting"}-${phase}`}
             onSend={handleSend}
-            placeholder={activeField ? copy.fields[activeField].placeholder : copy.actions.change}
+            placeholder={copy.composer.placeholder}
             quickReplies={quickReplies}
           />
         </motion.section>
 
-        <ChatProgress
-          activeField={activeField}
+        <ChatSessionPanel
           copy={copy}
-          draft={draft}
-          locale={locale}
-          onEdit={handleEdit}
-          pending={pending}
+          mode={mode}
+          onModeChange={setMode}
+          phase={phase}
+          sessionId={sessionId}
+          tool={tool}
         />
       </main>
 
       <div className="visually-hidden" aria-live="polite" aria-atomic="true">
-        {pending ? copy.assistant.searching : error ?? result?.summary ?? ""}
+        {pending ? copy.assistant.searching : error ?? summary}
       </div>
 
       {error && (
         <section className={styles.error} role="alert">
           <p>{error}</p>
           <div>
-            <button onClick={() => {
-              appendAssistant(copy.assistant.searching);
-              void runMatch(draft);
-            }} type="button">
-              {copy.actions.retry}
+            {lastMessage && sessionId && (
+              <button onClick={() => void handleSend(lastMessage)} type="button">
+                {copy.actions.retry}
+              </button>
+            )}
+            <button onClick={restart} type="button">
+              {copy.actions.restart}
             </button>
-            <button onClick={handleRestart} type="button">{copy.actions.restart}</button>
           </div>
         </section>
       )}
 
-      {result && <ChatResults copy={copy} locale={locale} result={result} sectionRef={resultRef} />}
+      {attachment && (
+        <ChatAttachmentResults
+          attachment={attachment}
+          copy={copy}
+          locale={locale}
+          sectionRef={resultRef}
+        />
+      )}
 
       <footer className={styles.footer}>
         <strong>{copy.brand}</strong>

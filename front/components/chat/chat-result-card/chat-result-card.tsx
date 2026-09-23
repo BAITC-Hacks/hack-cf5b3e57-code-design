@@ -4,6 +4,11 @@ import Image from "next/image";
 import Link from "next/link";
 import { useState } from "react";
 
+import {
+  CheckStatusIcon,
+  ClaimedStatusIcon,
+  ExternalLinkIcon,
+} from "@/components/shared/status-icons/status-icons";
 import type { Locale, MatchCard } from "../../../../shared/contract";
 import type { ChatMessages } from "@/lib/i18n/messages/chat";
 import styles from "./chat-result-card.module.css";
@@ -79,7 +84,7 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
             {card.factsUsed.map((fact, index) => (
               <li key={`${fact.key}-${index}`}>
                 <span className={fact.verified ? styles.verified : styles.claimed} aria-hidden="true">
-                  {fact.verified ? "✓" : "○"}
+                  {fact.verified ? <CheckStatusIcon /> : <ClaimedStatusIcon />}
                 </span>
                 <span>
                   <strong>{fact.label}</strong>
@@ -92,7 +97,7 @@ export function ChatResultCard({ card, copy, locale, rank }: ChatResultCardProps
 
         <Link className={styles.profileLink} href={`/contractor/${card.id}`}>
           {card.id}
-          <span aria-hidden="true">↗</span>
+          <ExternalLinkIcon />
         </Link>
       </div>
     </article>

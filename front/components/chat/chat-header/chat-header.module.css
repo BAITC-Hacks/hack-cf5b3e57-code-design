@@ -12,44 +12,7 @@
 }
 
 .brand {
-  display: inline-flex;
   width: max-content;
-  align-items: center;
-  gap: 10px;
-  font-size: var(--font-16);
-  font-weight: 800;
-  letter-spacing: -0.035em;
-}
-
-.mark {
-  display: flex;
-  width: 28px;
-  height: 28px;
-  align-items: flex-end;
-  justify-content: center;
-  gap: 2px;
-  padding: 6px;
-  border-radius: 9px;
-  background: var(--color-dark);
-}
-
-.mark span {
-  width: 3px;
-  border-radius: 4px;
-  background: #fff;
-}
-
-.mark span:nth-child(1) {
-  height: 8px;
-}
-
-.mark span:nth-child(2) {
-  height: 15px;
-  background: #8bd5b7;
-}
-
-.mark span:nth-child(3) {
-  height: 11px;
 }
 
 .navigation {

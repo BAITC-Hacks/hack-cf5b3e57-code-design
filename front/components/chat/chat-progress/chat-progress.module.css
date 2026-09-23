@@ -85,6 +85,11 @@
   font-size: 12px;
 }
 
+.index svg {
+  width: 15px;
+  height: 15px;
+}
+
 .field {
   display: grid;
   min-width: 0;

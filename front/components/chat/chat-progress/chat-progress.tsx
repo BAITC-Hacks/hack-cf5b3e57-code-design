@@ -2,6 +2,7 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 
+import { CheckStatusIcon } from "@/components/shared/status-icons/status-icons";
 import type { Locale } from "../../../../shared/contract";
 import {
   CHAT_FIELDS,
@@ -54,7 +55,7 @@ export function ChatProgress({
               transition={{ delay: reduceMotion ? 0 : index * 0.035, duration: reduceMotion ? 0 : 0.28 }}
             >
               <span className={styles.index} aria-hidden="true">
-                {value ? "✓" : String(index + 1).padStart(2, "0")}
+                {value ? <CheckStatusIcon /> : String(index + 1).padStart(2, "0")}
               </span>
               <span className={styles.field}>
                 <strong>

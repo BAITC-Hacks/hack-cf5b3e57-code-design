@@ -171,6 +171,11 @@
   font-weight: 800;
 }
 
+.facts li > span:first-child svg {
+  width: 13px;
+  height: 13px;
+}
+
 .verified {
   background: #e2f0e8;
   color: #34704f;
@@ -210,4 +215,9 @@
 
 .profileLink:hover {
   color: #244b37;
+}
+
+.profileLink svg {
+  width: 15px;
+  height: 15px;
 }

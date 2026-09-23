@@ -1,0 +1,50 @@
+.root {
+  display: grid;
+  gap: 8px;
+}
+
+.root button {
+  position: relative;
+  display: grid;
+  min-height: 66px;
+  padding: 13px 14px;
+  overflow: hidden;
+  border: 1px solid #dde1de;
+  border-radius: 15px;
+  background: #fff;
+  color: #676b67;
+  cursor: pointer;
+  text-align: left;
+}
+
+.root button:disabled {
+  cursor: wait;
+  opacity: 0.62;
+}
+
+.root button > span:last-child {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  gap: 4px;
+}
+
+.root strong {
+  color: var(--color-dark);
+  font-size: 11px;
+}
+
+.root small {
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.root .active {
+  border-color: #7da08e;
+}
+
+.indicator {
+  position: absolute;
+  inset: 0;
+  background: #edf5f0;
+}

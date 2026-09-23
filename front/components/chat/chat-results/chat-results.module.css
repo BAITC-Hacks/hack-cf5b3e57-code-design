@@ -14,6 +14,7 @@
   border: 1px solid var(--tm-line);
   border-radius: var(--tm-radius-card);
   background: var(--tm-ocean);
+  box-shadow: var(--tm-shadow-card, 0 12px 32px rgb(37 61 53 / 7%));
 }
 
 .outcome[data-outcome="no_category_in_city"],
@@ -62,6 +63,7 @@
   border: 1px solid var(--tm-line);
   border-radius: var(--tm-radius-card);
   background: var(--tm-surface);
+  box-shadow: var(--tm-shadow-card, 0 12px 32px rgb(37 61 53 / 7%));
 }
 
 .criteria h3,

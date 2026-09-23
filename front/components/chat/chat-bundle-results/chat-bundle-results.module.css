@@ -9,9 +9,10 @@
 .overview,
 .group {
   padding: 26px 28px;
-  border: 1px solid rgb(29 29 31 / 8%);
+  border: 1px solid var(--color-line, #dce2d9);
   border-radius: 22px;
-  background: rgb(255 255 255 / 78%);
+  background: rgb(255 255 255 / 88%);
+  box-shadow: 0 12px 32px rgb(37 61 53 / 7%);
 }
 
 .overview {
@@ -69,9 +70,10 @@
   display: grid;
   gap: 15px;
   padding: 18px;
-  border: 1px solid #e2e4e1;
+  border: 1px solid var(--color-line, #dce2d9);
   border-radius: 18px;
   background: #f8f8f6;
+  box-shadow: 0 8px 22px rgb(37 61 53 / 5%);
 }
 
 .item header {

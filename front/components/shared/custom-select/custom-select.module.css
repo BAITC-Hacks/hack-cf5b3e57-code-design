@@ -4,10 +4,16 @@
   min-width: 0;
 }
 
+.root:focus-within {
+  z-index: 120;
+}
+
 .trigger {
   display: grid;
   width: 100%;
+  max-width: 100%;
   min-height: 48px;
+  overflow: hidden;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
   gap: 10px;
@@ -74,6 +80,7 @@
   left: 0;
   z-index: 100;
   max-height: min(300px, 48vh);
+  min-width: 0;
   padding: 6px;
   overflow-y: auto;
   border: 1px solid var(--color-line, #dce2d9);
@@ -96,6 +103,11 @@
   cursor: pointer;
   font-size: var(--font-14, 14px);
   line-height: 1.35;
+}
+
+.option > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
 }
 
 .option[data-active="true"] {

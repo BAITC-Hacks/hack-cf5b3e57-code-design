@@ -29,6 +29,13 @@ import type { DemoPreset } from "../shared/manager-data";
 import type { DateComparison, RunStatus, TimelineItem } from "../shared/manager-types";
 import styles from "./manager-workspace.module.css";
 
+/** "2026-10-16" + 7 → "2026-10-23" (UTC, no timezone drift). */
+function addDays(isoDate: string, days: number) {
+  const [year, month, day] = isoDate.split("-").map(Number);
+  if (!year || !month || !day) return isoDate;
+  return new Date(Date.UTC(year, month - 1, day + days, 12)).toISOString().slice(0, 10);
+}
+
 export function ManagerWorkspace() {
   const { locale } = useLocale();
   const messages = MANAGER_MESSAGES[locale];
@@ -45,6 +52,9 @@ export function ManagerWorkspace() {
   const [isComparing, setIsComparing] = useState(false);
   const [comparison, setComparison] = useState<DateComparison | null>(null);
   const [comparisonError, setComparisonError] = useState<string | null>(null);
+  // Date B follows the form date (+7 days) until the manager picks it explicitly.
+  const [customCompareDate, setCustomCompareDate] = useState<string | null>(null);
+  const [comparedDates, setComparedDates] = useState<[string, string] | null>(null);
   const streamCloseRef = useRef<null | (() => void)>(null);
   const compareCloseRef = useRef<null | (() => void)>(null);
   const generationRef = useRef(0);
@@ -100,13 +110,24 @@ export function ManagerWorkspace() {
     });
   }, [appendTimeline, failRun, locale, messages, stopConnections]);
 
+  // The live pipeline renders below the request form — bring it into view when a run starts.
+  function revealTimeline() {
+    const node = timelineRef.current;
+    if (typeof window === "undefined" || !node) return;
+    const top = node.getBoundingClientRect().top;
+    if (top >= 80 && top < window.innerHeight * 0.6) return;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Leave room for the sticky header.
+    window.scrollTo({ top: Math.max(0, top + window.scrollY - 96), behavior: reduced ? "auto" : "smooth" });
+  }
+
+  function startRun(nextRequest: MatchRequest) {
+    runMatch(nextRequest);
+    revealTimeline();
+  }
+
   function selectPreset(preset: DemoPreset) {
-    runMatch({ ...preset.request, locale });
-    // On narrow screens the stream renders below the presets — bring it into view.
-    if (typeof window !== "undefined" && window.matchMedia("(max-width: 1000px)").matches) {
-      const reduced = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-      timelineRef.current?.scrollIntoView({ behavior: reduced ? "auto" : "smooth", block: "start" });
-    }
+    startRun({ ...preset.request, locale });
   }
 
   function cancelRun() {
@@ -123,8 +144,10 @@ export function ManagerWorkspace() {
     stopConnections();
     setStatus((current) => current === "running" || current === "connecting" ? "cancelled" : current);
     setIsComparing(true); setComparison(null); setComparisonError(null);
-    const first = collectMatchResult({ ...request, date: "2026-10-16", locale });
-    const second = collectMatchResult({ ...request, date: "2026-10-23", locale });
+    const dates: [string, string] = [request.date, compareDate];
+    setComparedDates(dates);
+    const first = collectMatchResult({ ...request, date: dates[0], locale });
+    const second = collectMatchResult({ ...request, date: dates[1], locale });
     compareCloseRef.current = () => { first.cancel(); second.cancel(); };
     try {
       const [firstResult, secondResult] = await Promise.all([first.result, second.result]);
@@ -136,6 +159,7 @@ export function ManagerWorkspace() {
     }
   }
 
+  const compareDate = customCompareDate ?? addDays(request.date, 7);
   const streaming = status === "connecting" || status === "running";
   const busy = streaming || isComparing;
   const localizedRequest: MatchRequest = { ...request, locale };
@@ -143,7 +167,7 @@ export function ManagerWorkspace() {
     <ManagerShell>
       <ManagerHero status={status} />
       <div className={styles.request}>
-        <MatchRequestForm request={localizedRequest} busy={busy} onChange={setRequest} onRun={() => runMatch(localizedRequest)} onCancel={cancelRun} />
+        <MatchRequestForm request={localizedRequest} busy={busy} onChange={setRequest} onRun={() => startRun(localizedRequest)} onCancel={cancelRun} />
         <DemoPresets busy={busy} onSelect={selectPreset} />
       </div>
       <div className={styles.live}>
@@ -155,7 +179,7 @@ export function ManagerWorkspace() {
         </div>
       </div>
       <ManagerResults cards={cards} result={result} />
-      <ComparisonPanel comparing={isComparing} comparison={comparison} error={comparisonError} onCompare={compareDates} />
+      <ComparisonPanel comparedDates={comparedDates} comparing={isComparing} comparison={comparison} error={comparisonError} firstDate={request.date} onCompare={compareDates} onSecondDateChange={setCustomCompareDate} secondDate={compareDate} />
       <JsonPanel result={result} />
     </ManagerShell>
   );

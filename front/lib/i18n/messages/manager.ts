@@ -45,6 +45,9 @@ export type ManagerMessages = {
     section: string; title: string; description: string; action: string; loading: string; changed: (count: number) => string;
     dropped: (names: string) => string; unchanged: string; count: (count: number) => string; onlyHere: string; cancelled: string; failed: string;
     empty: string; dateFilter: string;
+    descriptionCurrent: string; dateLabel: string; and: string; actionDates: (dates: string) => string;
+    diff: (dropped: number, added: number) => string; droppedOn: (date: string, names: string) => string;
+    unchangedOn: (date: string) => string; bothEmpty: string;
   };
   json: { title: string; hint: string };
   errors: { connection: string; parse: string };
@@ -82,7 +85,7 @@ const ru: ManagerMessages = {
       idle: { label: "Готов к запуску", description: "Заполните запрос или выберите демо-сценарий." },
       connecting: { label: "Подключаемся", description: "Связываемся с сервисом подбора." },
       running: { label: "Идёт подбор", description: "Шаги появляются по мере обработки." },
-      done: { label: "Подбор завершён", description: "Ответ проверен и собран в карточки." },
+      done: { label: "Подбор завершён", description: "Ответ проверен — результат и причины ниже." },
       cancelled: { label: "Остановлено", description: "Подбор прерван. Его можно запустить снова." },
       error: { label: "Нет связи", description: "Сервис подбора не ответил. Попробуйте ещё раз." },
     },
@@ -143,6 +146,10 @@ const ru: ManagerMessages = {
     dropped: (names) => `Выпали к 23 октября из-за занятости: ${names}.`, unchanged: "Никто из подборки на 16 октября не выпал на второй дате.",
     count: (count) => `${count} в подборке`, onlyHere: "Только здесь", cancelled: "Сравнение отменено.", failed: "Не удалось сравнить две даты. Попробуйте ещё раз.",
     empty: "Подходящих подрядчиков нет", dateFilter: "Фильтр по дате",
+    descriptionCurrent: "Сохраним все поля формы и сравним выдачу на двух датах. Так видно, кто выпал именно из-за занятости.",
+    dateLabel: "Сравнить с датой", and: "и", actionDates: (dates) => `Сравнить ${dates}`,
+    diff: (dropped, added) => `Ушли: ${dropped} · Пришли: ${added}`, droppedOn: (date, names) => `Выпали к ${date} из-за занятости: ${names}.`,
+    unchangedOn: (date) => `Никто из подборки на ${date} не выпал на второй дате.`, bothEmpty: "Ни на одну из дат никто не подходит",
   },
   json: { title: "Технические данные ответа", hint: "Полный ответ сервиса — для разработчиков" },
   errors: { connection: "Не удалось связаться с сервисом подбора. Попробуйте ещё раз через минуту.", parse: "Сервис прислал непонятный ответ. Запустите подбор ещё раз." },
@@ -167,7 +174,7 @@ const kk: ManagerMessages = {
       idle: { label: "Іске қосуға дайын", description: "Сұрауды толтырыңыз немесе демо-сценарийді таңдаңыз." },
       connecting: { label: "Қосылып жатыр", description: "Іріктеу қызметімен байланысып жатырмыз." },
       running: { label: "Іріктеу жүріп жатыр", description: "Қадамдар өңделу барысында пайда болады." },
-      done: { label: "Іріктеу аяқталды", description: "Жауап тексеріліп, карточкаларға жиналды." },
+      done: { label: "Іріктеу аяқталды", description: "Жауап тексерілді — нәтиже мен себептері төменде." },
       cancelled: { label: "Тоқтатылды", description: "Іріктеу үзілді. Қайта іске қосуға болады." },
       error: { label: "Байланыс жоқ", description: "Іріктеу қызметі жауап бермеді. Қайталап көріңіз." },
     },
@@ -224,6 +231,10 @@ const kk: ManagerMessages = {
     dropped: (names) => `23 қазанда бос болмағандықтан шықты: ${names}.`, unchanged: "16 қазандағы іріктеуден екінші күні ешкім шықпады.",
     count: (count) => `Іріктеуде ${count}`, onlyHere: "Тек мұнда", cancelled: "Салыстыру тоқтатылды.", failed: "Екі күнді салыстыру мүмкін болмады. Қайталап көріңіз.",
     empty: "Сәйкес мердігерлер жоқ", dateFilter: "Күн бойынша сүзгі",
+    descriptionCurrent: "Форманың барлық өрісін сақтап, екі күндегі нәтижені салыстырамыз. Кімнің бос еместіктен шыққаны көрінеді.",
+    dateLabel: "Салыстыратын күн", and: "және", actionDates: (dates) => `${dates} күндерін салыстыру`,
+    diff: (dropped, added) => `Шықты: ${dropped} · Кірді: ${added}`, droppedOn: (date, names) => `${date} бос болмағандықтан шықты: ${names}.`,
+    unchangedOn: (date) => `${date} іріктеуден екінші күні ешкім шықпады.`, bothEmpty: "Екі күнге де ешкім сәйкес келмейді",
   },
   json: { title: "Жауаптың техникалық деректері", hint: "Қызметтің толық жауабы — әзірлеушілерге" },
   errors: { connection: "Іріктеу қызметімен байланысу мүмкін болмады. Бір минуттан кейін қайталап көріңіз.", parse: "Қызмет түсініксіз жауап жіберді. Іріктеуді қайта бастаңыз." },
@@ -248,7 +259,7 @@ const en: ManagerMessages = {
       idle: { label: "Ready to run", description: "Fill in the request or pick a demo scenario." },
       connecting: { label: "Connecting", description: "Reaching the matching service." },
       running: { label: "Matching in progress", description: "Steps appear as they are processed." },
-      done: { label: "Matching complete", description: "The response is checked and assembled into cards." },
+      done: { label: "Matching complete", description: "The response is checked — results and reasons are below." },
       cancelled: { label: "Stopped", description: "Matching was stopped. You can run it again." },
       error: { label: "No connection", description: "The matching service did not respond. Try again." },
     },
@@ -306,6 +317,10 @@ const en: ManagerMessages = {
     dropped: (names) => `Unavailable on October 23: ${names}.`, unchanged: "Nobody from the October 16 selection dropped out on the second date.",
     count: (count) => `${count} selected`, onlyHere: "Only here", cancelled: "Comparison cancelled.", failed: "Could not compare the two dates. Please try again.",
     empty: "No suitable contractors", dateFilter: "Date filter",
+    descriptionCurrent: "We keep every form field and compare two dates to show who dropped out because of availability.",
+    dateLabel: "Compare with date", and: "and", actionDates: (dates) => `Compare ${dates}`,
+    diff: (dropped, added) => `Dropped: ${dropped} · Added: ${added}`, droppedOn: (date, names) => `Unavailable on ${date}: ${names}.`,
+    unchangedOn: (date) => `Nobody from the ${date} selection dropped out on the second date.`, bothEmpty: "Nobody matches on either date",
   },
   json: { title: "Technical response data", hint: "The full service response — for developers" },
   errors: { connection: "Could not reach the matching service. Please try again in a minute.", parse: "The service sent an unexpected response. Run matching again." },

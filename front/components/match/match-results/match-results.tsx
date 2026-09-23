@@ -18,6 +18,7 @@ interface MatchResultsProps {
 
 export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsProps) {
   const hasCards = result.cards.length > 0;
+  const emptyAdvice = result.outcome === "no_category_in_city" ? copy.emptyActionCity : copy.emptyAction;
 
   return (
     <section
@@ -32,9 +33,9 @@ export function MatchResults({ copy, locale, result, sectionRef }: MatchResultsP
         copy={copy}
         criteria={result.criteria}
         editLabel={hasCards ? undefined : copy.editRequest}
-        hint={hasCards || !result.summary ? undefined : copy.emptyAction}
+        hint={hasCards || !result.summary ? undefined : emptyAdvice}
         locale={locale}
-        message={hasCards ? undefined : result.summary || copy.emptyAction}
+        message={hasCards ? undefined : result.summary || emptyAdvice}
         variant={hasCards ? "found" : "sorry"}
       />
 

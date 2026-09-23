@@ -1,7 +1,7 @@
 export const siteCopy = {
   ru: {
     catalog: "Каталог", match: "Подбор", venues: "Для менеджера",
-    assistant: "Ассистент", manager: "Для менеджера", cta: "Подобрать с AI",
+    assistant: "Ассистент", manager: "Для менеджера", cta: "Подобрать с ИИ",
     brandAria: "ToiMatch — на главную",
     navigation: "Основная навигация", language: "Язык интерфейса", skip: "Перейти к содержимому",
     menuOpen: "Открыть меню", menuClose: "Закрыть меню", menu: "Меню",
@@ -10,13 +10,13 @@ export const siteCopy = {
     photo: "Фото подрядчиков — ИИ-иллюстрации. Выбор объясняем фактами из каталога.",
     rights: "© 2026 ToiMatch",
     notFoundCode: "Ошибка 404",
-    notFound: "Страница не найдена", notFoundText: "Возможно, ссылка устарела. Найдите подрядчика в каталоге или начните подбор с AI.",
-    notFoundMatch: "Подобрать с AI",
+    notFound: "Страница не найдена", notFoundText: "Возможно, ссылка устарела. Найдите подрядчика в каталоге или начните подбор с ИИ.",
+    notFoundMatch: "Подобрать с ИИ",
     mascotAlt: "Нурлан, консьерж ToiMatch, разводит руками",
   },
   kk: {
     catalog: "Каталог", match: "Іріктеу", venues: "Менеджерге",
-    assistant: "Көмекші", manager: "Менеджерге", cta: "AI арқылы таңдау",
+    assistant: "Көмекші", manager: "Менеджерге", cta: "ЖИ арқылы таңдау",
     brandAria: "ToiMatch — басты бет",
     navigation: "Негізгі навигация", language: "Интерфейс тілі", skip: "Мазмұнға өту",
     menuOpen: "Мәзірді ашу", menuClose: "Мәзірді жабу", menu: "Мәзір",
@@ -25,8 +25,8 @@ export const siteCopy = {
     photo: "Мердігер фотолары — ЖИ иллюстрациялары. Әр таңдауды каталог деректерімен түсіндіреміз.",
     rights: "© 2026 ToiMatch",
     notFoundCode: "404 қатесі",
-    notFound: "Бет табылмады", notFoundText: "Сілтеме ескірген болуы мүмкін. Каталогтан мердігер табыңыз немесе AI арқылы іріктеуді бастаңыз.",
-    notFoundMatch: "AI арқылы таңдау",
+    notFound: "Бет табылмады", notFoundText: "Сілтеме ескірген болуы мүмкін. Каталогтан мердігер табыңыз немесе ЖИ арқылы іріктеуді бастаңыз.",
+    notFoundMatch: "ЖИ арқылы таңдау",
     mascotAlt: "ToiMatch консьержі Нұрлан қолын жаяды",
   },
   en: {

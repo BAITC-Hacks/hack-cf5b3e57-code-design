@@ -206,3 +206,32 @@
   .loading span { animation: none; }
   .intro button { transition: none; }
 }
+
+.dateField {
+  display: grid;
+  max-width: 260px;
+  gap: 6px;
+  margin-top: 20px;
+}
+
+.dateField > span {
+  color: var(--tm-muted);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.dateField input {
+  min-height: 48px;
+  padding: 0 14px;
+  border: 1px solid var(--tm-line);
+  border-radius: 14px;
+  background: var(--tm-surface);
+  color: var(--tm-ink);
+  font: inherit;
+  font-size: 15px;
+}
+
+.dateField input:focus-visible {
+  outline: 2px solid var(--tm-ocean-ink);
+  outline-offset: 2px;
+}

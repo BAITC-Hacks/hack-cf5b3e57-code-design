@@ -7,10 +7,59 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-model User {
-  id        Int      @id @default(autoincrement())
-  email     String   @unique
-  name      String?
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+/// Профиль подрядчика event-площадки. Схема повторяет колонки датасета организаторов.
+model Contractor {
+  id            String   @id
+  anonName      String
+  categories    String[]
+  city          String
+  cityImputed   Boolean  @default(false)
+  synthetic     Boolean  @default(false)
+  priceFromKzt  Int
+  priceImputed  Boolean  @default(false)
+  eventFormats  String[]
+  languages     String[]
+  maxHours      Int?
+  busyDates     String[]
+  description   String
+
+  enrichment    Enrichment?
+
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([city])
+  @@map("contractors")
+}
+
+/// Офлайн-обогащение: агент один раз проходит по каждому описанию и достаёт
+/// специализацию и проверяемые признаки. Используется на этапе объяснения.
+model Enrichment {
+  contractorId   String   @id
+  contractor     Contractor @relation(fields: [contractorId], references: [id], onDelete: Cascade)
+  specialization String
+  signals        String[]
+  raw            Json?
+
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  @@map("enrichments")
+}
+
+/// Кэш объяснений LLM. Ключ — хэш нормализованного запроса + id подрядчика.
+/// Обеспечивает детерминизм: тот же запрос → тот же текст.
+model ExplanationCache {
+  id           String   @id @default(cuid())
+  requestHash  String
+  contractorId String
+  reason       String
+  factsUsed    Json
+  version      Int      @default(1)
+
+  createdAt    DateTime @default(now())
+
+  @@unique([requestHash, contractorId])
+  @@index([requestHash])
+  @@map("explanation_cache")
 }

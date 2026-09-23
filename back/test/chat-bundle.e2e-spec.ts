@@ -812,6 +812,223 @@ describe('bundle chat in MOCK mode', () => {
       jest.useRealTimers();
     }
   });
+
+  it('answers a category question and recalculates after the reported Almaty budget cut and decorator removal', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+
+      const first = completedBundle(
+        await collect(
+          chat.streamMessage(
+            sessionId,
+            'У меня свадьба в Алмате. 26 октября. бюджет 5 млн',
+          ),
+        ),
+      );
+      expect(first.bundle).toMatchObject({
+        city: 'Алматы',
+        date: '2026-10-26',
+        eventType: 'свадьба',
+        totalBudgetKzt: 5_000_000,
+      });
+
+      const budgetCut = await collect(
+        chat.streamMessage(sessionId, 'Блин, бюджет сократился до 4 млн'),
+      );
+      expect(budgetCut.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'estimate_bundle_minimum',
+        expect.objectContaining({
+          city: 'Алматы',
+          date: '2026-10-26',
+          eventType: 'свадьба',
+          requiredCategories: [
+            'Ведущий',
+            'Банкетный зал',
+            'Фотограф',
+            'Декоратор',
+          ],
+        }),
+      ]);
+      const fullEstimateCall = execute.mock.results.at(-1);
+      const fullEstimate = (await fullEstimateCall?.value) as {
+        totalMinKzt: number;
+        breakdown: { category: string; minKzt: number }[];
+      };
+      expect(fullEstimate.totalMinKzt).toBeGreaterThan(4_000_000);
+      const budgetCutDone = budgetCut.find((event) => event.type === 'done');
+      if (budgetCutDone?.type !== 'done') {
+        throw new Error('missing budget-cut done event');
+      }
+      expect(budgetCutDone.data.message.content).toMatch(/4\s*000\s*000/iu);
+
+      const callsBeforeQuestion = execute.mock.calls.length;
+      const categoryQuestion = await collect(
+        chat.streamMessage(sessionId, 'А какие категории вообще бывают'),
+      );
+      expect(categoryQuestion.some((event) => event.type === 'error')).toBe(
+        false,
+      );
+      expect(
+        categoryQuestion.some((event) => event.type === 'tool_start'),
+      ).toBe(false);
+      expect(
+        categoryQuestion.some((event) => event.type === 'attachment'),
+      ).toBe(false);
+      expect(execute.mock.calls).toHaveLength(callsBeforeQuestion);
+      const categoryDone = categoryQuestion.find(
+        (event) => event.type === 'done',
+      );
+      if (categoryDone?.type !== 'done') {
+        throw new Error('missing category-question done event');
+      }
+      const categoryText = categoryDone.data.message.content;
+      expect(categoryText).toMatch(/обязательн/iu);
+      expect(categoryText).toMatch(/дополнительн|рекомендуем/iu);
+      expect(categoryText).toMatch(/ведущ/iu);
+      expect(categoryText).toMatch(/декоратор/iu);
+      expect(categoryText).toMatch(/флорист/iu);
+      expect(categoryText).not.toBe(budgetCutDone.data.message.content);
+      expect(categoryText).not.toMatch(/нужно минимум|нужен минимум/iu);
+
+      const removal = await collect(
+        chat.streamMessage(sessionId, 'Давай уберем декоратора'),
+      );
+      expect(removal.some((event) => event.type === 'error')).toBe(false);
+      expect(execute.mock.calls.length).toBeGreaterThan(callsBeforeQuestion);
+      const estimateCalls = execute.mock.calls.filter(
+        ([name]) => name === 'estimate_bundle_minimum',
+      );
+      expect(estimateCalls.at(-1)).toEqual([
+        'estimate_bundle_minimum',
+        expect.objectContaining({
+          city: 'Алматы',
+          date: '2026-10-26',
+          eventType: 'свадьба',
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+        }),
+      ]);
+      const newEstimateResult = execute.mock.results
+        .filter(
+          (_, index) =>
+            execute.mock.calls[index][0] === 'estimate_bundle_minimum',
+        )
+        .at(-1);
+      const newEstimate = (await newEstimateResult?.value) as {
+        totalMinKzt: number;
+      };
+      const decoratorMin = fullEstimate.breakdown.find(
+        (item) => item.category === 'Декоратор',
+      )?.minKzt;
+      expect(decoratorMin).toBeGreaterThan(0);
+      if (decoratorMin === undefined) {
+        throw new Error('missing decorator minimum');
+      }
+      expect(newEstimate.totalMinKzt).toBe(
+        fullEstimate.totalMinKzt - decoratorMin,
+      );
+
+      const removalDone = removal.find((event) => event.type === 'done');
+      if (removalDone?.type !== 'done') {
+        throw new Error('missing removal done event');
+      }
+      expect(removalDone.data.message.content).toMatch(/декоратор/iu);
+      expect(removalDone.data.message.content).toMatch(/исключ|убрал|убран/iu);
+      if (newEstimate.totalMinKzt > 4_000_000) {
+        expect(removalDone.data.message.content).toContain(
+          newEstimate.totalMinKzt.toLocaleString('ru-RU'),
+        );
+        expect(removalDone.data.message.content).toMatch(/4\s*000\s*000/iu);
+        expect(removalDone.data.message.attachments).toBeUndefined();
+      } else {
+        const updatedBundle = completedBundle(removal);
+        expect(execute).toHaveBeenCalledWith(
+          'build_event_bundle',
+          expect.objectContaining({
+            city: 'Алматы',
+            date: '2026-10-26',
+            totalBudgetKzt: 4_000_000,
+            requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+          }),
+        );
+        expect(updatedBundle.bundle).toMatchObject({
+          city: 'Алматы',
+          date: '2026-10-26',
+          totalBudgetKzt: 4_000_000,
+        });
+        expect(
+          updatedBundle.bundle.required.map((item) => item.category),
+        ).toEqual(['Ведущий', 'Банкетный зал', 'Фотограф']);
+      }
+    } finally {
+      jest.useRealTimers();
+    }
+  });
+
+  it('treats a question about removing the decorator as a question, then applies an explicit removal', async () => {
+    jest.useFakeTimers().setSystemTime(new Date('2026-09-23T00:00:00.000Z'));
+    try {
+      const { chat, execute } = createHarness();
+      const { sessionId } = await chat.createSession({ mode: 'bundle' });
+      const initial = completedBundle(
+        await collect(
+          chat.streamMessage(
+            sessionId,
+            'Свадьба в Астане 17 октября, бюджет 5 млн ₸',
+          ),
+        ),
+      );
+      expect(initial.bundle.required.map((item) => item.category)).toContain(
+        'Декоратор',
+      );
+
+      const callsBeforeQuestion = execute.mock.calls.length;
+      const question = await collect(
+        chat.streamMessage(sessionId, 'Можно убрать декоратора?'),
+      );
+      expect(question.some((event) => event.type === 'error')).toBe(false);
+      expect(question.some((event) => event.type === 'tool_start')).toBe(false);
+      expect(question.some((event) => event.type === 'attachment')).toBe(false);
+      expect(execute.mock.calls).toHaveLength(callsBeforeQuestion);
+      const questionDone = question.find((event) => event.type === 'done');
+      if (questionDone?.type !== 'done') {
+        throw new Error('missing question done event');
+      }
+      expect(questionDone.data.message.content).toMatch(/декоратор/iu);
+      expect(questionDone.data.message.content).not.toMatch(/уже исключен/iu);
+
+      const removal = completedBundle(
+        await collect(chat.streamMessage(sessionId, 'Давай уберём декоратора')),
+      );
+      expect(execute.mock.calls.at(-2)).toEqual([
+        'estimate_bundle_minimum',
+        expect.objectContaining({
+          city: 'Астана',
+          date: '2026-10-17',
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+        }),
+      ]);
+      expect(execute.mock.calls.at(-1)).toEqual([
+        'build_event_bundle',
+        expect.objectContaining({
+          city: 'Астана',
+          date: '2026-10-17',
+          totalBudgetKzt: 5_000_000,
+          requiredCategories: ['Ведущий', 'Банкетный зал', 'Фотограф'],
+        }),
+      ]);
+      expect(removal.bundle.required.map((item) => item.category)).toEqual([
+        'Ведущий',
+        'Банкетный зал',
+        'Фотограф',
+      ]);
+      expect(removal.content).toMatch(/декоратор/iu);
+    } finally {
+      jest.useRealTimers();
+    }
+  });
 });
 
 describe('search chat in MOCK mode — slot extraction and memory', () => {

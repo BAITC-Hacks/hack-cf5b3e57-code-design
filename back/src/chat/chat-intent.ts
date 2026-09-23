@@ -256,6 +256,15 @@ function parseOne(text: string, now: Date): ChatIntent {
 
 export function parseCategoryActions(text: string): CategoryAction[] {
   const normalized = text.toLowerCase().replace(/ё/g, 'е');
+  // A question or a hypothetical is not permission to change the package.
+  if (
+    /(?:^|[.!?]\s*)(?:а\s+)?(?:можно\s+ли|можно|могу\s+ли|что\s+если|если|стоит\s+ли)\b/iu.test(
+      normalized,
+    ) ||
+    normalized.trimEnd().endsWith('?')
+  ) {
+    return [];
+  }
   const actions: (CategoryAction & { index: number })[] = [];
   const mentions = CATEGORY_PATTERNS.flatMap(([category, pattern]) =>
     [
@@ -290,7 +299,7 @@ export function parseCategoryActions(text: string): CategoryAction[] {
         .at(-1) ?? '';
     const after = normalized.slice(end, end + 40).split(/[,.!?;]/u)[0] ?? '';
     const removeBefore =
-      /(?:не\s+нуж(?:ен|на|ны)|не\s+надо|не\s+нужно|не\s+хочу|без|убери|убрать|исключи|исключить|откажемся\s+от)\s+(?:\S+\s+){0,2}$/iu.test(
+      /(?:не\s+нуж(?:ен|на|ны)|не\s+надо|не\s+нужно|не\s+хочу|без|убер(?:и|ем|ите)|убрать|исключ(?:и|им|ить)|откажемся\s+от)\s+(?:\S+\s+){0,2}$/iu.test(
         before,
       );
     const removeAfter =

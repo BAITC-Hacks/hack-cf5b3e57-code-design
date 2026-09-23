@@ -162,7 +162,17 @@ export class ChatService {
       const missing = this.missingRequired(intent, session.mode as ChatMode);
       let finalText: string;
 
-      if (missing) {
+      if (
+        session.mode === 'bundle' &&
+        intent.eventType &&
+        this.isCategoryOverviewQuestion(content) &&
+        parseCategoryActions(content).length === 0
+      ) {
+        finalText = this.bundleCategoriesText(
+          intent.eventType,
+          intent.excludedCategories ?? [],
+        );
+      } else if (missing) {
         finalText = await this.conversationalQuestion(
           content,
           session.locale as Locale,
@@ -186,6 +196,15 @@ export class ChatService {
         };
         if (this.isRepeatedCategoryAction(content, intent, previousIntent)) {
           finalText = this.repeatedCategoryActionText(content);
+        } else if (this.isCategoryChangeQuestion(content)) {
+          finalText = intent.category
+            ? `Да, категорию «${intent.category}» можно убрать из пакета. Если хотите исключить её и пересчитать бюджет, напишите: «Убери ${intent.category.toLowerCase()}». Пока состав пакета не менял.`
+            : 'Да, любую категорию можно убрать из пакета. Назовите её, и я пересчитаю бюджет. Пока состав пакета не менял.';
+        } else if (
+          this.isUnchangedBundleRequest(content, intent, previousIntent)
+        ) {
+          finalText =
+            'Условия подбора не изменились. Могу перечислить категории пакета или пересчитать его для другого бюджета, даты либо состава. Что хотите изменить?';
         } else if (categories.required.length === 0) {
           finalText =
             'Вы исключили все обязательные категории. Верните хотя бы одну категорию, чтобы я собрал пакет.';
@@ -397,6 +416,78 @@ export class ChatService {
     return 'Эти изменения уже учтены. Условия подбора не изменились.';
   }
 
+  private isCategoryOverviewQuestion(content: string): boolean {
+    const normalized = content.toLowerCase().replace(/ё/g, 'е');
+    return (
+      /(?:какие|какая|какую|каких|перечисли|покажи|список|что\s+(?:входит|есть)).{0,70}(?:категор|подрядчик|пакет)/iu.test(
+        normalized,
+      ) ||
+      /(?:категор|подрядчик|пакет).{0,70}(?:бывают|доступн|входят|какие|список)/iu.test(
+        normalized,
+      )
+    );
+  }
+
+  private isCategoryChangeQuestion(content: string): boolean {
+    const normalized = content.toLowerCase().replace(/ё/g, 'е');
+    return /(?:можно|могу|если|стоит).{0,60}(?:убрать|убер|исключ|без)/iu.test(
+      normalized,
+    );
+  }
+
+  private isUnchangedBundleRequest(
+    content: string,
+    intent: ChatIntent,
+    previousIntent: ChatIntent,
+  ): boolean {
+    const stated = parseChatIntent([content]);
+    for (const key of [
+      'city',
+      'date',
+      'eventType',
+      'budgetKzt',
+      'durationHours',
+      'language',
+    ] as const) {
+      if (stated[key] !== undefined) return false;
+      if (intent[key] !== previousIntent[key]) return false;
+    }
+    const previousExcluded = previousIntent.excludedCategories ?? [];
+    const currentExcluded = intent.excludedCategories ?? [];
+    return (
+      previousExcluded.length === currentExcluded.length &&
+      previousExcluded.every((category) => currentExcluded.includes(category))
+    );
+  }
+
+  private bundleCategoriesText(
+    eventType: string,
+    excludedCategories: string[],
+  ): string {
+    const base = BUNDLE_CATEGORIES[eventType];
+    const excluded = new Set(excludedCategories);
+    const required = base.required.filter(
+      (category) => !excluded.has(category),
+    );
+    const recommended = base.recommended.filter(
+      (category) => !excluded.has(category),
+    );
+    return [
+      `Для ${eventType === 'свадьба' ? 'свадьбы' : eventType === 'день рождения' ? 'дня рождения' : eventType} предлагаю такой пакет:`,
+      '',
+      '**Обязательные по умолчанию** (можно убрать):',
+      ...required.map((category) => `- ${category}`),
+      '',
+      '**Дополнительные по желанию:**',
+      ...recommended.map((category) => `- ${category}`),
+      ...(excludedCategories.length > 0
+        ? ['', `Уже исключены: ${excludedCategories.join(', ')}.`]
+        : []),
+      '',
+      'Назовите категорию, которую хотите убрать, — я пересчитаю пакет с вашим текущим бюджетом.',
+    ].join('\n');
+  }
+
   private async conversationalQuestion(
     content: string,
     locale: Locale,
@@ -537,6 +628,12 @@ export class ChatService {
       .map((item) => item.category);
     const prefix = actions.length > 0 ? 'Обновил пакет' : 'Подбор';
     return [
+      ...(actions.length > 0
+        ? [
+            `Состав пакета изменён: ${actions.map(({ category, action }) => `${action === 'remove' ? 'исключена' : 'добавлена'} категория «${category}»`).join(', ')}.`,
+            '',
+          ]
+        : []),
       `${prefix} ${cityLoc(bundle.city)} на ${date}, бюджет ${bundle.totalBudgetKzt.toLocaleString('ru-RU')} ₸.`,
       `Обязательные: ${foundRequired}/${bundle.required.length}; дополнительные: ${foundRecommended}/${bundle.recommended.length}.`,
       missing.length > 0

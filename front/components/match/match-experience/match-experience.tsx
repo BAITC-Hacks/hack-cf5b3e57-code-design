@@ -15,7 +15,6 @@ import type { MatchFormState } from "../match-form/match-form";
 import { MatchHero } from "../match-hero/match-hero";
 import { MatchResults } from "../match-results/match-results";
 import { MatchStatus } from "../match-status/match-status";
-import { Mascot } from "../mascot/mascot";
 import styles from "./match-experience.module.css";
 
 const INITIAL_FORM = toFormState(DEMO_PRESETS[0].request);
@@ -117,7 +116,6 @@ export function MatchExperience() {
 
       <div className={styles.shell}>
         <MatchHero copy={copy} />
-        <Mascot pose="hello" speech={copy.mascotHello} name={copy.mascotName} />
         <MatchForm
           copy={copy}
           form={form}
@@ -132,8 +130,6 @@ export function MatchExperience() {
         <div className={styles.liveRegion} aria-live="polite" aria-atomic="true">
           {pending ? copy.loadingSteps[loadingStep] : error ?? result?.summary ?? ""}
         </div>
-
-        {pending && <Mascot pose="thinking" speech={copy.loadingSteps[loadingStep]} name={copy.mascotName} />}
 
         <MatchStatus
           copy={copy}

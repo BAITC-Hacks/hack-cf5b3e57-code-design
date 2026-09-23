@@ -2,6 +2,87 @@
 
 > HackAlem AI 2026 · трек 06 «Креативные индустрии» · задача Firebird «Умный подбор подрядчиков» (#79-lite) · команда Code & Design (Ян Пинчук, Никита Костров, Иван Лысов)
 
+**Русский** · [Қазақша](README.kk.md) · [English](README.en.md)
+
+## Как запустить
+Нужен только Docker (с Docker Compose v2). Ключи не нужны.
+
+```bash
+git clone https://github.com/BAITC-Hacks/hack-cf5b3e57-code-design.git
+cd hack-cf5b3e57-code-design
+docker compose up --build
+```
+
+Одна команда поднимает PostgreSQL, применяет миграции, загружает сид (66 подрядчиков), запускает API и фронт. Первая сборка занимает несколько минут.
+
+- Сайт: http://localhost:3000 (подбор — http://localhost:3000/match)
+- API: http://localhost:3001/api/v1/health → `{"ok":true,"mock":true}`
+
+Остановить и очистить базу: `docker compose down -v`.
+
+### Пример переменных окружения
+Всё работает без файла `.env`. Для живой модели скопируйте [`.env.example`](.env.example) в `.env` в корне проекта (файл в `.gitignore`), впишите ключ и поставьте `MOCK=0`. Команда та же: `docker compose up --build`.
+
+```env
+# .env.example (корень проекта, для Docker Compose)
+MOCK=1                      # 1 — без модели; 0 — OpenAI (нужен ключ)
+OPENAI_API_KEY=             # необязательно
+MODEL_MAIN=gpt-4o-mini
+CORS_ORIGIN=http://localhost:3000
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+Для запуска без Docker есть отдельные примеры: [`back/.env.example`](back/.env.example) и [`front/.env.example`](front/.env.example).
+
+```env
+# back/.env.example
+DATABASE_URL="postgresql://postgres:postgres@localhost:5433/hackaton?schema=public"
+PORT=3001
+MOCK=1
+OPENAI_API_KEY=
+MODEL_MAIN=gpt-4o-mini
+
+# front/.env.example
+BACKEND_URL=http://localhost:3001
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+**Docker по умолчанию работает без ключа (`MOCK=1`)**: объяснения строятся из тех же проверенных фактов детерминированно, сеть не нужна. Для живой модели передайте `OPENAI_API_KEY` через окружение и установите `MOCK=0`; ключ не записывайте в репозиторий.
+
+### Запуск с живой моделью (по желанию)
+Нужен Node.js 22+. База остаётся в Docker, бэк и фронт запускаются локально:
+
+```bash
+docker compose up -d postgres
+cd back
+cp .env.example .env        # вписать OPENAI_API_KEY и установить MOCK=0
+npm install
+npx prisma migrate deploy
+npx prisma db seed
+npm run start:dev           # API на http://localhost:3001
+```
+
+Во втором терминале:
+```bash
+cd front
+cp .env.example .env.local
+npm install
+npm run dev                 # http://localhost:3000
+```
+
+### Переменные окружения
+| Переменная | Где | Зачем | Обязательна |
+|---|---|---|---|
+| `DATABASE_URL` | `back/.env` | подключение к PostgreSQL | да, значение из `back/.env.example` |
+| `PORT` | `back/.env` | порт API | нет, 3001 |
+| `OPENAI_API_KEY` | `back/.env` / окружение Compose | живые объяснения и чат моделью при `MOCK=0` | **нет** — без ключа работает MOCK |
+| `MODEL_MAIN` | `back/.env` | модель OpenAI | нет, `gpt-4o-mini` |
+| `MOCK` | `back/.env` / compose | `1` — принудительно без модели; `0` с ключом — OpenAI | нет; в Docker по умолчанию `1` |
+| `BACKEND_URL` | `front/.env.local` | адрес API для сервера Next.js | нет, `http://localhost:3001` (в Docker — `http://backend:3001`) |
+| `NEXT_PUBLIC_API_URL` | `front/.env.local` | адрес API для браузера (стрим на `/manager`) | нет, `http://localhost:3001` |
+
+Настоящих ключей в репозитории нет: `.env` и `.env.local` в `.gitignore`, в репозитории только `.env.example`, `back/.env.example` и `front/.env.example`.
+
 ## Проблема и для кого
 Заказчик мероприятия в Казахстане открывает каталог подрядчиков своего города и тонет в похожих профилях: описания одинаковые («харизма», «топ-10»), непонятно, чему верить и на что смотреть. Менеджер площадки вручную собирает клиенту 3 варианта и объясняет выбор.
 
@@ -48,58 +129,6 @@ NestJS (back/src/matching)
    ▼
 PostgreSQL (Prisma): contractors · enrichments · explanation_cache
 ```
-
-## Установка и запуск
-Нужен только Docker (с Docker Compose v2). Ключи не нужны.
-
-```bash
-git clone https://github.com/BAITC-Hacks/hack-cf5b3e57-code-design.git
-cd hack-cf5b3e57-code-design
-docker compose up --build
-```
-
-Одна команда поднимает PostgreSQL, применяет миграции, загружает сид (66 подрядчиков), запускает API и фронт. Первая сборка занимает несколько минут.
-
-- Сайт: http://localhost:3000 (подбор — http://localhost:3000/match)
-- API: http://localhost:3001/api/v1/health → `{"ok":true,"mock":true}`
-
-Остановить и очистить базу: `docker compose down -v`.
-
-**Docker по умолчанию работает без ключа (`MOCK=1`)**: объяснения строятся из тех же проверенных фактов детерминированно, сеть не нужна. Для живой модели передайте `OPENAI_API_KEY` через окружение и установите `MOCK=0`; ключ не записывайте в репозиторий.
-
-### Запуск с живой моделью (по желанию)
-Нужен Node.js 22+. База остаётся в Docker, бэк и фронт запускаются локально:
-
-```bash
-docker compose up -d postgres
-cd back
-cp .env.example .env        # вписать OPENAI_API_KEY и установить MOCK=0
-npm install
-npx prisma migrate deploy
-npx prisma db seed
-npm run start:dev           # API на http://localhost:3001
-```
-
-Во втором терминале:
-```bash
-cd front
-cp .env.example .env.local
-npm install
-npm run dev                 # http://localhost:3000
-```
-
-## Переменные окружения
-| Переменная | Где | Зачем | Обязательна |
-|---|---|---|---|
-| `DATABASE_URL` | `back/.env` | подключение к PostgreSQL | да, значение из `back/.env.example` |
-| `PORT` | `back/.env` | порт API | нет, 3001 |
-| `OPENAI_API_KEY` | `back/.env` / окружение Compose | живые объяснения и чат моделью при `MOCK=0` | **нет** — без ключа работает MOCK |
-| `MODEL_MAIN` | `back/.env` | модель OpenAI | нет, `gpt-4o-mini` |
-| `MOCK` | `back/.env` / compose | `1` — принудительно без модели; `0` с ключом — OpenAI | нет; в Docker по умолчанию `1` |
-| `BACKEND_URL` | `front/.env.local` | адрес API для сервера Next.js | нет, `http://localhost:3001` (в Docker — `http://backend:3001`) |
-| `NEXT_PUBLIC_API_URL` | `front/.env.local` | адрес API для браузера (стрим на `/manager`) | нет, `http://localhost:3001` |
-
-Настоящих ключей в репозитории нет: `.env` и `.env.local` в `.gitignore`, в репозитории только `*.env.example`.
 
 ## Экраны
 **Подбор `/match`** — запрос 1: три карточки, у каждой своё объяснение и проверенные факты.

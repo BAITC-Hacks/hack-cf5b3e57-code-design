@@ -1,4 +1,4 @@
-.funnel { margin-top: 24px; padding: 20px 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card, 0 12px 32px rgb(37 61 53 / 7%)); }
+.funnel { margin-top: 24px; padding: 20px 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); box-shadow: var(--tm-shadow-card); }
 .toggle { min-height: 44px; align-content: center; color: var(--tm-ink); font-size: 16px; font-weight: 600; cursor: pointer; }
 .toggle:focus-visible { outline: 3px solid var(--tm-ocean-ink); outline-offset: 3px; }
 .heading { display: flex; align-items: start; justify-content: space-between; gap: 20px; margin-top: 20px; }

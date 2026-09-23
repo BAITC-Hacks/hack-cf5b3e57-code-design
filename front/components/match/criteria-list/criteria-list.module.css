@@ -1,4 +1,4 @@
-.criteria { display: grid; grid-template-columns: 185px minmax(0, 1fr); gap: 24px; margin-top: 24px; padding: 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: color-mix(in srgb, var(--tm-ocean) 22%, var(--tm-surface)); box-shadow: var(--tm-shadow-card, 0 12px 32px rgb(37 61 53 / 7%)); }
+.criteria { display: grid; grid-template-columns: 185px minmax(0, 1fr); gap: 24px; margin-top: 24px; padding: 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: color-mix(in srgb, var(--tm-ocean) 22%, var(--tm-surface)); box-shadow: var(--tm-shadow-card); }
 .criteria > div { display: flex; align-items: start; gap: 10px; }
 .criteria > div svg { width: 23px; height: 23px; flex-shrink: 0; color: var(--tm-ocean-ink); }
 .criteria h3 { margin: 0; color: var(--tm-ink); font-size: 16px; }

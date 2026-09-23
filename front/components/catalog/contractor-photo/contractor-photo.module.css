@@ -1,0 +1,75 @@
+.frame {
+  position: relative;
+  min-height: 220px;
+  overflow: hidden;
+  border-radius: 22px;
+  background:
+    radial-gradient(circle at 18% 18%, rgb(255 255 255 / 72%), transparent 30%),
+    linear-gradient(145deg, #e8f1ec 0%, #dce9e2 48%, #cedfd6 100%);
+}
+
+.image {
+  object-fit: cover;
+  transition: transform 420ms ease;
+}
+
+.frame:hover .image {
+  transform: scale(1.025);
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  align-content: center;
+  gap: 12px;
+  padding: 24px;
+  color: #375e50;
+  text-align: center;
+}
+
+.fallback svg {
+  width: 58px;
+  height: 58px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.4;
+  opacity: 0.78;
+}
+
+.fallback span {
+  font-size: 13px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+.disclosure {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  z-index: 1;
+  padding: 6px 9px;
+  border: 1px solid rgb(255 255 255 / 46%);
+  border-radius: 999px;
+  background: rgb(20 35 29 / 68%);
+  color: #fff;
+  font-size: 9px;
+  font-weight: 650;
+  line-height: 1;
+  backdrop-filter: blur(8px);
+}
+
+@media (max-width: 640px) {
+  .frame {
+    min-height: 210px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .image {
+    transition: none;
+  }
+}

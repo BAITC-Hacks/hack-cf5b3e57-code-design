@@ -1,0 +1,140 @@
+.header {
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  border-bottom: 1px solid rgb(29 29 31 / 8%);
+  background: rgb(245 245 247 / 88%);
+  backdrop-filter: saturate(150%) blur(18px);
+}
+
+.inner {
+  display: flex;
+  width: min(calc(100% - 40px), var(--max-width, 1380px));
+  min-height: 74px;
+  align-items: center;
+  gap: 34px;
+  margin: 0 auto;
+}
+
+.brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 10px;
+  color: var(--color-dark, #1d1d1f);
+  font-size: var(--font-18, 18px);
+  font-weight: 800;
+  letter-spacing: -0.035em;
+}
+
+.brand > span:last-child {
+  display: grid;
+  gap: 1px;
+}
+
+.brand small {
+  color: #858587;
+  font-size: 8px;
+  font-weight: 650;
+  letter-spacing: 0.02em;
+}
+
+.brandMark {
+  display: grid;
+  width: 38px;
+  height: 38px;
+  place-items: center;
+  border-radius: 13px;
+  background: var(--color-dark, #1d1d1f);
+  color: #fff;
+  font-size: var(--font-18, 18px);
+}
+
+.nav {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.nav a {
+  min-height: 42px;
+  padding: 13px 14px 10px;
+  border-radius: 11px;
+  color: #68686b;
+  font-size: var(--font-12, 12px);
+  font-weight: 660;
+  white-space: nowrap;
+}
+
+.nav a:hover,
+.nav .active {
+  background: #fff;
+  color: var(--color-dark, #1d1d1f);
+}
+
+.cta {
+  display: inline-flex;
+  min-height: 42px;
+  flex: 0 0 auto;
+  align-items: center;
+  justify-content: center;
+  padding: 0 16px;
+  border-radius: 12px;
+  background: var(--color-accent, #0066cc);
+  color: #fff;
+  font-size: var(--font-12, 12px);
+  font-weight: 750;
+}
+
+.locale {
+  flex: 0 0 auto;
+}
+
+.cta:hover {
+  background: #0058b2;
+}
+
+@media (max-width: 1040px) {
+  .inner {
+    width: min(calc(100% - 32px), var(--max-width, 1380px));
+  }
+
+  .nav {
+    display: none;
+  }
+}
+
+@media (max-width: 760px) {
+  .inner {
+    min-height: 66px;
+  }
+
+  .brand small {
+    display: none;
+  }
+
+  .cta {
+    margin-left: 0;
+  }
+
+  .locale {
+    margin-left: auto;
+  }
+}
+
+@media (max-width: 480px) {
+  .inner {
+    width: min(calc(100% - 24px), var(--max-width, 1380px));
+  }
+
+  .brandMark {
+    width: 34px;
+    height: 34px;
+  }
+
+  .cta {
+    display: none;
+  }
+}

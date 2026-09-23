@@ -1,18 +1,28 @@
 import type { Metadata } from "next";
+import "@fontsource-variable/onest";
+import { LocaleProvider } from "@/lib/i18n/locale-provider";
+import { getRequestLocale } from "@/lib/i18n/get-request-locale";
 import "./globals.css";
 
 export const metadata: Metadata = {
   title: {
-    default: "HackAlem Admin",
-    template: "%s · HackAlem Admin",
+    default: "Тройка — подбор подрядчиков",
+    template: "%s · Тройка",
   },
-  description: "Управление каталогом подрядчиков HackAlem",
+  description:
+    "Объяснимый подбор подрядчиков для мероприятий по городу, дате и бюджету",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const locale = await getRequestLocale();
+
   return (
-    <html lang="ru">
-      <body>{children}</body>
+    <html lang={locale} data-scroll-behavior="smooth">
+      <body>
+        <LocaleProvider initialLocale={locale} key={locale}>
+          {children}
+        </LocaleProvider>
+      </body>
     </html>
   );
 }

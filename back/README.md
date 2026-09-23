@@ -25,6 +25,51 @@
 
 [Nest](https://github.com/nestjs/nest) framework TypeScript starter repository.
 
+This backend exposes authentication and an administrator-only view of the
+anonymized contractor dataset. Contractor records are separate from login
+users; roles are stored on `User` as `USER` or `ADMIN`.
+
+## Database and seed
+
+Set a PostgreSQL `DATABASE_URL`. To use the API, also set a random
+`SESSION_SECRET` of at least 32 characters. `ADMIN_EMAIL` / `ADMIN_PASSWORD`
+can override the development seed account. Do not commit real values. Then run:
+
+```powershell
+npm run prisma:generate
+npm run prisma:deploy
+npm run prisma:seed
+```
+
+The seed reads `prisma/seed-data/contractors.csv`, validates all fields, and uses
+upserts, so it is safe to run repeatedly. Existing contractor activation
+statuses are preserved. In development, omitted admin variables create the
+demo account `admin@hackalem.local` / `HackAlem2026!`; override both for shared
+environments. In production (`NODE_ENV=production`) both variables are
+mandatory. The password must contain at least 12 characters.
+
+In development, an omitted `SESSION_SECRET` is generated in memory when the
+backend starts; restarting the process invalidates existing access tokens. In
+production, a secret of at least 32 characters is mandatory.
+
+The production entry point is `dist/back/src/main.js` because the compiled
+backend consumes the repository-level `shared/contract.ts` as its API source
+of truth. `npm run start:prod` uses this path automatically.
+
+## Admin API
+
+- `POST /api/v1/auth/login` with `{ "email": "...", "password": "..." }`
+- `GET /api/v1/auth/me` with `Authorization: Bearer <accessToken>`
+- `GET /api/v1/admin/overview` (admin only)
+- `GET /api/v1/admin/contractors` with optional `search`, `city`, `category`,
+  `status=all|active|inactive`, `page`, and `pageSize` query parameters
+- `PATCH /api/v1/admin/contractors/:id/status` with
+  `{ "isActive": true|false }`
+
+All `/admin` endpoints return `401` without a valid token and `403` when the
+current database user is not an admin. Tokens intentionally contain only the
+user id; every request reloads the current role from PostgreSQL.
+
 ## Project setup
 
 ```bash

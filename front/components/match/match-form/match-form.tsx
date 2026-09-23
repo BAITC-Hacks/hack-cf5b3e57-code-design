@@ -1,5 +1,6 @@
 import type { FormEvent } from "react";
 
+import { CustomSelect } from "@/components/shared/custom-select/custom-select";
 import { CITIES, EVENT_FORMATS, LANGUAGES } from "../../../../shared/contract";
 import type { MatchMessages } from "@/lib/i18n/messages/match";
 import { CategoryPicker } from "../category-picker/category-picker";
@@ -60,9 +61,14 @@ export function MatchForm({
         <div className={styles.fields}>
           <label className={styles.field}>
             <span>{copy.city}</span>
-            <select value={form.city} onChange={(event) => onChange("city", event.target.value)}>
-              {CITIES.map((city) => <option key={city} value={city}>{copy.cities[city]}</option>)}
-            </select>
+            <CustomSelect
+              onChange={(event) => onChange("city", event.target.value)}
+              options={CITIES.map((city) => ({
+                value: city,
+                label: copy.cities[city],
+              }))}
+              value={form.city}
+            />
           </label>
 
           <label className={styles.field}>
@@ -72,9 +78,14 @@ export function MatchForm({
 
           <label className={styles.field}>
             <span>{copy.event}</span>
-            <select value={form.eventType} onChange={(event) => onChange("eventType", event.target.value)}>
-              {EVENT_FORMATS.map((eventFormat) => <option key={eventFormat} value={eventFormat}>{copy.eventFormats[eventFormat]}</option>)}
-            </select>
+            <CustomSelect
+              onChange={(event) => onChange("eventType", event.target.value)}
+              options={EVENT_FORMATS.map((eventFormat) => ({
+                value: eventFormat,
+                label: copy.eventFormats[eventFormat],
+              }))}
+              value={form.eventType}
+            />
           </label>
 
           <label className={styles.field}>
@@ -94,10 +105,17 @@ export function MatchForm({
 
             <label className={styles.field}>
               <span>{copy.language}</span>
-              <select value={form.language} onChange={(event) => onChange("language", event.target.value)}>
-                <option value="">{copy.languageAny}</option>
-                {LANGUAGES.map((language) => <option key={language} value={language}>{copy.languages[language]}</option>)}
-              </select>
+              <CustomSelect
+                onChange={(event) => onChange("language", event.target.value)}
+                options={[
+                  { value: "", label: copy.languageAny },
+                  ...LANGUAGES.map((language) => ({
+                    value: language,
+                    label: copy.languages[language],
+                  })),
+                ]}
+                value={form.language}
+              />
             </label>
           </div>
         </details>

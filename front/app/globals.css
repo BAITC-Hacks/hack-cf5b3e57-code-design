@@ -27,6 +27,26 @@
   --color-line: #dce2d9;
   --color-footer: #151515;
 
+  /* Shared ToiMatch component tokens. */
+  --tm-bg: var(--color-ivory);
+  --tm-surface: var(--color-surface);
+  --tm-ink: var(--color-ink);
+  --tm-muted: var(--color-muted);
+  --tm-line: var(--color-line);
+  --tm-ember: var(--color-orange);
+  --tm-ember-soft: var(--color-warm);
+  --tm-ocean: var(--color-ocean);
+  --tm-ocean-ink: var(--color-teal);
+  --tm-gold: var(--color-gold);
+  --tm-footer: var(--color-footer);
+  --tm-stop: #a33a34;
+  --tm-stop-soft: #fbe8e5;
+  --tm-warn: var(--color-amber);
+  --tm-warn-soft: var(--color-warm);
+  --tm-radius-card: 24px;
+  --tm-radius-field: 12px;
+  --tm-shadow-card: 0 14px 36px rgb(37 61 53 / 10%);
+
   /* Compatibility aliases used by the existing component modules. */
   --color-gray: var(--color-muted);
   --color-dark: var(--color-ink);

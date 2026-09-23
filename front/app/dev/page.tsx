@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { CustomSelect } from '@/components/shared/custom-select/custom-select';
 import type {
   ContractorListResponse,
   MatchRequest,
@@ -109,33 +110,19 @@ function CatalogPanel() {
       <div className="flex flex-wrap gap-2 items-end">
         <label className="flex flex-col text-xs">
           Город
-          <select
+          <CustomSelect
             value={city}
             onChange={(e) => setCity(e.target.value)}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            <option value="">все</option>
-            {CITIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            options={[{ value: '', label: 'все' }, ...CITIES.map((c) => ({ value: c, label: c }))]}
+          />
         </label>
         <label className="flex flex-col text-xs">
           Категория
-          <select
+          <CustomSelect
             value={category}
             onChange={(e) => setCategory(e.target.value)}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            <option value="">все</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            options={[{ value: '', label: 'все' }, ...CATEGORIES.map((c) => ({ value: c, label: c }))]}
+          />
         </label>
         <button
           onClick={load}
@@ -200,17 +187,11 @@ function MatchPanel() {
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
         <label className="flex flex-col">
           Город
-          <select
+          <CustomSelect
             value={req.city}
             onChange={(e) => patch('city', e.target.value)}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            {CITIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            options={CITIES.map((c) => ({ value: c, label: c }))}
+          />
         </label>
         <label className="flex flex-col">
           Дата
@@ -223,31 +204,19 @@ function MatchPanel() {
         </label>
         <label className="flex flex-col">
           Тип события
-          <select
+          <CustomSelect
             value={req.eventType}
             onChange={(e) => patch('eventType', e.target.value)}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            {EVENT_FORMATS.map((f) => (
-              <option key={f} value={f}>
-                {f}
-              </option>
-            ))}
-          </select>
+            options={EVENT_FORMATS.map((f) => ({ value: f, label: f }))}
+          />
         </label>
         <label className="flex flex-col">
           Категория
-          <select
+          <CustomSelect
             value={req.category}
             onChange={(e) => patch('category', e.target.value)}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+            options={CATEGORIES.map((c) => ({ value: c, label: c }))}
+          />
         </label>
         <label className="flex flex-col">
           Бюджет ₸
@@ -260,18 +229,11 @@ function MatchPanel() {
         </label>
         <label className="flex flex-col">
           Язык (опц.)
-          <select
+          <CustomSelect
             value={req.language ?? ''}
             onChange={(e) => patch('language', e.target.value || undefined)}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            <option value="">—</option>
-            {LANGUAGES.map((l) => (
-              <option key={l} value={l}>
-                {l}
-              </option>
-            ))}
-          </select>
+            options={[{ value: '', label: '—' }, ...LANGUAGES.map((l) => ({ value: l, label: l }))]}
+          />
         </label>
       </div>
       <button
@@ -419,14 +381,14 @@ function ChatPanel() {
       <div className="flex gap-2 items-end text-xs flex-wrap">
         <label className="flex flex-col">
           Режим
-          <select
+          <CustomSelect
             value={mode}
             onChange={(e) => setMode(e.target.value as 'search' | 'bundle')}
-            className="border rounded px-2 py-1 bg-transparent"
-          >
-            <option value="search">search (одна категория)</option>
-            <option value="bundle">bundle (весь пакет)</option>
-          </select>
+            options={[
+              { value: 'search', label: 'search (одна категория)' },
+              { value: 'bundle', label: 'bundle (весь пакет)' },
+            ]}
+          />
         </label>
         <button
           onClick={createSession}

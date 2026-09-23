@@ -338,6 +338,7 @@ export default async function CatalogPage({
             </svg>
           </Link>
         </section>
+
       </main>
 
       <footer className={styles.footer}>

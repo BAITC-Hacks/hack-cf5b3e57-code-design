@@ -1,24 +1,139 @@
-.form { display: grid; gap: 20px; padding: 24px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-card); background: var(--tm-surface); }
-.heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
-.heading span { color: var(--tm-ink); font-size: 18px; font-weight: 600; }
-.heading p { margin-top: 6px; color: var(--tm-muted); font-size: 13px; line-height: 1.5; }
-.reset { min-height: 44px; display: inline-flex; align-items: center; padding: 10px; color: var(--tm-ocean-ink); font-size: 13px; font-weight: 550; }
-.reset:hover { text-decoration: underline; text-underline-offset: 3px; }
-.grid { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 12px; }
-.field { display: grid; align-content: start; gap: 8px; min-width: 0; }
-.field > span { color: var(--tm-muted); font-size: 12px; font-weight: 550; }
-.field select, .field input { width: 100%; min-width: 0; min-height: 48px; padding: 10px 12px; border: 1px solid var(--tm-line); border-radius: var(--tm-radius-field); background: var(--tm-bg); color: var(--tm-ink); font-size: 14px; }
-.field select { cursor: pointer; }
-.field input::placeholder { color: var(--tm-muted); opacity: 1; }
-.field select:focus-visible, .field input:focus-visible { outline: 3px solid var(--tm-ocean-ink); outline-offset: 2px; }
-.submit { display: inline-flex; justify-self: end; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 12px 20px; border: 0; border-radius: var(--tm-radius-field); background: var(--tm-ember); color: var(--tm-ink); cursor: pointer; font-size: 14px; font-weight: 600; }
-.submit:hover { box-shadow: var(--tm-shadow-card); }
-.submit svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
-@media (max-width: 1100px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
-@media (max-width: 600px) {
-  .form { padding: 18px; }
-  .grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
-  .heading { flex-wrap: wrap; gap: 8px; }
-  .submit { justify-self: stretch; }
+.form {
+  display: grid;
+  min-width: 0;
+  gap: 20px;
+  padding: 24px;
+  border: 1px solid var(--color-line, #dce2d9);
+  border-radius: var(--tm-radius-card, 24px);
+  background: var(--color-surface, #fff);
+  box-shadow: 0 14px 36px rgb(37 61 53 / 7%);
 }
-@media (max-width: 380px) { .grid { grid-template-columns: minmax(0, 1fr); } }
+
+.heading {
+  display: grid;
+  min-width: 0;
+  gap: 4px;
+}
+
+.heading > div {
+  min-width: 0;
+}
+
+.heading span {
+  color: var(--color-ink, #253d35);
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.heading p {
+  margin-top: 6px;
+  color: var(--color-muted, #617067);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.reset {
+  display: inline-flex;
+  min-height: 40px;
+  align-items: center;
+  justify-self: start;
+  color: var(--color-teal, #25685e);
+  font-size: 13px;
+  font-weight: 550;
+}
+
+.reset:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.grid {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 14px;
+}
+
+.field {
+  display: grid;
+  min-width: 0;
+  align-content: start;
+  gap: 8px;
+}
+
+.field > span {
+  color: var(--color-muted, #617067);
+  font-size: 12px;
+  font-weight: 550;
+}
+
+.field select,
+.field input {
+  width: 100%;
+  min-width: 0;
+  min-height: 48px;
+  padding: 10px 12px;
+  border: 1px solid var(--color-line, #dce2d9);
+  border-radius: var(--tm-radius-field, 12px);
+  background: var(--color-ivory, #fff8f0);
+  color: var(--color-ink, #253d35);
+  font-size: 14px;
+}
+
+.field select {
+  cursor: pointer;
+}
+
+.field input::placeholder {
+  color: var(--color-muted, #617067);
+  opacity: 1;
+}
+
+.field select:focus-visible,
+.field input:focus-visible {
+  outline: 3px solid rgb(37 104 94 / 24%);
+  outline-offset: 2px;
+}
+
+.submit {
+  display: inline-flex;
+  width: 100%;
+  min-height: 48px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 12px 20px;
+  border: 0;
+  border-radius: var(--tm-radius-field, 12px);
+  background: var(--color-orange, #ff8811);
+  color: var(--color-ink, #253d35);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.submit:hover {
+  box-shadow: 0 10px 24px rgb(255 136 17 / 20%);
+}
+
+.submit svg {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 1.6;
+}
+
+@media (max-width: 1040px) and (min-width: 601px) {
+  .grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 600px) {
+  .form {
+    padding: 18px;
+  }
+}

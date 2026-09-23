@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { motion, useReducedMotion } from "framer-motion";
 
+import { CustomSelect } from "@/components/shared/custom-select/custom-select";
 import {
   CATEGORIES,
   CITIES,
@@ -44,53 +45,62 @@ export function CatalogFilters({
       <div className={styles.grid}>
         <label className={styles.field}>
           <span>{messages.filters.city}</span>
-          <select name="city" defaultValue={filters.city ?? ""}>
-            <option value="">{messages.filters.allCities}</option>
-            {CITIES.map((city) => (
-              <option key={city} value={city}>
-                {messages.values.cities[city]}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            defaultValue={filters.city ?? ""}
+            name="city"
+            options={[
+              { value: "", label: messages.filters.allCities },
+              ...CITIES.map((city) => ({
+                value: city,
+                label: messages.values.cities[city],
+              })),
+            ]}
+          />
         </label>
 
         <label className={styles.field}>
           <span>{messages.filters.category}</span>
-          <select name="category" defaultValue={filters.category ?? ""}>
-            <option value="">{messages.filters.allCategories}</option>
-            {CATEGORIES.map((category) => (
-              <option key={category} value={category}>
-                {messages.values.categories[category]}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            defaultValue={filters.category ?? ""}
+            name="category"
+            options={[
+              { value: "", label: messages.filters.allCategories },
+              ...CATEGORIES.map((category) => ({
+                value: category,
+                label: messages.values.categories[category],
+              })),
+            ]}
+          />
         </label>
 
         <label className={styles.field}>
           <span>{messages.filters.eventFormat}</span>
-          <select
-            name="eventFormat"
+          <CustomSelect
             defaultValue={filters.eventFormat ?? ""}
-          >
-            <option value="">{messages.filters.anyFormat}</option>
-            {EVENT_FORMATS.map((eventFormat) => (
-              <option key={eventFormat} value={eventFormat}>
-                {messages.values.eventFormats[eventFormat]}
-              </option>
-            ))}
-          </select>
+            name="eventFormat"
+            options={[
+              { value: "", label: messages.filters.anyFormat },
+              ...EVENT_FORMATS.map((eventFormat) => ({
+                value: eventFormat,
+                label: messages.values.eventFormats[eventFormat],
+              })),
+            ]}
+          />
         </label>
 
         <label className={styles.field}>
           <span>{messages.filters.language}</span>
-          <select name="language" defaultValue={filters.language ?? ""}>
-            <option value="">{messages.filters.anyLanguage}</option>
-            {LANGUAGES.map((language) => (
-              <option key={language} value={language}>
-                {messages.values.languages[language]}
-              </option>
-            ))}
-          </select>
+          <CustomSelect
+            defaultValue={filters.language ?? ""}
+            name="language"
+            options={[
+              { value: "", label: messages.filters.anyLanguage },
+              ...LANGUAGES.map((language) => ({
+                value: language,
+                label: messages.values.languages[language],
+              })),
+            ]}
+          />
         </label>
 
         <label className={styles.field}>

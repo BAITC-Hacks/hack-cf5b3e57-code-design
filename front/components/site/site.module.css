@@ -1,4 +1,4 @@
-.header { border-bottom: 1px solid var(--tm-line); background: var(--tm-bg); }
+.header { border-bottom: 1px solid var(--tm-line, var(--color-line)); background: var(--tm-bg, var(--color-ivory)); box-shadow: 0 8px 24px rgb(37 61 53 / 4%); }
 .headerInner, .footerInner { width: min(100% - 96px, 1280px); margin-inline: auto; }
 .headerInner { display: flex; align-items: center; gap: 32px; min-height: 88px; }
 .brand { display: flex; align-items: center; min-height: 44px; flex-shrink: 0; }
@@ -18,7 +18,7 @@
 .footerNav { display: flex; gap: 8px; align-items: start; flex-wrap: wrap; }
 .footerNav a:hover { color: var(--tm-gold); }
 .footerNotes { grid-column: 1 / -1; display: grid; gap: 8px; border-top: 1px solid var(--tm-muted); padding-top: 24px; }
-.notFound { max-width: 680px; margin: 72px auto; padding: 32px 24px; text-align: center; display: grid; gap: 24px; }
+.notFound { display: grid; max-width: 680px; gap: 24px; margin: 72px auto; padding: 32px 24px; border: 1px solid var(--tm-line, var(--color-line)); border-radius: var(--tm-radius-card, 24px); background: var(--tm-surface, var(--color-surface)); box-shadow: var(--tm-shadow-card, 0 12px 32px rgb(37 61 53 / 7%)); text-align: center; }
 .notFound h1 { font-size: clamp(32px, 5vw, 48px); line-height: 1.1; }
 .notFound p { color: var(--tm-muted); line-height: 1.7; }
 .notFound a { justify-self: center; min-height: 48px; display: inline-flex; align-items: center; border-radius: var(--tm-radius-field); padding: 12px 24px; background: var(--tm-ember); color: var(--tm-ink); font-weight: 600; }

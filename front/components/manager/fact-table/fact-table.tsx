@@ -11,6 +11,7 @@ const CATALOG_FIELDS: Record<FactKey, string> = {
   format: "event_formats",
   language: "languages",
   hours: "max_hours",
+  date: "busy_dates",
   signal: "signals",
   description: "description",
 };
